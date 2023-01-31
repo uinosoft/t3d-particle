@@ -1,0 +1,187 @@
+<html>
+<head>
+	<title>Multiple Emitters</title>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+	<link rel="stylesheet" type="text/css" href="./main.css">
+</head>
+<body>
+	<p class="numParticles"></p>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "./libs/t3d/build/t3d.module.js",
+                "t3d/examples/jsm/": "./libs/t3d/examples/jsm/",
+                "t3d-particle": "../build/t3d.particle.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from 't3d/examples/jsm/Clock.js';
+		import { OrbitControls } from 't3d/examples/jsm/controls/OrbitControls.js';
+		import { Texture2DLoader } from 't3d/examples/jsm/loaders/Texture2DLoader.js';
+
+		import {
+			ParticleGroup, ParticleEmitter
+		} from 't3d-particle';
+
+		// variables used in init()
+		let width, height, scene, camera, renderer, backRenderTarget, clock, controller;
+
+		// Used in initParticles()
+		let emitter, particleGroup;
+		const numEmitters = 40;
+
+		// Setup the scene
+		function init() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			document.body.appendChild(canvas);
+
+			const gl = canvas.getContext("webgl2", {
+				antialias: true,
+				alpha: false,
+				stencil: true
+			});
+
+			scene = new t3d.Scene();
+			camera = new t3d.Camera();
+			camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 10000);
+			camera.position.z = 500;
+			scene.add(camera);
+
+			renderer = new t3d.Renderer(gl);
+			renderer.renderPass.setClearColor(0, 0, 0, 1);
+			backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+			clock = new Clock();
+
+			controller = new OrbitControls(camera, canvas);
+		}
+
+		function getRandomNumber(base) {
+			return Math.random() * base - (base / 2);
+		}
+
+		function getRandomColor() {
+			const c = new t3d.Color3();
+			c.setRGB(Math.random(), Math.random(), Math.random());
+			return c;
+		}
+
+		// Create particle group and emitter
+		function initParticles() {
+			particleGroup = new ParticleGroup({
+				texture: {
+					value: new Texture2DLoader().load('./resources/img/smokeparticle.png')
+				},
+				maxParticleCount: numEmitters * 100
+			});
+
+			for (let i = 0; i < numEmitters; ++i) {
+				emitter = new ParticleEmitter({
+					maxAge: 5,
+					type: Math.random() * 4 | 0,
+					position: {
+						value: new t3d.Vector3(
+							getRandomNumber(200),
+							getRandomNumber(200),
+							getRandomNumber(200)
+						)
+					},
+					acceleration: {
+						value: new t3d.Vector3(
+							getRandomNumber(-2),
+							getRandomNumber(-2),
+							getRandomNumber(-2)
+						)
+					},
+					velocity: {
+						value: new t3d.Vector3(
+							getRandomNumber(5),
+							getRandomNumber(5),
+							getRandomNumber(5)
+						)
+					},
+					rotation: {
+						axis: new t3d.Vector3(
+							getRandomNumber(1),
+							getRandomNumber(1),
+							getRandomNumber(1)
+						),
+						angle: Math.random() * Math.PI,
+						center: new t3d.Vector3(
+							getRandomNumber(100),
+							getRandomNumber(100),
+							getRandomNumber(100)
+						)
+					},
+					wiggle: {
+						value: Math.random() * 20
+					},
+					drag: {
+						value: Math.random()
+					},
+					color: {
+						value: [getRandomColor(), getRandomColor()]
+					},
+					size: {
+						value: [0, 2 + Math.random() * 10, 0]
+					},
+					particleCount: 100,
+					opacity: [0, 1, 0]
+				});
+
+				particleGroup.addEmitter(emitter);
+			}
+
+			scene.add(particleGroup.mesh);
+
+			document.querySelector('.numParticles').textContent =
+				'Total particles: ' + particleGroup.particleCount;
+		}
+
+		function animate() {
+			requestAnimationFrame(animate);
+
+			controller.update();
+
+			particleGroup.tick(clock.getDelta());
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.renderPass.clear(true, true, false);
+			renderer.renderScene(scene, camera);
+		}
+
+		init();
+		initParticles();
+
+		setTimeout(animate, 0);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 10000);
+
+			backRenderTarget.resize(width, height);
+		}
+
+		window.addEventListener("resize", onWindowResize, false);
+    </script>
+</body>
+</html>

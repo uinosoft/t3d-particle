@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Clock</title>
+	<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+	<link rel="stylesheet" type="text/css" href="./main.css">
+</head>
+<body>
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "./libs/t3d/build/t3d.module.js",
+                "t3d/examples/jsm/": "./libs/t3d/examples/jsm/",
+                "t3d-particle": "../build/t3d.particle.module.js"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from 't3d/examples/jsm/Clock.js';
+		import { OrbitControls } from 't3d/examples/jsm/controls/OrbitControls.js';
+		import { Texture2DLoader } from 't3d/examples/jsm/loaders/Texture2DLoader.js';
+
+		import {
+			ParticleGroup, ParticleEmitter
+		} from 't3d-particle';
+
+		// variables used in init()
+		let width, height, scene, camera, renderer, backRenderTarget, clock, fixedTimeStep = false, date, controller;
+
+		// Used in initParticles()
+		let group, secondHand, minuteHand, hourHand;
+
+		// Setup the scene
+		function init() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			document.body.appendChild(canvas);
+
+			const gl = canvas.getContext("webgl2", {
+				antialias: true,
+				alpha: false,
+				stencil: true
+			});
+
+			scene = new t3d.Scene();
+			camera = new t3d.Camera();
+			camera.setPerspective(64 / 180 * Math.PI, width / height, 0.1, 10000);
+			camera.position.z = 40;
+			scene.add(camera);
+
+			renderer = new t3d.Renderer(gl);
+			renderer.renderPass.setClearColor(0, 0, 0, 1);
+			backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+			clock = new Clock();
+			date = new Date(Date.now());
+
+			controller = new OrbitControls(camera, canvas);
+		}
+
+		// Create particle group and emitter
+		function initParticles() {
+			group = new ParticleGroup({
+				texture: {
+					value: new Texture2DLoader().load('./resources/img/smokeparticle.png')
+				},
+				maxParticleCount: 1500
+			});
+
+			secondHand = new ParticleEmitter({
+				particleCount: 500,
+				maxAge: {
+					value: 2
+				},
+				position: {
+					value: new t3d.Vector3(0, 5, 0)
+				},
+				size: {
+					value: [0, 1]
+				},
+				color: {
+					value: [new t3d.Color3(0, 0, 1), new t3d.Color3(1, 1, 0), new t3d.Color3(1, 0, 0)]
+				},
+				opacity: {
+					value: 1
+				},
+				rotation: {
+					axis: new t3d.Vector3(0, 0, 1),
+					angle: 0,
+					static: false,
+					center: new t3d.Vector3()
+				},
+				direction: -1
+			});
+
+			minuteHand = new ParticleEmitter({
+				particleCount: 500,
+				maxAge: {
+					value: 2
+				},
+				position: {
+					value: new t3d.Vector3(0, 7.5, 0)
+				},
+				size: {
+					value: [0, 2]
+				},
+				color: {
+					value: [new t3d.Color3(0, 0, 1), new t3d.Color3(0, 1, 0), new t3d.Color3(0, 1, 1)]
+				},
+				opacity: {
+					value: 1
+				},
+				rotation: {
+					axis: new t3d.Vector3(0, 0, 1),
+					angle: 0,
+					static: false,
+					center: new t3d.Vector3()
+				},
+				direction: -1
+			});
+
+			hourHand = new ParticleEmitter({
+				particleCount: 500,
+				maxAge: {
+					value: 2
+				},
+				position: {
+					value: new t3d.Vector3(0, 10, 0)
+				},
+				size: {
+					value: [0, 4]
+				},
+				color: {
+					value: new t3d.Color3(0.5, 0.25, 0.9)
+				},
+				opacity: {
+					value: 1
+				},
+				rotation: {
+					axis: new t3d.Vector3(0, 0, 1),
+					angle: 0,
+					static: false,
+					center: new t3d.Vector3()
+				},
+				direction: -1
+			});
+
+			group.addEmitter(secondHand);
+			group.addEmitter(minuteHand);
+			group.addEmitter(hourHand);
+			scene.add(group.mesh);
+		}
+
+		function animate() {
+			requestAnimationFrame(animate);
+
+			controller.update();
+
+			onAnimate();
+			group.tick(!fixedTimeStep ? clock.getDelta() : undefined, camera);
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.renderPass.clear(true, true, false);
+			renderer.renderScene(scene, camera);
+		}
+
+		function preRender() {
+			const catchUpSeconds = date.getSeconds(),
+				catchUpMinutes = date.getMinutes(),
+				catchUpHours = date.getHours() % 12;
+
+			secondHand.rotation.angle = (catchUpSeconds / 60) * Math.PI * 2;
+			minuteHand.rotation.angle = (catchUpMinutes / 60) * Math.PI * 2;
+			hourHand.rotation.angle = (catchUpHours / 12) * Math.PI * 2;
+		}
+
+		function onAnimate() {
+			date.setTime(Date.now());
+
+			const seconds = date.getSeconds(),
+				minutes = date.getMinutes(),
+				hours = date.getHours() % 12,
+				fullRotation = Math.PI * 2,
+				secondAngle = (seconds / 60) * fullRotation,
+				minuteAngle = (minutes / 60) * fullRotation,
+				hourAngle = (hours / 12) * fullRotation;
+
+			if (secondAngle !== secondHand.rotation.angle) {
+				secondHand.rotation.angle = secondAngle;
+			}
+
+			if (minuteAngle !== minuteHand.rotation.angle) {
+				minuteHand.rotation.angle = minuteAngle;
+			}
+
+			if (hourAngle !== hourHand.rotation.angle) {
+				hourHand.rotation.angle = hourAngle;
+			}
+		}
+
+		init();
+		initParticles();
+
+		preRender();
+		setTimeout(animate, 0);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(64 / 180 * Math.PI, width / height, 0.1, 10000);
+
+			backRenderTarget.resize(width, height);
+		}
+
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

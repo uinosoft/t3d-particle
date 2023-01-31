@@ -1,0 +1,311 @@
+<html>
+<head>
+    <title>Emitter pooling</title>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="./main.css">
+</head>
+<body>
+    <p class="numParticles">Click mouse or press any key to trigger an explosion.</p>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "./libs/t3d/build/t3d.module.js",
+                "t3d/examples/jsm/": "./libs/t3d/examples/jsm/",
+                "t3d-particle": "../build/t3d.particle.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from 't3d/examples/jsm/Clock.js';
+		import { Texture2DLoader } from 't3d/examples/jsm/loaders/Texture2DLoader.js';
+
+		import {
+			ParticleProperties, ParticleGroup, ParticleEmitter
+		} from 't3d-particle';
+
+		class EmitterPool {
+
+			constructor(group) {
+				this._group = group;
+
+				this._pool = [];
+				this._poolCreationSettings = null;
+				this._createNewWhenPoolEmpty = false;
+			}
+
+			/**
+			 * Add a pool of emitters to this particle group
+			 *
+			 * @param {Number} numEmitters      The number of emitters to add to the pool.
+			 * @param {EmitterOptions|Array} emitterOptions  An object, or array of objects, describing the options to pass to each emitter.
+			 * @param {Boolean} createNew       Should a new emitter be created if the pool runs out?
+			 * @return {ParticleGroup} This group instance.
+			 */
+			addPool(numEmitters, emitterOptions, createNew) {
+				// Save relevant settings and flags.
+				this._poolCreationSettings = emitterOptions;
+				this._createNewWhenPoolEmpty = !!createNew;
+
+				// Create the emitters, add them to this group and the pool.
+				let emitter;
+				for (let i = 0; i < numEmitters; ++i) {
+					if (Array.isArray(emitterOptions)) {
+						emitter = new ParticleEmitter(emitterOptions[i]);
+					} else {
+						emitter = new ParticleEmitter(emitterOptions);
+					}
+					this._group.addEmitter(emitter);
+					this.releaseIntoPool(emitter);
+				}
+
+				return this;
+			}
+
+			/**
+			 * Get the pool array
+			 *
+			 * @return {Array}
+			 */
+			getPool() {
+				return this._pool;
+			}
+
+			/**
+			 * Fetch a single emitter instance from the pool.
+			 * If there are no objects in the pool, a new emitter will be
+			 * created if specified.
+			 *
+			 * @return {ParticleEmitter|null}
+			 */
+			getFromPool() {
+				const pool = this._pool,
+					createNew = this._createNewWhenPoolEmpty;
+
+				if (pool.length) {
+					return pool.pop();
+				} else if (createNew) {
+					const emitter = new ParticleEmitter(this._poolCreationSettings);
+
+					this._group.addEmitter(emitter);
+
+					return emitter;
+				}
+
+				return null;
+			}
+
+			/**
+			 * Release an emitter into the pool.
+			 *
+			 * @param  {ShaderParticleEmitter} emitter
+			 * @return {ParticleGroup} This group instance.
+			 */
+			releaseIntoPool(emitter) {
+				emitter.reset();
+				this._pool.unshift(emitter);
+
+				return this;
+			}
+
+			/**
+			 * Set a given number of emitters as alive, with an optional position
+			 * vector3 to move them to.
+			 *
+			 * @param  {Number} numEmitters The number of emitters to activate
+			 * @param  {Object} [position=undefined] A t3d.Vector3 instance describing the position to activate the emitter(s) at.
+			 * @return {ParticleGroup} This group instance.
+			 */
+			triggerPoolEmitter(numEmitters, position) {
+				if (typeof numEmitters === 'number' && numEmitters > 1) {
+					for (let i = 0; i < numEmitters; ++i) {
+						this._triggerSingleEmitter(position);
+					}
+				} else {
+					this._triggerSingleEmitter(position);
+				}
+
+				return this;
+			}
+
+			_triggerSingleEmitter(pos) {
+				const emitter = this.getFromPool(),
+					self = this;
+
+				if (emitter === null) {
+					console.log('Emitter Pool ran out.');
+					return;
+				}
+
+				if (pos instanceof t3d.Vector3) {
+					// Trigger the setter for this property to force an
+					// update to the emitter's position attribute.
+					emitter.position.value = emitter.position.value.copy(pos);
+				}
+
+				emitter.enable();
+
+				setTimeout(function () {
+					emitter.disable();
+					self.releaseIntoPool(emitter);
+				}, (Math.max(emitter.duration, (emitter.maxAge.value + emitter.maxAge.spread))) * 1000);
+
+				return this;
+			}
+
+		}
+
+		// variables used in init()
+		let width, height, scene, camera, renderer, backRenderTarget, clock;
+
+		// Used in initParticles()
+		let particleGroup, pool;
+		const pos = new t3d.Vector3(),
+			emitterSettings = {
+				type: ParticleProperties.distributions.SPHERE,
+				position: {
+					spread: new t3d.Vector3(10),
+					radius: 1,
+				},
+				velocity: {
+					value: new t3d.Vector3(100)
+				},
+				size: {
+					value: [30, 0]
+				},
+				opacity: {
+					value: [1, 0]
+				},
+				color: {
+					value: [new t3d.Color3(1, 1, 0), new t3d.Color3(1, 0, 0)]
+				},
+				particleCount: 100,
+				alive: true,
+				duration: 0.05,
+				maxAge: {
+					value: 0.5
+				}
+			};
+
+		// Setup the scene
+		function init() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			document.body.appendChild(canvas);
+
+			const gl = canvas.getContext("webgl2", {
+				antialias: true,
+				alpha: false,
+				stencil: true
+			});
+
+			scene = new t3d.Scene();
+			camera = new t3d.Camera();
+			camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 10000);
+			camera.position.z = 200;
+			scene.add(camera);
+
+			const referenceCubeMat = new t3d.BasicMaterial();
+			referenceCubeMat.transparent = true;
+			referenceCubeMat.opacity = 0.1;
+			referenceCubeMat.drawMode = t3d.DRAW_MODE.LINE_STRIP;
+			const referenceCube = new t3d.Mesh(
+				new t3d.BoxGeometry(300, 300, 300),
+				referenceCubeMat
+			);
+			scene.add(referenceCube);
+
+			renderer = new t3d.Renderer(gl);
+			renderer.renderPass.setClearColor(0, 0, 0, 1);
+			backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+			clock = new Clock();
+		}
+
+		// Create particle group and emitter
+		function initParticles() {
+			particleGroup = new ParticleGroup({
+				texture: {
+					value: new Texture2DLoader().load('./resources/img/smokeparticle.png')
+				},
+				blending: t3d.BLEND_TYPE.ADD,
+				maxParticleCount: 10 * 100
+			});
+
+			pool = new EmitterPool(particleGroup);
+
+			pool.addPool(10, emitterSettings, false);
+
+			scene.add(particleGroup.mesh);
+		}
+
+		let now = 0;
+		const up = new t3d.Vector3(0, 1, 0);
+
+		function animate() {
+			requestAnimationFrame(animate);
+
+			const deltaTime = clock.getDelta();
+
+			now += deltaTime * 0.7;
+
+			camera.position.set(Math.sin(now) * 500, 0, Math.cos(now) * 500);
+			camera.lookAt(scene.position, up);
+
+			particleGroup.tick(deltaTime);
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.renderPass.clear(true, true, false);
+			renderer.renderScene(scene, camera);
+		}
+
+		// Generate a random number between -size/2 and +size/2
+		function rand(size) {
+			return size * Math.random() - (size / 2);
+		}
+
+		// Trigger an explosion and random co-ords.
+		function createExplosion() {
+			const num = 150;
+			pos.set(rand(num), rand(num), rand(num));
+			pool.triggerPoolEmitter(1, pos);
+		}
+
+		// Add a mousedown listener. When mouse is clicked, a new explosion will be created.
+		document.addEventListener('mousedown', createExplosion, false);
+
+		// Do the same for a keydown event
+		document.addEventListener('keydown', createExplosion, false);
+
+		init();
+		initParticles();
+
+		setTimeout(animate, 0);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 10000);
+
+			backRenderTarget.resize(width, height);
+		}
+
+		window.addEventListener("resize", onWindowResize, false);
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+	"point": [
+		"point_active_multiplier",
+		"point_basic",
+		"point_clock",
+		"point_clouds",
+		"point_distributions",
+		"point_explosion",
+		"point_fog",
+		"point_mouse_follow",
+		"point_multiple_emitters",
+		"point_orbit",
+		"point_pool",
+		"point_rotation"
+	],
+	"mesh": [
+		"mesh_basic"
+	],
+	"benchmark": [
+		"benchmark_point",
+		"benchmark_mesh"
+	]
+}

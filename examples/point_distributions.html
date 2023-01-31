@@ -1,0 +1,249 @@
+<html>
+<head>
+    <title>Distribution types</title>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+    <link rel="stylesheet" type="text/css" href="./main.css">
+</head>
+<body>
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "./libs/t3d/build/t3d.module.js",
+                "t3d/examples/jsm/": "./libs/t3d/examples/jsm/",
+                "t3d-particle": "../build/t3d.particle.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from 't3d/examples/jsm/Clock.js';
+		import { OrbitControls } from 't3d/examples/jsm/controls/OrbitControls.js';
+		import { Texture2DLoader } from 't3d/examples/jsm/loaders/Texture2DLoader.js';
+
+		import {
+			ParticleProperties, ParticleGroup, ParticleEmitter
+		} from 't3d-particle';
+
+		// variables used in init()
+		let width, height, scene, camera, renderer, backRenderTarget, clock, controller;
+
+		// Used in initParticles()
+		let particleGroup;
+
+		// Setup the scene
+		function init() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			document.body.appendChild(canvas);
+
+			const gl = canvas.getContext("webgl2", {
+				antialias: true,
+				alpha: false,
+				stencil: true
+			});
+
+			scene = new t3d.Scene();
+			camera = new t3d.Camera();
+			camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 10000);
+			camera.position.z = 75;
+			scene.add(camera);
+
+			renderer = new t3d.Renderer(gl);
+			renderer.renderPass.setClearColor(0, 0, 0, 1);
+			backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+			clock = new Clock();
+
+			controller = new OrbitControls(camera, canvas);
+		}
+
+		// Create particle group and emitter
+		function initParticles() {
+			particleGroup = new ParticleGroup({
+				texture: {
+					value: new Texture2DLoader().load('./resources/img/smokeparticle.png')
+				},
+				maxParticleCount: (250 + 500 + 250 + 250 + 250) * 3
+			});
+
+			// General distributions.
+			for (let i = 1; i < 4; ++i) {
+				const emitter = new ParticleEmitter({
+					type: i,
+					maxAge: {
+						value: 1
+					},
+					position: {
+						value: new t3d.Vector3(-50 + (i * 25), 40, 0),
+						radius: 5,
+						spread: new t3d.Vector3(3, 3, 3)
+					},
+					color: {
+						value: [new t3d.Color3(1, 1, 1), new t3d.Color3(1, 0, 0)]
+					},
+					size: {
+						value: 1
+					},
+					isStatic: true,
+					particleCount: 250
+				});
+
+				particleGroup.addEmitter(emitter);
+			}
+
+			// Spread clamping.
+			for (let i = 1; i < 4; ++i) {
+				const emitter = new ParticleEmitter({
+					type: i,
+					maxAge: {
+						value: 1
+					},
+					position: {
+						value: new t3d.Vector3(-50 + (i * 25), 20, 0),
+						radius: 4,
+						spread: new t3d.Vector3(5, 5, 5),
+						spreadClamp: new t3d.Vector3(2, 2, 2)
+					},
+					color: {
+						value: [new t3d.Color3(1, 1, 1), new t3d.Color3(1, 0, 0)]
+					},
+					size: {
+						value: 1
+					},
+					isStatic: true,
+					particleCount: 500
+				});
+
+				particleGroup.addEmitter(emitter);
+			}
+
+			// Spherical velocity distributions.
+			for (let i = 1; i < 4; ++i) {
+				const emitter = new ParticleEmitter({
+					type: i,
+					maxAge: {
+						value: 1
+					},
+					position: {
+						value: new t3d.Vector3(-50 + (i * 25), 0, 0),
+						radius: 5,
+						spread: i === 1 ? new t3d.Vector3(3, 3, 3) : undefined
+					},
+					velocity: {
+						value: new t3d.Vector3(3, 0, 0), // Only the x component takes effect for sphere distribution
+						distribution: ParticleProperties.distributions.SPHERE
+					},
+					color: {
+						value: [new t3d.Color3(1, 1, 1), new t3d.Color3(1, 0, 0)]
+					},
+					size: {
+						value: 1
+					},
+					particleCount: 250
+				});
+
+				particleGroup.addEmitter(emitter);
+			}
+
+			// Disc velocity distributions.
+			for (let i = 1; i < 4; ++i) {
+				const emitter = new ParticleEmitter({
+					type: i,
+					maxAge: {
+						value: 1
+					},
+					position: {
+						value: new t3d.Vector3(-50 + (i * 25), -20, 0),
+						radius: 5,
+						spread: i === 1 ? new t3d.Vector3(3, 3, 3) : undefined
+					},
+					velocity: {
+						value: new t3d.Vector3(3, 0, 0),  // Only the x component takes effect for disc distribution
+						distribution: ParticleProperties.distributions.DISC
+					},
+					color: {
+						value: [new t3d.Color3(1, 1, 1), new t3d.Color3(1, 0, 0)]
+					},
+					size: {
+						value: 1
+					},
+					particleCount: 250
+				});
+
+				particleGroup.addEmitter(emitter);
+			}
+
+			// Box velocity distributions.
+			for (let i = 1; i < 4; ++i) {
+				const emitter = new ParticleEmitter({
+					type: i,
+					maxAge: {
+						value: 1
+					},
+					position: {
+						value: new t3d.Vector3(-50 + (i * 25), -40, 0),
+						radius: 5,
+						spread: i === 1 ? new t3d.Vector3(3, 3, 3) : undefined
+					},
+					velocity: {
+						value: new t3d.Vector3(3, 3, 3),
+						distribution: ParticleProperties.distributions.BOX
+					},
+					color: {
+						value: [new t3d.Color3(1, 1, 1), new t3d.Color3(1, 0, 0)]
+					},
+					size: {
+						value: 1
+					},
+					particleCount: 250
+				});
+
+				particleGroup.addEmitter(emitter);
+			}
+
+			scene.add(particleGroup.mesh);
+		}
+
+		function animate() {
+			requestAnimationFrame(animate);
+
+			controller.update();
+
+			particleGroup.tick(clock.getDelta());
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.renderPass.clear(true, true, false);
+			renderer.renderScene(scene, camera);
+		}
+
+		init();
+		initParticles();
+
+		setTimeout(animate, 0);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 10000);
+
+			backRenderTarget.resize(width, height);
+		}
+
+		window.addEventListener("resize", onWindowResize, false);
+    </script>
+</body>
+</html>
