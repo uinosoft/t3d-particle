@@ -50,7 +50,7 @@ export class ParticleEmitter extends AbstractParticleEmitter {
 		}
 
 		if (this.paramsArray === null) {
-			this.paramsArray = this.attributes.params.typedArray.array;
+			this.paramsArray = this.attributes.params.buffer.array;
 		}
 
 		const start = this.attributeOffset,
@@ -115,7 +115,7 @@ export class ParticleEmitter extends AbstractParticleEmitter {
 			const start = this.attributeOffset,
 				end = start + this.particleCount,
 				array = this.paramsArray,
-				attr = this.attributes.params.bufferAttribute;
+				attr = this.attributes.params;
 
 			for (let i = end - 1, index; i >= start; --i) {
 				index = i * 4;
@@ -140,52 +140,52 @@ export class ParticleEmitter extends AbstractParticleEmitter {
 
 		switch (prop) {
 			case 'position':
-				typedArray = this.attributes.position.typedArray;
-				this._assignPositionValue(typedArray.array, typedArray.componentSize * index);
+				typedArray = this.attributes.position.buffer.array;
+				this._assignPositionValue(typedArray, this.attributes.position.size * index);
 				break;
 
 			case 'velocity':
 			case 'acceleration':
-				typedArray = this.attributes.position.typedArray;
+				typedArray = this.attributes.position.buffer.array;
 
 				// Ensure position values aren't zero? otherwise no force will be applied.
-				positionX = typedArray.array[index * 3 + 0];
-				positionY = typedArray.array[index * 3 + 1];
-				positionZ = typedArray.array[index * 3 + 2];
+				positionX = typedArray[index * 3 + 0];
+				positionY = typedArray[index * 3 + 1];
+				positionZ = typedArray[index * 3 + 2];
 
-				typedArray = this.attributes[prop].typedArray;
-				this._assignForceValue(typedArray.array, typedArray.componentSize * index, prop, [positionX, positionY, positionZ]);
+				typedArray = this.attributes[prop].buffer.array;
+				this._assignForceValue(typedArray, this.attributes[prop].size * index, prop, [positionX, positionY, positionZ]);
 				break;
 
 			case 'size':
 			case 'opacity':
-				typedArray = this.attributes[prop].typedArray;
-				this._assignAbsLifetimeValue(typedArray.array, typedArray.componentSize * index, prop);
+				typedArray = this.attributes[prop].buffer.array;
+				this._assignAbsLifetimeValue(typedArray, this.attributes[prop].size * index, prop);
 				break;
 
 			case 'angle':
-				typedArray = this.attributes.angle.typedArray;
-				this._assignAngleValue(typedArray.array, typedArray.componentSize * index);
+				typedArray = this.attributes.angle.buffer.array;
+				this._assignAngleValue(typedArray, this.attributes.angle.size * index);
 				break;
 
 			case 'params':
-				typedArray = this.attributes.params.typedArray;
-				this._assignParamsValue(typedArray.array, typedArray.componentSize * index, true);
+				typedArray = this.attributes.params.buffer.array;
+				this._assignParamsValue(typedArray, this.attributes.params.size * index, true);
 				break;
 
 			case 'rotation':
-				typedArray = this.attributes.rotation.typedArray;
-				typedArray2 = this.attributes.rotationCenter.typedArray;
+				typedArray = this.attributes.rotation.buffer.array;
+				typedArray2 = this.attributes.rotationCenter.buffer.array;
 				this._assignRotationValue(
-					typedArray.array, typedArray.componentSize * index,
-					typedArray2.array, typedArray2.componentSize * index,
+					typedArray, this.attributes.rotation.size * index,
+					typedArray2, this.attributes.rotationCenter.size * index,
 					true
 				);
 				break;
 
 			case 'color':
-				typedArray = this.attributes.color.typedArray;
-				this._assignColorValue(typedArray.array, typedArray.componentSize * index, true);
+				typedArray = this.attributes.color.buffer.array;
+				this._assignColorValue(typedArray, this.attributes.color.size * index, true);
 				break;
 		}
 	}

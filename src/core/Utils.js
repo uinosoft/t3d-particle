@@ -423,7 +423,7 @@ export const Utils = {
 		return array;
 	},
 
-	getRandomVector3OnSphere: function(array, offset, base, radius, radiusSpread, radiusScale, radiusSpreadClamp, distributionClamp) {
+	getRandomVector3OnSphere: function(array, offset, base, radius, radiusSpread, radiusScale, radiusSpreadClamp) {
 		let depth = 2 * Math.random() - 1,
 			t = 6.2832 * Math.random(),
 			r = Math.sqrt(1 - depth * depth),

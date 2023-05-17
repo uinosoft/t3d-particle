@@ -464,7 +464,7 @@ export class AbstractParticleEmitter {
 				Utils.getRandomVector3(array, offset, value, spread, prop._spreadClamp);
 				break;
 			case distributions.SPHERE:
-				Utils.getRandomVector3OnSphere(array, offset, value, prop._radius, prop._spread.x, prop._radiusScale, prop._spreadClamp.x, prop._distributionClamp || this.particleCount);
+				Utils.getRandomVector3OnSphere(array, offset, value, prop._radius, prop._spread.x, prop._radiusScale, prop._spreadClamp.x);
 				break;
 			case distributions.DISC:
 				Utils.getRandomVector3OnDisc(array, offset, value, prop._radius, prop._spread.x, prop._radiusScale, prop._spreadClamp.x);
@@ -494,7 +494,7 @@ export class AbstractParticleEmitter {
 					particlePos[0],
 					particlePos[1],
 					particlePos[2],
-					this.position.value,
+					this.position._value,
 					value.x,
 					spread.x
 				);
@@ -505,7 +505,7 @@ export class AbstractParticleEmitter {
 					particlePos[0],
 					particlePos[1],
 					particlePos[2],
-					this.position.value,
+					this.position._value,
 					value.x,
 					spread.x
 				);

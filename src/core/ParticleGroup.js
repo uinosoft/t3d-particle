@@ -1,10 +1,22 @@
 import * as t3d from "t3d";
 import { Utils } from "./Utils.js";
-import { ShaderAttribute } from "../helpers/ShaderAttribute.js";
 import { Shaders } from "../shaders/Shaders.js";
 import { ParticleProperties } from "../ParticleProperties.js";
 import { ParticleEmitter } from "./ParticleEmitter.js";
 import { AbstractParticleGroup } from "./AbstractParticleGroup.js";
+
+const componentSizeMap = {
+	position: 3,
+	acceleration: 4, // w component is drag
+	velocity: 3,
+	rotation: 4,
+	rotationCenter: 3,
+	params: 4, // Holds (alive, age, delay, wiggle)
+	size: 4,
+	angle: 4,
+	color: 4,
+	opacity: 4
+}
 
 export class ParticleGroup extends AbstractParticleGroup {
 
@@ -76,19 +88,17 @@ export class ParticleGroup extends AbstractParticleGroup {
 		this.mesh.frustumCulled = false;
 
 		// Map of all attributes to be applied to the particles.
-		//
-		// See ShaderAttribute for a bit more info on this bit.
 		this.attributes = {
-			position: new ShaderAttribute('v3', true),
-			acceleration: new ShaderAttribute('v4', true), // w component is drag
-			velocity: new ShaderAttribute('v3', true),
-			rotation: new ShaderAttribute('v4', true),
-			rotationCenter: new ShaderAttribute('v3', true),
-			params: new ShaderAttribute('v4', true), // Holds (alive, age, delay, wiggle)
-			size: new ShaderAttribute('v4', true),
-			angle: new ShaderAttribute('v4', true),
-			color: new ShaderAttribute('v4', true),
-			opacity: new ShaderAttribute('v4', true)
+			position: null,
+			acceleration: null,
+			velocity: null,
+			rotation: null,
+			rotationCenter: null,
+			params: null,
+			size: null,
+			angle: null,
+			color: null,
+			opacity: null
 		};
 
 		this.attributeKeys = Object.keys(this.attributes);
@@ -101,14 +111,12 @@ export class ParticleGroup extends AbstractParticleGroup {
 		this._attributesNeedRefresh = false;
 		this._attributesNeedDynamicReset = false;
 
-		//
-
 		this.particleCount = 0;
 	}
 
 	/**
 	 * Adds an ParticleEmitter instance to this group, creating particle values and
-	 * assigning them to this group's shader attributes.
+	 * assigning them to this group's attributes.
 	 *
 	 * @param {ParticleEmitter} emitter The emitter to add to this group.
 	 */
@@ -162,22 +170,42 @@ export class ParticleGroup extends AbstractParticleGroup {
 		// easier access during the emitter's tick function.
 		emitter.attributes = this.attributes;
 
-		// Ensure the attributes and their BufferAttributes exist, and their
-		// TypedArrays are of the correct size.
+		// Ensure the attributes and their attribute exist, and their
+		// buffer arrays are of the correct size.
 		for (const attr in attributes) {
 			if (attributes.hasOwnProperty(attr)) {
 				// When creating a buffer, pass through the maxParticle count
 				// if one is specified.
-				attributes[attr]._createBufferAttribute(
-					this.maxParticleCount !== null ?
-						this.maxParticleCount :
-						this.particleCount
-				);
+				let attribute = attributes[attr];
+				let size = this.maxParticleCount !== null ?
+					this.maxParticleCount :
+					this.particleCount;
+
+				if (attribute !== null && attribute.buffer.array !== null) {
+					// Make sure the buffer array is present and correct.
+					if (attribute.buffer.array.length !== size * attribute.size) {
+						let currentArraySize = attribute.buffer.array.length;
+						const bufferSize = size * attribute.size;
+						if (bufferSize < currentArraySize) {
+							attribute.buffer.array = attribute.buffer.array.subarray(0, bufferSize);
+						} else {
+							let existingArray = attribute.buffer.array,
+								newArray = new Float32Array(bufferSize);
+							newArray.set(existingArray);
+							attribute.buffer.array = newArray;
+						}
+						attribute.buffer.count = size;
+						attribute.buffer.version++;
+					}
+				} else {
+					attributes[attr] = new t3d.Attribute(new t3d.Buffer(new Float32Array(size * componentSizeMap[attr]), componentSizeMap[attr]));
+					attributes[attr].buffer.usage = t3d.BUFFER_USAGE.DYNAMIC_DRAW;
+				}
 			}
 		}
 
 		// Loop through each particle this emitter wants to have, and create the attributes values,
-		// storing them in the TypedArrays that each attribute holds.
+		// storing them in the buffer array that each attribute holds.
 		for (let i = start; i < end; ++i) {
 			emitter._assignValue('position', i);
 			emitter._assignValue('velocity', i);
@@ -234,24 +262,42 @@ export class ParticleGroup extends AbstractParticleGroup {
 		// and their age as 0.
 		const start = emitter.attributeOffset,
 			end = start + emitter.particleCount,
-			params = this.attributes.params.typedArray;
+			params = this.attributes.params.buffer.array;
 
 		// Set alive and age to zero.
 		for (let i = start; i < end; ++i) {
-			params.array[i * 4] = 0.0;
-			params.array[i * 4 + 1] = 0.0;
+			params[i * 4] = 0.0;
+			params[i * 4 + 1] = 0.0;
 		}
 
 		// Remove the emitter from this group's "store".
 		this._emitters.splice(emitterIndex, 1);
 
-		// Remove this emitter's attribute values from all shader attributes.
-		// The `.splice()` call here also marks each attribute's buffer
+		// Remove this emitter's attribute values from all attributes.
+		// Also marks each attribute's buffer
 		// as needing to update it's entire contents.
 		for (const attr in this.attributes) {
 			if (this.attributes.hasOwnProperty(attr)) {
-				this.attributes[attr].splice(start, end);
+				const attribute = this.attributes[attr];
+
+				const startSize = start * attribute.size;
+				const endSize = end * attribute.size;
+				let data = [],
+					array = attribute.buffer.array;
+				for (let i = 0; i < array.length; ++i) {
+					if (i < startSize || i >= endSize) {
+						data.push(array[i]);
+					}
+				}
+				array = array.subarray(0, data.length);
+				array.set(data);
+				this.attributes[attr].buffer.array = array;
 			}
+		}
+
+		for (let j = this._emitters.length - 1; j >= emitterIndex; j--) {
+			const attributeOffset = this._emitters[j].attributeOffset - emitter.particleCount;
+			this._emitters[j]._setAttributeOffset(attributeOffset);
 		}
 
 		// Ensure this group's particle count is correct.
@@ -284,14 +330,6 @@ export class ParticleGroup extends AbstractParticleGroup {
 		this.uniforms.runTime += deltaTime;
 		this.uniforms.deltaTime = deltaTime;
 
-		// Reset buffer update ranges on the shader attributes.
-
-		i = this.attributeCount - 1;
-
-		for (i; i >= 0; --i) {
-			attrs[keys[i]].resetUpdateRange();
-		}
-
 		// If nothing needs updating, then stop here.
 
 		if (
@@ -303,36 +341,37 @@ export class ParticleGroup extends AbstractParticleGroup {
 		}
 
 		// Loop through each emitter in this group and
-		// simulate it, then update the shader attribute
+		// simulate it, then update the attribute
 		// buffers.
 
 		for (j = 0; j < numEmitters; ++j) {
-			const emitter = emitters[j];
-
 			// Run tick
+			emitters[j].tick(deltaTime);
+		}
 
-			emitter.tick(deltaTime);
+		for (i = this.attributeCount - 1; i >= 0; --i) {
+			const key = keys[i];
+			let particleUpdateMin = Infinity;
+			let particleUpdateMax = -Infinity;
 
-			// Mark update range
+			for (j = 0; j < numEmitters; ++j) {
+				// Mark update range
+				const emitterRanges = emitters[j].bufferUpdateRanges;
+				const emitterAttr = emitterRanges[key];
+				particleUpdateMin = Math.min(emitterAttr.min, particleUpdateMin);
+				particleUpdateMax = Math.max(emitterAttr.max, particleUpdateMax);
+			}
 
-			const emitterRanges = emitter.bufferUpdateRanges;
-
-			let key,
-				emitterAttr,
-				attr;
-
-			i = this.attributeCount - 1;
-
-			for (i; i >= 0; --i) {
-				key = keys[i];
-				emitterAttr = emitterRanges[key];
-				attr = attrs[key];
-				attr.setUpdateRange(emitterAttr.min, emitterAttr.max);
-				attr.flagUpdate();
+			if (particleUpdateMax - particleUpdateMin > 0) {
+				// Reset buffer update ranges.
+				const attr = attrs[key];
+				attr.buffer.updateRange.offset = particleUpdateMin * attr.size;
+				attr.buffer.updateRange.count = Math.min((particleUpdateMax - particleUpdateMin + 1) * attr.size, attr.buffer.array.length);
+				attr.buffer.version++;
 			}
 		}
 
-		// If the shader attributes have been refreshed,
+		// If the attributes have been refreshed,
 		// then the dynamic properties of each buffer
 		// attribute will need to be reset back to
 		// what they should be.
@@ -341,13 +380,13 @@ export class ParticleGroup extends AbstractParticleGroup {
 			i = this.attributeCount - 1;
 
 			for (i; i >= 0; --i) {
-				attrs[keys[i]].resetDynamic();
+				attrs[keys[i]].buffer.usage = t3d.BUFFER_USAGE.DYNAMIC_DRAW;
 			}
 
 			this._attributesNeedDynamicReset = false;
 		}
 
-		// If this group's shader attributes need a full refresh
+		// If this group's attributes need a full refresh
 		// then mark each attribute's buffer attribute as
 		// needing so.
 
@@ -355,7 +394,10 @@ export class ParticleGroup extends AbstractParticleGroup {
 			i = this.attributeCount - 1;
 
 			for (i; i >= 0; --i) {
-				attrs[keys[i]].forceUpdateAll();
+				attrs[keys[i]].buffer.updateRange.offset = 0;
+				attrs[keys[i]].buffer.updateRange.count = -1;
+				attrs[keys[i]].buffer.usage = t3d.BUFFER_USAGE.STATIC_DRAW;
+				attrs[keys[i]].buffer.version++;
 			}
 
 			this._attributesNeedRefresh = false;
@@ -418,7 +460,7 @@ export class ParticleGroup extends AbstractParticleGroup {
 
 		let attribute, geometryAttribute;
 
-		// Loop through all the shader attributes and assign (or re-assign)
+		// Loop through all the attributes and assign (or re-assign)
 		// typed array buffers to each one.
 		for (const attr in attributes) {
 			if (attributes.hasOwnProperty(attr)) {
@@ -436,7 +478,7 @@ export class ParticleGroup extends AbstractParticleGroup {
 					// Add the attribute to the geometry if it doesn't already exist.
 					geometry.addAttribute(
 						attr === 'position' ? 'a_Position' : attr,
-						attribute.bufferAttribute
+						attribute
 					);
 				}
 			}

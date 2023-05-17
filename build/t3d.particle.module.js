@@ -498,7 +498,7 @@ const Utils = {
 		return array;
 	},
 
-	getRandomVector3OnSphere: function(array, offset, base, radius, radiusSpread, radiusScale, radiusSpreadClamp, distributionClamp) {
+	getRandomVector3OnSphere: function(array, offset, base, radius, radiusSpread, radiusScale, radiusSpreadClamp) {
 		let depth = 2 * Math.random() - 1,
 			t = 6.2832 * Math.random(),
 			r = Math.sqrt(1 - depth * depth),
@@ -643,507 +643,6 @@ const Utils = {
 	}()),
 
 };
-
-/**
- * A helper class for TypedArrays.
- *
- * Allows for easy resizing, assignment of various component-based
- * types (Vector2s, Vector3s, Vector4s, Mat3s, Mat4s),
- * as well as Colors (where components are `r`, `g`, `b`),
- * Numbers, and setting from other TypedArrays.
- *
- * @author Luke Moody
- * @constructor
- * @param {Function} TypedArrayConstructor The constructor to use (Float32Array, Uint8Array, etc.)
- * @param {Number} size                 The size of the array to create
- * @param {Number} componentSize        The number of components per-value (ie. 3 for a vec3, 9 for a Mat3, etc.)
- * @param {Number} indexOffset          The index in the array from which to start assigning values. Default `0` if none provided
- */
-class TypedArrayHelper {
-
-	constructor(TypedArrayConstructor, size, componentSize, indexOffset) {
-		this.componentSize = componentSize || 1;
-		this.size = (size || 1);
-		this.TypedArrayConstructor = TypedArrayConstructor || Float32Array;
-		this.array = new TypedArrayConstructor(size * this.componentSize);
-		this.indexOffset = indexOffset || 0;
-	}
-
-	/**
-	 * Sets the size of the internal array.
-	 *
-	 * Delegates to `this.shrink` or `this.grow` depending on size
-	 * argument's relation to the current size of the internal array.
-	 *
-	 * Note that if the array is to be shrunk, data will be lost.
-	 *
-	 * @param {Number} size The new size of the array.
-	 */
-	setSize(size, noComponentMultiply) {
-		let currentArraySize = this.array.length;
-
-		if (!noComponentMultiply) {
-			size = size * this.componentSize;
-		}
-
-		if (size < currentArraySize) {
-			return this.shrink(size);
-		} else if (size > currentArraySize) {
-			return this.grow(size);
-		} else {
-			console.info('TypedArray is already of size:', size + '.', 'Will not resize.');
-		}
-	}
-
-	/**
-	 * Shrinks the internal array.
-	 *
-	 * @param  {Number} size The new size of the typed array. Must be smaller than `this.array.length`.
-	 * @return {TypedArrayHelper}      Instance of this class.
-	 */
-	shrink(size) {
-		this.array = this.array.subarray(0, size);
-		this.size = size;
-		return this;
-	}
-
-	/**
-	 * Grows the internal array.
-	 * @param  {Number} size The new size of the typed array. Must be larger than `this.array.length`.
-	 * @return {TypedArrayHelper}      Instance of this class.
-	 */
-	grow(size) {
-		let existingArray = this.array,
-			newArray = new this.TypedArrayConstructor(size);
-
-		newArray.set(existingArray);
-		this.array = newArray;
-		this.size = size;
-
-		return this;
-	}
-
-
-	/**
-	 * Perform a splice operation on this array's buffer.
-	 * @param  {Number} start The start index of the splice. Will be multiplied by the number of components for this attribute.
-	 * @param  {Number} end The end index of the splice. Will be multiplied by the number of components for this attribute.
-	 * @returns {Object} The TypedArrayHelper instance.
-	 */
-	splice(start, end) {
-		start *= this.componentSize;
-		end *= this.componentSize;
-
-		let data = [],
-			array = this.array,
-			size = array.length;
-
-		for (let i = 0; i < size; ++i) {
-			if (i < start || i >= end) {
-				data.push(array[i]);
-			}
-			// array[ i ] = 0;
-		}
-
-		this.setFromArray(0, data);
-
-		return this;
-	}
-
-
-	/**
-	 * Copies from the given TypedArray into this one, using the index argument
-	 * as the start position. Alias for `TypedArray.set`. Will automatically resize
-	 * if the given source array is of a larger size than the internal array.
-	 *
-	 * @param {Number} index      The start position from which to copy into this array.
-	 * @param {TypedArray} array The array from which to copy; the source array.
-	 * @return {TypedArrayHelper} Instance of this class.
-	 */
-	setFromArray(index, array) {
-		let sourceArraySize = array.length,
-			newSize = index + sourceArraySize;
-
-		if (newSize > this.array.length) {
-			this.grow(newSize);
-		} else if (newSize < this.array.length) {
-			this.shrink(newSize);
-		}
-
-		this.array.set(array, this.indexOffset + index);
-
-		return this;
-	}
-
-	/**
-	 * Set a Vector2 value at `index`.
-	 *
-	 * @param {Number} index The index at which to set the vec2 values from.
-	 * @param {Vector2} vec2  Any object that has `x` and `y` properties.
-	 * @return {TypedArrayHelper} Instance of this class.
-	 */
-	setVec2(index, vec2) {
-		return this.setVec2Components(index, vec2.x, vec2.y);
-	}
-
-	/**
-	 * Set a Vector2 value using raw components.
-	 *
-	 * @param {Number} index The index at which to set the vec2 values from.
-	 * @param {Number} x     The Vec2's `x` component.
-	 * @param {Number} y     The Vec2's `y` component.
-	 * @return {TypedArrayHelper} Instance of this class.
-	 */
-	setVec2Components(index, x, y) {
-		let array = this.array,
-			i = this.indexOffset + (index * this.componentSize);
-
-		array[i] = x;
-		array[i + 1] = y;
-		return this;
-	}
-
-	/**
-	 * Set a Vector3 value at `index`.
-	 *
-	 * @param {Number} index The index at which to set the vec3 values from.
-	 * @param {Vector3} vec2  Any object that has `x`, `y`, and `z` properties.
-	 * @return {TypedArrayHelper} Instance of this class.
-	 */
-	setVec3(index, vec3) {
-		return this.setVec3Components(index, vec3.x, vec3.y, vec3.z);
-	}
-
-	/**
-	 * Set a Vector3 value using raw components.
-	 *
-	 * @param {Number} index The index at which to set the vec3 values from.
-	 * @param {Number} x     The Vec3's `x` component.
-	 * @param {Number} y     The Vec3's `y` component.
-	 * @param {Number} z     The Vec3's `z` component.
-	 * @return {TypedArrayHelper} Instance of this class.
-	 */
-	setVec3Components(index, x, y, z) {
-		let array = this.array,
-			i = this.indexOffset + (index * this.componentSize);
-
-		array[i] = x;
-		array[i + 1] = y;
-		array[i + 2] = z;
-		return this;
-	}
-
-	/**
-	 * Set a Vector4 value at `index`.
-	 *
-	 * @param {Number} index The index at which to set the vec4 values from.
-	 * @param {Vector4} vec2  Any object that has `x`, `y`, `z`, and `w` properties.
-	 * @return {TypedArrayHelper} Instance of this class.
-	 */
-	setVec4(index, vec4) {
-		return this.setVec4Components(index, vec4.x, vec4.y, vec4.z, vec4.w);
-	}
-
-	/**
-	 * Set a Vector4 value using raw components.
-	 *
-	 * @param {Number} index The index at which to set the vec4 values from.
-	 * @param {Number} x     The Vec4's `x` component.
-	 * @param {Number} y     The Vec4's `y` component.
-	 * @param {Number} z     The Vec4's `z` component.
-	 * @param {Number} w     The Vec4's `w` component.
-	 * @return {TypedArrayHelper} Instance of this class.
-	 */
-	setVec4Components(index, x, y, z, w) {
-		let array = this.array,
-			i = this.indexOffset + (index * this.componentSize);
-
-		array[i] = x;
-		array[i + 1] = y;
-		array[i + 2] = z;
-		array[i + 3] = w;
-		return this;
-	}
-
-	/**
-	 * Set a Matrix3 value at `index`.
-	 *
-	 * @param {Number} index The index at which to set the matrix values from.
-	 * @param {Matrix3} mat3 The 3x3 matrix to set from. Must have a TypedArray property named `elements` to copy from.
-	 * @return {TypedArrayHelper} Instance of this class.
-	 */
-	setMat3(index, mat3) {
-		return this.setFromArray(this.indexOffset + (index * this.componentSize), mat3.elements);
-	}
-
-	/**
-	 * Set a Matrix4 value at `index`.
-	 *
-	 * @param {Number} index The index at which to set the matrix values from.
-	 * @param {Matrix4} mat3 The 4x4 matrix to set from. Must have a TypedArray property named `elements` to copy from.
-	 * @return {TypedArrayHelper} Instance of this class.
-	 */
-	setMat4(index, mat4) {
-		return this.setFromArray(this.indexOffset + (index * this.componentSize), mat4.elements);
-	}
-
-	/**
-	 * Set a Color value at `index`.
-	 *
-	 * @param {Number} index The index at which to set the vec3 values from.
-	 * @param {Color} color  Any object that has `r`, `g`, and `b` properties.
-	 * @return {TypedArrayHelper} Instance of this class.
-	 */
-	setColor(index, color) {
-		return this.setVec3Components(index, color.r, color.g, color.b);
-	}
-
-	/**
-	 * Set a Number value at `index`.
-	 *
-	 * @param {Number} index The index at which to set the vec3 values from.
-	 * @param {Number} numericValue  The number to assign to this index in the array.
-	 * @return {TypedArrayHelper} Instance of this class.
-	 */
-	setNumber(index, numericValue) {
-		this.array[this.indexOffset + (index * this.componentSize)] = numericValue;
-		return this;
-	}
-
-	/**
-	 * Returns the value of the array at the given index, taking into account
-	 * the `indexOffset` property of this class.
-	 *
-	 * Note that this function ignores the component size and will just return a
-	 * single value.
-	 *
-	 * @param  {Number} index The index in the array to fetch.
-	 * @return {Number}       The value at the given index.
-	 */
-	getValueAtIndex(index) {
-		return this.array[this.indexOffset + index];
-	}
-
-	/**
-	 * Returns the component value of the array at the given index, taking into account
-	 * the `indexOffset` property of this class.
-	 *
-	 * If the componentSize is set to 3, then it will return a new TypedArray
-	 * of length 3.
-	 *
-	 * @param  {Number} index The index in the array to fetch.
-	 * @return {TypedArray}       The component value at the given index.
-	 */
-	getComponentValueAtIndex(index) {
-		return this.array.subarray(this.indexOffset + (index * this.componentSize));
-	}
-
-}
-
-/**
- * A helper to handle creating and updating a t3d.BufferAttribute instance.
- *
- * @author  Luke Moody
- * @constructor
- * @param {String} type          The buffer attribute type. See ShaderAttribute.typeSizeMap for valid values.
- * @param {Boolean=} dynamicBuffer Whether this buffer attribute should be marked as dynamic or not.
- * @param {Function=} arrayType     A reference to a TypedArray constructor. Defaults to Float32Array if none provided.
- */
-/**
- * A map of uniform types to their component size.
- * @enum {Number}
- */
-const _typeSizeMap = {
-	/**
-	 * Float
-	 * @type {Number}
-	 */
-	f: 1,
-
-	/**
-	 * Vec2
-	 * @type {Number}
-	 */
-	v2: 2,
-
-	/**
-	 * Vec3
-	 * @type {Number}
-	 */
-	v3: 3,
-
-	/**
-	 * Vec4
-	 * @type {Number}
-	 */
-	v4: 4,
-
-	/**
-	 * Color
-	 * @type {Number}
-	 */
-	c: 3,
-
-	/**
-	 * Mat3
-	 * @type {Number}
-	 */
-	m3: 9,
-
-	/**
-	 * Mat4
-	 * @type {Number}
-	 */
-	m4: 16
-};
-
-class ShaderAttribute {
-
-	constructor(type, dynamicBuffer, arrayType) {
-		let typeMap = _typeSizeMap;
-
-		this.type = typeof type === 'string' && typeMap.hasOwnProperty(type) ? type : 'f';
-		this.componentSize = typeMap[this.type];
-		this.arrayType = arrayType || Float32Array;
-		this.typedArray = null;
-		this.bufferAttribute = null;
-		this.dynamicBuffer = !!dynamicBuffer;
-
-		this.updateMin = 0;
-		this.updateMax = 0;
-	}
-
-	/**
-	 * Calculate the minimum and maximum update range for this buffer attribute using
-	 * component size independant min and max values.
-	 *
-	 * @param {Number} min The start of the range to mark as needing an update.
-	 * @param {Number} max The end of the range to mark as needing an update.
-	 */
-	setUpdateRange(min, max) {
-		this.updateMin = Math.min(min * this.componentSize, this.updateMin * this.componentSize);
-		this.updateMax = Math.max(max * this.componentSize, this.updateMax * this.componentSize);
-	}
-
-	/**
-	 * Calculate the number of indices that this attribute should mark as needing
-	 * updating. Also marks the attribute as needing an update.
-	 */
-	flagUpdate() {
-		let attr = this.bufferAttribute,
-			range = attr.buffer.updateRange;
-
-		range.offset = this.updateMin;
-		range.count = Math.min((this.updateMax - this.updateMin) + this.componentSize, this.typedArray.array.length);
-		attr.buffer.version++;
-	}
-
-
-
-	/**
-	 * Reset the index update counts for this attribute
-	 */
-	resetUpdateRange() {
-		this.updateMin = 0;
-		this.updateMax = 0;
-	}
-
-	resetDynamic() {
-		this.bufferAttribute.buffer.usage = this.dynamicBuffer ?
-			t3d.BUFFER_USAGE.DYNAMIC_DRAW :
-			t3d.BUFFER_USAGE.STREAM_DRAW;
-	}
-
-	/**
-	 * Perform a splice operation on this attribute's buffer.
-	 * @param  {Number} start The start index of the splice. Will be multiplied by the number of components for this attribute.
-	 * @param  {Number} end The end index of the splice. Will be multiplied by the number of components for this attribute.
-	 */
-	splice(start, end) {
-		this.typedArray.splice(start, end);
-
-		// Reset the reference to the attribute's typed array
-		// since it has probably changed.
-		this.forceUpdateAll();
-	}
-
-	forceUpdateAll() {
-		this.bufferAttribute.buffer.array = this.typedArray.array;
-		this.bufferAttribute.buffer.updateRange.offset = 0;
-		this.bufferAttribute.buffer.updateRange.count = -1;
-
-		this.bufferAttribute.buffer.usage = t3d.BUFFER_USAGE.STATIC_DRAW;
-		this.bufferAttribute.buffer.version++;
-	}
-
-	/**
-	 * Make sure this attribute has a typed array associated with it.
-	 *
-	 * If it does, then it will ensure the typed array is of the correct size.
-	 *
-	 * If not, a new TypedArrayHelper instance will be created.
-	 *
-	 * @param  {Number} size The size of the typed array to create or update to.
-	 */
-	_ensureTypedArray(size) {
-		// Condition that's most likely to be true at the top: no change.
-		if (this.typedArray !== null && this.typedArray.size === size * this.componentSize) {
-			return;
-		} else if (this.typedArray !== null && this.typedArray.size !== size) {
-			// Resize the array if we need to, telling the TypedArrayHelper to
-			// ignore it's component size when evaluating size.
-			this.typedArray.setSize(size);
-		} else if (this.typedArray === null) {
-			// This condition should only occur once in an attribute's lifecycle.
-			this.typedArray = new TypedArrayHelper(this.arrayType, size, this.componentSize);
-		}
-	}
-
-
-	/**
-	 * Creates a t3d.BufferAttribute instance if one doesn't exist already.
-	 *
-	 * Ensures a typed array is present by calling _ensureTypedArray() first.
-	 *
-	 * If a buffer attribute exists already, then it will be marked as needing an update.
-	 *
-	 * @param  {Number} size The size of the typed array to create if one doesn't exist, or resize existing array to.
-	 */
-	_createBufferAttribute(size) {
-		// Make sure the typedArray is present and correct.
-		this._ensureTypedArray(size);
-
-		// Don't create it if it already exists, but do
-		// flag that it needs updating on the next render
-		// cycle.
-		if (this.bufferAttribute !== null) {
-			this.bufferAttribute.buffer.array = this.typedArray.array;
-
-			this.bufferAttribute.buffer.count = this.bufferAttribute.buffer.array.length / this.bufferAttribute.buffer.stride;
-			this.bufferAttribute.buffer.version++;
-			return;
-		}
-
-		this.bufferAttribute = new t3d.Attribute(new t3d.Buffer(this.typedArray.array, this.componentSize));
-
-		this.bufferAttribute.usage = this.dynamicBuffer ?
-			t3d.BUFFER_USAGE.DYNAMIC_DRAW :
-			t3d.BUFFER_USAGE.STATIC_DRAW;
-	}
-
-	/**
-	 * Returns the length of the typed array associated with this attribute.
-	 * @return {Number} The length of the typed array. Will be 0 if no typed array has been created yet.
-	 */
-	getLength() {
-		if (this.typedArray === null) {
-			return 0;
-		}
-
-		return this.typedArray.array.length;
-	}
-
-}
 
 var ShaderChunks = {
 	// Register color-packing define statements.
@@ -2044,7 +1543,7 @@ class AbstractParticleEmitter {
 				Utils.getRandomVector3(array, offset, value, spread, prop._spreadClamp);
 				break;
 			case distributions.SPHERE:
-				Utils.getRandomVector3OnSphere(array, offset, value, prop._radius, prop._spread.x, prop._radiusScale, prop._spreadClamp.x, prop._distributionClamp || this.particleCount);
+				Utils.getRandomVector3OnSphere(array, offset, value, prop._radius, prop._spread.x, prop._radiusScale, prop._spreadClamp.x);
 				break;
 			case distributions.DISC:
 				Utils.getRandomVector3OnDisc(array, offset, value, prop._radius, prop._spread.x, prop._radiusScale, prop._spreadClamp.x);
@@ -2074,7 +1573,7 @@ class AbstractParticleEmitter {
 					particlePos[0],
 					particlePos[1],
 					particlePos[2],
-					this.position.value,
+					this.position._value,
 					value.x,
 					spread.x
 				);
@@ -2085,7 +1584,7 @@ class AbstractParticleEmitter {
 					particlePos[0],
 					particlePos[1],
 					particlePos[2],
-					this.position.value,
+					this.position._value,
 					value.x,
 					spread.x
 				);
@@ -2263,7 +1762,7 @@ class ParticleEmitter extends AbstractParticleEmitter {
 		}
 
 		if (this.paramsArray === null) {
-			this.paramsArray = this.attributes.params.typedArray.array;
+			this.paramsArray = this.attributes.params.buffer.array;
 		}
 
 		const start = this.attributeOffset,
@@ -2328,7 +1827,7 @@ class ParticleEmitter extends AbstractParticleEmitter {
 			const start = this.attributeOffset,
 				end = start + this.particleCount,
 				array = this.paramsArray,
-				attr = this.attributes.params.bufferAttribute;
+				attr = this.attributes.params;
 
 			for (let i = end - 1, index; i >= start; --i) {
 				index = i * 4;
@@ -2353,52 +1852,52 @@ class ParticleEmitter extends AbstractParticleEmitter {
 
 		switch (prop) {
 			case 'position':
-				typedArray = this.attributes.position.typedArray;
-				this._assignPositionValue(typedArray.array, typedArray.componentSize * index);
+				typedArray = this.attributes.position.buffer.array;
+				this._assignPositionValue(typedArray, this.attributes.position.size * index);
 				break;
 
 			case 'velocity':
 			case 'acceleration':
-				typedArray = this.attributes.position.typedArray;
+				typedArray = this.attributes.position.buffer.array;
 
 				// Ensure position values aren't zero? otherwise no force will be applied.
-				positionX = typedArray.array[index * 3 + 0];
-				positionY = typedArray.array[index * 3 + 1];
-				positionZ = typedArray.array[index * 3 + 2];
+				positionX = typedArray[index * 3 + 0];
+				positionY = typedArray[index * 3 + 1];
+				positionZ = typedArray[index * 3 + 2];
 
-				typedArray = this.attributes[prop].typedArray;
-				this._assignForceValue(typedArray.array, typedArray.componentSize * index, prop, [positionX, positionY, positionZ]);
+				typedArray = this.attributes[prop].buffer.array;
+				this._assignForceValue(typedArray, this.attributes[prop].size * index, prop, [positionX, positionY, positionZ]);
 				break;
 
 			case 'size':
 			case 'opacity':
-				typedArray = this.attributes[prop].typedArray;
-				this._assignAbsLifetimeValue(typedArray.array, typedArray.componentSize * index, prop);
+				typedArray = this.attributes[prop].buffer.array;
+				this._assignAbsLifetimeValue(typedArray, this.attributes[prop].size * index, prop);
 				break;
 
 			case 'angle':
-				typedArray = this.attributes.angle.typedArray;
-				this._assignAngleValue(typedArray.array, typedArray.componentSize * index);
+				typedArray = this.attributes.angle.buffer.array;
+				this._assignAngleValue(typedArray, this.attributes.angle.size * index);
 				break;
 
 			case 'params':
-				typedArray = this.attributes.params.typedArray;
-				this._assignParamsValue(typedArray.array, typedArray.componentSize * index, true);
+				typedArray = this.attributes.params.buffer.array;
+				this._assignParamsValue(typedArray, this.attributes.params.size * index, true);
 				break;
 
 			case 'rotation':
-				typedArray = this.attributes.rotation.typedArray;
-				typedArray2 = this.attributes.rotationCenter.typedArray;
+				typedArray = this.attributes.rotation.buffer.array;
+				typedArray2 = this.attributes.rotationCenter.buffer.array;
 				this._assignRotationValue(
-					typedArray.array, typedArray.componentSize * index,
-					typedArray2.array, typedArray2.componentSize * index,
+					typedArray, this.attributes.rotation.size * index,
+					typedArray2, this.attributes.rotationCenter.size * index,
 					true
 				);
 				break;
 
 			case 'color':
-				typedArray = this.attributes.color.typedArray;
-				this._assignColorValue(typedArray.array, typedArray.componentSize * index, true);
+				typedArray = this.attributes.color.buffer.array;
+				this._assignColorValue(typedArray, this.attributes.color.size * index, true);
 				break;
 		}
 	}
@@ -2680,6 +2179,19 @@ defaultTexture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 defaultTexture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 defaultTexture.generateMipmaps = false;
 
+const componentSizeMap = {
+	position: 3,
+	acceleration: 4, // w component is drag
+	velocity: 3,
+	rotation: 4,
+	rotationCenter: 3,
+	params: 4, // Holds (alive, age, delay, wiggle)
+	size: 4,
+	angle: 4,
+	color: 4,
+	opacity: 4
+};
+
 class ParticleGroup extends AbstractParticleGroup {
 
 	constructor(options) {
@@ -2750,19 +2262,17 @@ class ParticleGroup extends AbstractParticleGroup {
 		this.mesh.frustumCulled = false;
 
 		// Map of all attributes to be applied to the particles.
-		//
-		// See ShaderAttribute for a bit more info on this bit.
 		this.attributes = {
-			position: new ShaderAttribute('v3', true),
-			acceleration: new ShaderAttribute('v4', true), // w component is drag
-			velocity: new ShaderAttribute('v3', true),
-			rotation: new ShaderAttribute('v4', true),
-			rotationCenter: new ShaderAttribute('v3', true),
-			params: new ShaderAttribute('v4', true), // Holds (alive, age, delay, wiggle)
-			size: new ShaderAttribute('v4', true),
-			angle: new ShaderAttribute('v4', true),
-			color: new ShaderAttribute('v4', true),
-			opacity: new ShaderAttribute('v4', true)
+			position: null,
+			acceleration: null,
+			velocity: null,
+			rotation: null,
+			rotationCenter: null,
+			params: null,
+			size: null,
+			angle: null,
+			color: null,
+			opacity: null
 		};
 
 		this.attributeKeys = Object.keys(this.attributes);
@@ -2775,14 +2285,12 @@ class ParticleGroup extends AbstractParticleGroup {
 		this._attributesNeedRefresh = false;
 		this._attributesNeedDynamicReset = false;
 
-		//
-
 		this.particleCount = 0;
 	}
 
 	/**
 	 * Adds an ParticleEmitter instance to this group, creating particle values and
-	 * assigning them to this group's shader attributes.
+	 * assigning them to this group's attributes.
 	 *
 	 * @param {ParticleEmitter} emitter The emitter to add to this group.
 	 */
@@ -2836,22 +2344,42 @@ class ParticleGroup extends AbstractParticleGroup {
 		// easier access during the emitter's tick function.
 		emitter.attributes = this.attributes;
 
-		// Ensure the attributes and their BufferAttributes exist, and their
-		// TypedArrays are of the correct size.
+		// Ensure the attributes and their attribute exist, and their
+		// buffer arrays are of the correct size.
 		for (const attr in attributes) {
 			if (attributes.hasOwnProperty(attr)) {
 				// When creating a buffer, pass through the maxParticle count
 				// if one is specified.
-				attributes[attr]._createBufferAttribute(
-					this.maxParticleCount !== null ?
-						this.maxParticleCount :
-						this.particleCount
-				);
+				let attribute = attributes[attr];
+				let size = this.maxParticleCount !== null ?
+					this.maxParticleCount :
+					this.particleCount;
+
+				if (attribute !== null && attribute.buffer.array !== null) {
+					// Make sure the buffer array is present and correct.
+					if (attribute.buffer.array.length !== size * attribute.size) {
+						let currentArraySize = attribute.buffer.array.length;
+						const bufferSize = size * attribute.size;
+						if (bufferSize < currentArraySize) {
+							attribute.buffer.array = attribute.buffer.array.subarray(0, bufferSize);
+						} else {
+							let existingArray = attribute.buffer.array,
+								newArray = new Float32Array(bufferSize);
+							newArray.set(existingArray);
+							attribute.buffer.array = newArray;
+						}
+						attribute.buffer.count = size;
+						attribute.buffer.version++;
+					}
+				} else {
+					attributes[attr] = new t3d.Attribute(new t3d.Buffer(new Float32Array(size * componentSizeMap[attr]), componentSizeMap[attr]));
+					attributes[attr].buffer.usage = t3d.BUFFER_USAGE.DYNAMIC_DRAW;
+				}
 			}
 		}
 
 		// Loop through each particle this emitter wants to have, and create the attributes values,
-		// storing them in the TypedArrays that each attribute holds.
+		// storing them in the buffer array that each attribute holds.
 		for (let i = start; i < end; ++i) {
 			emitter._assignValue('position', i);
 			emitter._assignValue('velocity', i);
@@ -2908,24 +2436,42 @@ class ParticleGroup extends AbstractParticleGroup {
 		// and their age as 0.
 		const start = emitter.attributeOffset,
 			end = start + emitter.particleCount,
-			params = this.attributes.params.typedArray;
+			params = this.attributes.params.buffer.array;
 
 		// Set alive and age to zero.
 		for (let i = start; i < end; ++i) {
-			params.array[i * 4] = 0.0;
-			params.array[i * 4 + 1] = 0.0;
+			params[i * 4] = 0.0;
+			params[i * 4 + 1] = 0.0;
 		}
 
 		// Remove the emitter from this group's "store".
 		this._emitters.splice(emitterIndex, 1);
 
-		// Remove this emitter's attribute values from all shader attributes.
-		// The `.splice()` call here also marks each attribute's buffer
+		// Remove this emitter's attribute values from all attributes.
+		// Also marks each attribute's buffer
 		// as needing to update it's entire contents.
 		for (const attr in this.attributes) {
 			if (this.attributes.hasOwnProperty(attr)) {
-				this.attributes[attr].splice(start, end);
+				const attribute = this.attributes[attr];
+
+				const startSize = start * attribute.size;
+				const endSize = end * attribute.size;
+				let data = [],
+					array = attribute.buffer.array;
+				for (let i = 0; i < array.length; ++i) {
+					if (i < startSize || i >= endSize) {
+						data.push(array[i]);
+					}
+				}
+				array = array.subarray(0, data.length);
+				array.set(data);
+				this.attributes[attr].buffer.array = array;
 			}
+		}
+
+		for (let j = this._emitters.length - 1; j >= emitterIndex; j--) {
+			const attributeOffset = this._emitters[j].attributeOffset - emitter.particleCount;
+			this._emitters[j]._setAttributeOffset(attributeOffset);
 		}
 
 		// Ensure this group's particle count is correct.
@@ -2958,14 +2504,6 @@ class ParticleGroup extends AbstractParticleGroup {
 		this.uniforms.runTime += deltaTime;
 		this.uniforms.deltaTime = deltaTime;
 
-		// Reset buffer update ranges on the shader attributes.
-
-		i = this.attributeCount - 1;
-
-		for (i; i >= 0; --i) {
-			attrs[keys[i]].resetUpdateRange();
-		}
-
 		// If nothing needs updating, then stop here.
 
 		if (
@@ -2977,36 +2515,37 @@ class ParticleGroup extends AbstractParticleGroup {
 		}
 
 		// Loop through each emitter in this group and
-		// simulate it, then update the shader attribute
+		// simulate it, then update the attribute
 		// buffers.
 
 		for (j = 0; j < numEmitters; ++j) {
-			const emitter = emitters[j];
-
 			// Run tick
+			emitters[j].tick(deltaTime);
+		}
 
-			emitter.tick(deltaTime);
+		for (i = this.attributeCount - 1; i >= 0; --i) {
+			const key = keys[i];
+			let particleUpdateMin = Infinity;
+			let particleUpdateMax = -Infinity;
 
-			// Mark update range
+			for (j = 0; j < numEmitters; ++j) {
+				// Mark update range
+				const emitterRanges = emitters[j].bufferUpdateRanges;
+				const emitterAttr = emitterRanges[key];
+				particleUpdateMin = Math.min(emitterAttr.min, particleUpdateMin);
+				particleUpdateMax = Math.max(emitterAttr.max, particleUpdateMax);
+			}
 
-			const emitterRanges = emitter.bufferUpdateRanges;
-
-			let key,
-				emitterAttr,
-				attr;
-
-			i = this.attributeCount - 1;
-
-			for (i; i >= 0; --i) {
-				key = keys[i];
-				emitterAttr = emitterRanges[key];
-				attr = attrs[key];
-				attr.setUpdateRange(emitterAttr.min, emitterAttr.max);
-				attr.flagUpdate();
+			if (particleUpdateMax - particleUpdateMin > 0) {
+				// Reset buffer update ranges.
+				const attr = attrs[key];
+				attr.buffer.updateRange.offset = particleUpdateMin * attr.size;
+				attr.buffer.updateRange.count = Math.min((particleUpdateMax - particleUpdateMin + 1) * attr.size, attr.buffer.array.length);
+				attr.buffer.version++;
 			}
 		}
 
-		// If the shader attributes have been refreshed,
+		// If the attributes have been refreshed,
 		// then the dynamic properties of each buffer
 		// attribute will need to be reset back to
 		// what they should be.
@@ -3015,13 +2554,13 @@ class ParticleGroup extends AbstractParticleGroup {
 			i = this.attributeCount - 1;
 
 			for (i; i >= 0; --i) {
-				attrs[keys[i]].resetDynamic();
+				attrs[keys[i]].buffer.usage = t3d.BUFFER_USAGE.DYNAMIC_DRAW;
 			}
 
 			this._attributesNeedDynamicReset = false;
 		}
 
-		// If this group's shader attributes need a full refresh
+		// If this group's attributes need a full refresh
 		// then mark each attribute's buffer attribute as
 		// needing so.
 
@@ -3029,7 +2568,10 @@ class ParticleGroup extends AbstractParticleGroup {
 			i = this.attributeCount - 1;
 
 			for (i; i >= 0; --i) {
-				attrs[keys[i]].forceUpdateAll();
+				attrs[keys[i]].buffer.updateRange.offset = 0;
+				attrs[keys[i]].buffer.updateRange.count = -1;
+				attrs[keys[i]].buffer.usage = t3d.BUFFER_USAGE.STATIC_DRAW;
+				attrs[keys[i]].buffer.version++;
 			}
 
 			this._attributesNeedRefresh = false;
@@ -3092,7 +2634,7 @@ class ParticleGroup extends AbstractParticleGroup {
 
 		let attribute, geometryAttribute;
 
-		// Loop through all the shader attributes and assign (or re-assign)
+		// Loop through all the attributes and assign (or re-assign)
 		// typed array buffers to each one.
 		for (const attr in attributes) {
 			if (attributes.hasOwnProperty(attr)) {
@@ -3108,7 +2650,7 @@ class ParticleGroup extends AbstractParticleGroup {
 					// Add the attribute to the geometry if it doesn't already exist.
 					geometry.addAttribute(
 						attr === 'position' ? 'a_Position' : attr,
-						attribute.bufferAttribute
+						attribute
 					);
 				}
 			}
