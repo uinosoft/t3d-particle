@@ -1,0 +1,782 @@
+<html>
+
+<head>
+    <title>Particlr Editor</title>
+    <meta name="viewport"
+        content="user-scalable=no, width=device-width, initial-scale=1.0, minimum-scale=1.0,maximum-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+
+<body>
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="../examples/libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../examples/libs/t3d/build/t3d.module.js",
+                "t3d/examples/jsm/": "../examples/libs/t3d/examples/jsm/",
+                "t3d-particle": "../build/t3d.particle.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as t3d from 't3d';
+        import {
+        	ParticleGroup, ParticleEmitter, MeshParticleGroup, MeshParticleEmitter
+        } from 't3d-particle';
+        import { Clock } from 't3d/examples/jsm/Clock.js';
+        import { OrbitControls } from 't3d/examples/jsm/controls/OrbitControls.js';
+        import { GUI } from './js/lil-gui.esm.min.js';
+        import { Texture2DLoader } from 't3d/examples/jsm/loaders/Texture2DLoader.js';
+        import { GeometryUtils } from 't3d/examples/jsm/geometries/GeometryUtils.js';
+        import {
+        	ParticleData,
+        	ParticleGroupData,
+        	ParticleEmitterData,
+        	GroupTexture,
+        	MaxAge,
+        	Position,
+        	Velocity,
+        	Acceleration,
+        	Drag,
+        	Wiggle,
+        	Rotation,
+        	Color,
+        	Opacity,
+        	Size,
+        	Angle
+        } from './js/ParticleData.js';
+
+        let width, height, scene, camera, renderer, backRenderTarget, clock, controller;
+
+        let particleGroup, emitterArray, particleData;
+
+        function init() {
+        	width = window.innerWidth || 2;
+        	height = window.innerHeight || 2;
+
+        	const canvas = document.createElement('canvas');
+        	canvas.width = width;
+        	canvas.height = height;
+        	document.body.appendChild(canvas);
+
+        	const gl = canvas.getContext("webgl2", {
+        		antialias: true,
+        		alpha: false,
+        		stencil: true
+        	});
+
+        	scene = new t3d.Scene();
+        	camera = new t3d.Camera();
+        	camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 10000);
+        	camera.position.z = 50;
+        	scene.add(camera);
+
+        	renderer = new t3d.Renderer(gl);
+        	renderer.renderPass.state.colorBuffer.setClear(0, 0, 0, 1);
+        	backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+        	clock = new Clock();
+
+        	controller = new OrbitControls(camera, canvas);
+
+        	emitterArray = [];
+        }
+
+        function createParticleGroup(topGui) {
+        	particleGroup = new ParticleGroup({
+        		texture: {
+        			value: new Texture2DLoader().load('../examples/resources/img/smokeparticle.png')
+        		},
+        		maxParticleCount: 2000
+        	});
+        	particleData = new ParticleData();
+
+        	const groupFolder = topGui.addFolder('粒子组');
+        	groupFolder.add(particleData.listGroups[0], 'useMesh').name('是否启用网格').onChange(value => {
+        		particleData.reset();
+        		particleData.listGroups[0].useMesh = value;
+
+        		if (value) {
+        			groupFolder.add(particleData.listGroups[0], 'meshUrl', ["BuildIn/Box", "BuildIn/Plane", "BuildIn/Sphere"]).name('网格模型').onChange(value => {
+        				if (particleData.listGroups[0].useMesh) {
+        					createMSPEParticleGroup(value, groupFolder);
+        				}
+        			});
+
+        			createMSPEParticleGroup(particleData.listGroups[0].meshUrl, groupFolder);
+
+        			resetGroupGui(groupFolder);
+        			groupFolder.controllers[1].disable();
+        		} else {
+        			particleGroup.dispose();
+        			scene.remove(particleGroup.mesh);
+        			particleGroup = null;
+        			emitterArray.forEach(element => {
+        				element.gui.destroy();
+        			});
+        			emitterArray = [];
+
+        			particleGroup = new ParticleGroup({
+        				texture: {
+        					value: new Texture2DLoader().load('../examples/resources/img/smokeparticle.png')
+        				},
+        				maxParticleCount: 2000
+        			});
+
+        			createEmitter(groupFolder);
+        			scene.add(particleGroup.mesh);
+        			particleGroup.gui = groupFolder;
+
+        			resetGroupGui(groupFolder);
+        			groupFolder.controllers[1].enable();
+        			groupFolder.controllers[10].destroy();
+        		}
+        	});
+
+        	groupFolder.add(particleData.listGroups[0], 'hasPerspective').name('透视').onChange(value => {
+        		if (!particleData.listGroups[0].useMesh) {
+        			particleGroup.material.defines["HAS_PERSPECTIVE"] = value;
+        			particleGroup.material.needsUpdate = true;
+        		}
+        	});
+
+        	groupFolder.add(particleData.listGroups[0], 'isColorize').name('上色').onChange(value => {
+        		if (!particleData.listGroups[0].useMesh) {
+        			particleGroup.material.defines["COLORIZE"] = value;
+        			particleGroup.material.needsUpdate = true;
+        		}
+        	});
+
+        	groupFolder.add(particleData.listGroups[0], 'isTransparent').name('透明').onChange(value => {
+        		if (particleData.listGroups[0].useMesh) {
+        			particleGroup.mesh.material.transparent = value;
+        			particleGroup.mesh.material.needsUpdate = true;
+        		} else {
+        			particleGroup.material.transparent = value;
+        			particleGroup.material.needsUpdate = true;
+        		}
+        	});
+
+        	groupFolder.add(particleData.listGroups[0], 'blendingMode', ["none", "normal", "add", "sub", "mul", "custom"]).name('混合模式').onChange(value => {
+        		if (particleData.listGroups[0].useMesh) {
+        			particleGroup.mesh.material.blending = value;
+        			particleGroup.mesh.material.needsUpdate = true;
+        		} else {
+        			particleGroup.material.blending = value;
+        			particleGroup.material.needsUpdate = true;
+        		}
+        	});
+
+        	groupFolder.add(particleData.listGroups[0], 'alphaTest', 0, 1, 0.1).name('alpha测试').onChange(value => {
+        		if (particleData.listGroups[0].useMesh) {
+        			particleGroup.mesh.material.alphaTest = value;
+        			particleGroup.mesh.material.needsUpdate = true;
+        		} else {
+        			particleGroup.material.alphaTest = value;
+        			particleGroup.material.needsUpdate = true;
+        		}
+        	});
+
+        	groupFolder.add(particleData.listGroups[0], 'isDepthWrite').name('深度写入').onChange(value => {
+        		if (particleData.listGroups[0].useMesh) {
+        			particleGroup.mesh.material.depthWrite = value;
+        			particleGroup.mesh.material.needsUpdate = true;
+        		} else {
+        			particleGroup.material.depthWrite = value;
+        			particleGroup.material.needsUpdate = true;
+        		}
+        	});
+
+        	groupFolder.add(particleData.listGroups[0], 'isDepthTest').name('深度测试').onChange(value => {
+        		if (particleData.listGroups[0].useMesh) {
+        			particleGroup.mesh.material.depthTest = value;
+        			particleGroup.mesh.material.needsUpdate = true;
+        		} else {
+        			particleGroup.material.depthTest = value;
+        			particleGroup.material.needsUpdate = true;
+        		}
+        	});
+
+        	groupFolder.add(particleData.listGroups[0], 'isFog').name('是否启用雾').onChange(value => {
+        		if (particleData.listGroups[0].useMesh) {
+        			particleGroup.mesh.material.fog = value;
+        			particleGroup.mesh.material.needsUpdate = true;
+        		} else {
+        			particleGroup.material.fog = value;
+        			particleGroup.material.needsUpdate = true;
+        		}
+        	});
+
+        	groupFolder.add(particleData.listGroups[0], 'fixedTimeStep').name('更新频率').onFinishChange(value => {
+        		particleGroup.fixedTimeStep = value;
+        	});
+
+        	createEmitter(groupFolder);
+        	scene.add(particleGroup.mesh);
+        	particleGroup.gui = groupFolder;
+        }
+
+        function createMSPEParticleGroup(geometryType, groupGui) {
+        	particleGroup.dispose();
+        	scene.remove(particleGroup.mesh);
+        	particleGroup = null;
+        	emitterArray.forEach(element => {
+        		element.gui.destroy();
+        	});
+        	emitterArray = [];
+
+        	let geometry;
+        	switch (geometryType) {
+        		case "BuildIn/Plane":
+        			const rotationMatrix = new t3d.Matrix4();
+        			const euler = new t3d.Euler(Math.PI / 2, 0, 0);
+        			const quaternion = new t3d.Quaternion();
+        			quaternion.setFromEuler(euler).toMatrix4(rotationMatrix);
+
+        			geometry = new t3d.PlaneGeometry(1, 1);
+        			GeometryUtils.applyMatrix4(geometry, rotationMatrix, true);
+        			break;
+        		case "BuildIn/Box":
+        			geometry = new t3d.CubeGeometry(1, 1, 1);
+        			break;
+        		case "BuildIn/Sphere":
+        			geometry = new t3d.SphereGeometry(1, 20, 20);
+        			break;
+        	}
+
+        	particleGroup = new MeshParticleGroup({
+        		texture: {
+        			value: new Texture2DLoader().load('../examples/resources/img/smokeparticle.png')
+        		},
+        		geometry: geometry,
+        		maxParticleCount: 2000
+        	});
+
+        	createEmitter(groupGui, true);
+        	scene.add(particleGroup.mesh);
+        	particleGroup.gui = groupGui;
+        }
+
+        function removeParticleGroup() {
+        	particleGroup.dispose();
+        	scene.remove(particleGroup.mesh);
+        	particleGroup.gui.destroy();
+        	particleGroup = null;
+        	emitterArray = [];
+        }
+
+        function resetGroupGui(groupGui) {
+        	groupGui.controllers[1].reset();
+        	groupGui.controllers[2].reset();
+        	groupGui.controllers[3].reset();
+        	groupGui.controllers[4].reset();
+        	groupGui.controllers[5].reset();
+        	groupGui.controllers[6].reset();
+        	groupGui.controllers[7].reset();
+        	groupGui.controllers[8].reset();
+        	groupGui.controllers[9].reset();
+        }
+
+        function createEmitter(groupGui, isMesh = false) {
+        	let emitter;
+        	const emitterFolder = groupGui.addFolder('粒子发射器');
+        	if (isMesh) {
+        		emitter = new MeshParticleEmitter({
+        			type: 1,
+        			maxAge: {
+        				value: 2
+        			},
+        			position: {
+        				value: new t3d.Vector3(0, 0, 0),
+        				spread: new t3d.Vector3(0, 0, 0)
+        			},
+        			acceleration: {
+        				value: new t3d.Vector3(0, -10, 0),
+        				spread: new t3d.Vector3(10, 0, 10)
+        			},
+        			velocity: {
+        				value: new t3d.Vector3(0, 25, 0),
+        				spread: new t3d.Vector3(10, 7.5, 10)
+        			},
+        			color: {
+        				value: [new t3d.Color3().setHex(0xd53369), new t3d.Color3().setHex(0xcbad6d)]
+        			},
+        			size: {
+        				value: 1
+        			},
+        			particleCount: 100
+        		});
+
+        		particleData.listGroups[0].listEmitters[0].particleCount = 100;
+
+        		// 朝向摄像机
+        		emitterFolder.add(particleData.listGroups[0].listEmitters[0], 'isLookAtCamera').name("朝向摄像机").onChange(value => {
+        			emitter.isLookAtCamera = value;
+        		});
+
+        		// 锁Y轴
+        		emitterFolder.add(particleData.listGroups[0].listEmitters[0], 'isLookAtCameraOnlyY').name("锁Y轴").onChange(value => {
+        			emitter.isLookAtCameraOnlyY = value;
+        		});
+        	} else {
+        		emitter = new ParticleEmitter({
+        			type: 1,
+        			maxAge: {
+        				value: 2
+        			},
+        			position: {
+        				value: new t3d.Vector3(0, 0, 0),
+        				spread: new t3d.Vector3(0, 0, 0)
+        			},
+        			acceleration: {
+        				value: new t3d.Vector3(0, -10, 0),
+        				spread: new t3d.Vector3(10, 0, 10)
+        			},
+        			velocity: {
+        				value: new t3d.Vector3(0, 25, 0),
+        				spread: new t3d.Vector3(10, 7.5, 10)
+        			},
+        			color: {
+        				value: [new t3d.Color3().setHex(0xd53369), new t3d.Color3().setHex(0xcbad6d)]
+        			},
+        			size: {
+        				value: 1
+        			},
+        			particleCount: 1000
+        		});
+
+        		particleData.listGroups[0].listEmitters[0].particleCount = 1000;
+        	}
+
+        	particleData.listGroups[0].listEmitters[0].listColor.push(new Color());
+        	particleData.listGroups[0].listEmitters[0].listColor[0].value = 0xd53369;
+        	particleData.listGroups[0].listEmitters[0].listColor[1].value = 0xcbad6d;
+        	particleData.listGroups[0].listEmitters[0].maxAge.value = emitter.maxAge.value;
+        	particleData.listGroups[0].listEmitters[0].acceleration.value = emitter.acceleration.value;
+        	particleData.listGroups[0].listEmitters[0].acceleration.spread = emitter.acceleration.spread;
+        	particleData.listGroups[0].listEmitters[0].velocity.value = emitter.velocity.value;
+        	particleData.listGroups[0].listEmitters[0].velocity.spread = emitter.velocity.spread;
+
+        	particleGroup.addEmitter(emitter);
+        	emitterArray.push(emitter);
+
+        	emitterFolder.close();
+
+        	// 静态
+        	emitterFolder.add(particleData.listGroups[0].listEmitters[0], 'isStatic').name("静态").onChange(value => {
+        		emitter.isStatic = value;
+        	});
+
+        	// 最大生命周期
+        	const maxAgeFolder = emitterFolder.addFolder('最大生命周期');
+        	maxAgeFolder.add(particleData.listGroups[0].listEmitters[0].maxAge, 'value', 0, 10).name('数值').onFinishChange(value => {
+        		emitter.maxAge.value = value;
+        	});
+        	maxAgeFolder.add(particleData.listGroups[0].listEmitters[0].maxAge, 'spread', 0, 10).name('方差').onFinishChange(value => {
+        		emitter.maxAge.spread = value;
+        	});
+        	maxAgeFolder.close();
+
+        	let vec3Components = ['x', 'y', 'z'], i;
+
+        	// 位置
+        	staticGui({
+        		obj: particleData.listGroups[0].listEmitters[0].position,
+        		emitterObj: emitter.position,
+        		parentGui: emitterFolder,
+        		folderName: '位置', maxValue: 100
+        	});
+
+        	// 速度
+        	staticGui({
+        		obj: particleData.listGroups[0].listEmitters[0].velocity,
+        		emitterObj: emitter.velocity,
+        		parentGui: emitterFolder,
+        		folderName: '速度', maxValue: 50
+        	});
+
+        	// 加速度
+        	staticGui({
+        		obj: particleData.listGroups[0].listEmitters[0].acceleration,
+        		emitterObj: emitter.acceleration,
+        		parentGui: emitterFolder,
+        		folderName: '加速度', maxValue: 50
+        	});
+
+        	// 阻力
+        	const dragFolder = emitterFolder.addFolder('阻力');
+        	dragFolder.add(particleData.listGroups[0].listEmitters[0].drag, 'value', 0, 2).name('数值').onChange(value => {
+        		emitter.drag.value = value;
+        	});
+        	dragFolder.add(particleData.listGroups[0].listEmitters[0].drag, 'spread', 0, 2).name('方差').onChange(value => {
+        		emitter.drag.spread = value;
+        	});
+        	dragFolder.add(particleData.listGroups[0].listEmitters[0].drag, 'randomise').name('随机').onChange(value => {
+        		emitter.drag.randomise = value;
+        	});
+        	dragFolder.close();
+
+        	// 旋转
+        	const rotationFolder = emitterFolder.addFolder('旋转');
+        	const rotationAxisValue = rotationFolder.addFolder('轴向');
+        	const rotationAxisSpread = rotationFolder.addFolder('轴向方差');
+        	const rotationCenter = rotationFolder.addFolder('中心点');
+        	for (i = 0; i < vec3Components.length; ++i) {
+        		rotationAxisValue.add(particleData.listGroups[0].listEmitters[0].rotation.axis, vec3Components[i], 0, 100).listen().onChange(function () {
+        			emitter.rotation.axis = emitter.rotation.axis;
+        		});
+        		rotationAxisSpread.add(particleData.listGroups[0].listEmitters[0].rotation.axisSpread, vec3Components[i], 0, 100).listen().onChange(function () {
+        			emitter.rotation.axisSpread = emitter.rotation.axisSpread;
+        		});
+        		rotationCenter.add(particleData.listGroups[0].listEmitters[0].rotation.center, vec3Components[i], 0, 100).listen().onChange(function () {
+        			emitter.rotation.center = emitter.rotation.center;
+        		});
+        	}
+        	rotationFolder.add(particleData.listGroups[0].listEmitters[0].rotation, 'angle', 0, 6.28).name('弧度').onChange(value => {
+        		emitter.rotation.angle = value;
+        	});
+        	rotationFolder.add(particleData.listGroups[0].listEmitters[0].rotation, 'angleSpread', 0, 6.28).name('弧度方差').onChange(value => {
+        		emitter.rotation.angleSpread = value;
+        	});
+        	rotationFolder.add(particleData.listGroups[0].listEmitters[0].rotation, 'isStatic').name('静态').onChange(value => {
+        		emitter.rotation.static = value;
+        	});
+        	rotationFolder.add(particleData.listGroups[0].listEmitters[0].rotation, 'randomise').name('随机').onChange(value => {
+        		emitter.rotation.randomise = value;
+        	});
+        	rotationFolder.close();
+        	rotationAxisValue.close();
+        	rotationAxisSpread.close();
+        	rotationCenter.close();
+
+        	// 颜色
+        	dynamicGui({
+        		obj: particleData.listGroups[0].listEmitters[0].listColor,
+        		emitterObj: emitter.color,
+        		parentGui: emitterFolder,
+        		folderName: '颜色',
+        	});
+
+        	// 透明度
+        	dynamicGui({
+        		obj: particleData.listGroups[0].listEmitters[0].listOpacity,
+        		emitterObj: emitter.opacity,
+        		parentGui: emitterFolder,
+        		folderName: '透明度', maxValue: 1
+        	});
+
+        	// 大小
+        	dynamicGui({
+        		obj: particleData.listGroups[0].listEmitters[0].listSize,
+        		emitterObj: emitter.size,
+        		parentGui: emitterFolder,
+        		folderName: '大小', maxValue: 10
+        	});
+
+        	// 角度
+        	dynamicGui({
+        		obj: particleData.listGroups[0].listEmitters[0].listAngle,
+        		emitterObj: emitter.angle,
+        		parentGui: emitterFolder,
+        		folderName: '角度', maxValue: 6.28
+        	});
+
+        	emitter.gui = emitterFolder;
+        }
+
+        function staticGui(params) {
+        	const { obj, emitterObj, parentGui, folderName, maxValue } = params;
+        	let vec3Components = ['x', 'y', 'z'], i;
+
+        	const folder = parentGui.addFolder(folderName);
+        	const valueFolder = folder.addFolder('数值');
+        	const spreadFolder = folder.addFolder('方差');
+        	folder.add(obj, 'distribution', { BOX: 1, SPHERE: 2, DISC: 3, LINE: 4 }).name('布局').onChange(value => {
+        		emitterObj.distribution = value;
+        	});
+        	for (i = 0; i < vec3Components.length; ++i) {
+        		valueFolder.add(obj.value, vec3Components[i], -maxValue, maxValue).listen().onChange(function () {
+        			emitterObj.value = obj.value;
+        		});
+        		spreadFolder.add(obj.spread, vec3Components[i], -maxValue, maxValue).listen().onChange(function () {
+        			emitterObj.spread = obj.spread;
+        		});
+        	}
+        	folder.add(obj, 'randomise').name('随机').onChange(value => {
+        		emitterObj.randomise = value;
+        	});
+        	folder.close();
+        	valueFolder.close();
+        	spreadFolder.close();
+        }
+
+        function dynamicGui(params) {
+        	const { obj, emitterObj, parentGui, folderName, maxValue } = params;
+        	let vec3Components = ['x', 'y', 'z'], i;
+
+        	const folder = parentGui.addFolder(folderName);
+        	const folderParams = {
+        		增加: function () {
+        			let element = folder.addFolder(folderName + '_' + obj.length);
+        			const data = createDynamic(folderName);
+        			obj.push(data);
+
+        			const tempArray = [];
+        			for (i = 0; i < obj.length; i++) {
+        				if (folderName === '颜色') {
+        					tempArray.push(new t3d.Color3().setHex(obj[i].value));
+        				} else {
+        					tempArray.push(obj[i].value);
+        				}
+        			}
+        			emitterObj.value = tempArray;
+
+        			tempArray.length = 0;
+        			for (i = 0; i < obj.length; i++) {
+        				tempArray.push(obj[i].spread);
+        			}
+        			emitterObj.spread = tempArray;
+
+        			tempArray.length = 0;
+        			for (i = 0; i < obj.length; i++) {
+        				tempArray.push(obj[i].randomise);
+        			}
+        			emitterObj.randomise = tempArray;
+
+        			if (folderName === '颜色') {
+        				element.addColor(data, 'value').name('数值').onChange(value => {
+        					const tempArray = [];
+        					for (i = 0; i < obj.length; i++) {
+        						tempArray.push(new t3d.Color3().setHex(obj[i].value));
+        					}
+        					emitterObj.value = tempArray;
+        				});
+        				const spreadElement = element.addFolder('方差');
+        				for (let j = 0; j < vec3Components.length; ++j) {
+        					spreadElement.add(data.spread, vec3Components[j], 0, 1).listen().onChange(function () {
+        						const tempArray = [];
+        						for (i = 0; i < obj.length; i++) {
+        							tempArray.push(obj[i].spread);
+        						}
+        						emitterObj.spread = tempArray;
+        					});
+        				}
+        				spreadElement.close();
+        			} else {
+        				element.add(data, 'value', 0, maxValue).name('数值').onChange(value => {
+        					const tempArray = [];
+        					for (i = 0; i < obj.length; i++) {
+        						tempArray.push(obj[i].value);
+        					}
+        					emitterObj.value = tempArray;
+        				});
+        				element.add(data, 'spread', 0, maxValue).name('方差').onChange(value => {
+        					const tempArray = [];
+        					for (i = 0; i < obj.length; i++) {
+        						tempArray.push(obj[i].spread);
+        					}
+        					emitterObj.spread = tempArray;
+        				});
+        			}
+
+        			element.add(data, 'randomise').name('随机').onChange(value => {
+        				const tempArray = [];
+        				for (i = 0; i < obj.length; i++) {
+        					tempArray.push(obj[i].randomise);
+        				}
+        				emitterObj.randomise = tempArray;
+        			});
+        			element.close();
+
+        			if (folder.folders.length <= 1) {
+        				destroyButton.disable();
+        			} else {
+        				destroyButton.enable();
+        			}
+        			if (folder.folders.length >= 4) {
+        				newButton.disable();
+        			} else {
+        				newButton.enable();
+        			}
+        		},
+        		删除: function () {
+        			obj.pop();
+        			folder.folders[folder.folders.length - 1].destroy();
+
+        			const tempArray = [];
+        			for (i = 0; i < obj.length; i++) {
+        				if (folderName === '颜色') {
+        					tempArray.push(new t3d.Color3().setHex(obj[i].value));
+        				} else {
+        					tempArray.push(obj[i].value);
+        				}
+        			}
+        			emitterObj.value = tempArray;
+
+        			tempArray.length = 0;
+        			for (i = 0; i < obj.length; i++) {
+        				tempArray.push(obj[i].spread);
+        			}
+        			emitterObj.spread = tempArray;
+
+        			tempArray.length = 0;
+        			for (i = 0; i < obj.length; i++) {
+        				tempArray.push(obj[i].randomise);
+        			}
+        			emitterObj.randomise = tempArray;
+
+        			if (folder.folders.length <= 1) {
+        				destroyButton.disable();
+        			} else {
+        				destroyButton.enable();
+        			}
+
+        			if (folder.folders.length >= 4) {
+        				newButton.disable();
+        			} else {
+        				newButton.enable();
+        			}
+        		}
+        	};
+
+        	const newButton = folder.add(folderParams, '增加');
+        	let destroyButton;
+        	if (folderName === '颜色') {
+        		destroyButton = folder.add(folderParams, '删除');
+        		for (let j = 0; j < obj.length; j++) {
+        			let element = folder.addFolder('颜色_' + j);
+        			const color = obj[j];
+        			element.addColor(color, 'value').name('数值').onChange(value => {
+        				const tempArray = [];
+        				for (i = 0; i < obj.length; i++) {
+        					tempArray.push(new t3d.Color3().setHex(obj[i].value));
+        				}
+        				emitterObj.value = tempArray;
+        			});
+        			const spreadElement = element.addFolder('方差');
+        			for (let j = 0; j < vec3Components.length; ++j) {
+        				spreadElement.add(color.spread, vec3Components[j], 0, 1).listen().onChange(function () {
+        					const tempArray = [];
+        					for (i = 0; i < obj.length; i++) {
+        						tempArray.push(obj[i].spread);
+        					}
+        					emitterObj.spread = tempArray;
+        				});
+        			}
+        			spreadElement.close();
+        			element.add(color, 'randomise').name('随机').onChange(value => {
+        				const tempArray = [];
+        				for (i = 0; i < obj.length; i++) {
+        					tempArray.push(obj[i].randomise);
+        				}
+        				emitterObj.randomise = tempArray;
+        			});
+        			element.close();
+        		}
+        	} else {
+        		destroyButton = folder.add(folderParams, '删除').disable();
+        		let element = folder.addFolder(folderName + '_0');
+        		element.add(obj[0], 'value', 0, maxValue).name('数值').onChange(value => {
+        			const tempArray = [];
+        			for (i = 0; i < obj.length; i++) {
+        				tempArray.push(obj[i].value);
+        			}
+        			emitterObj.value = tempArray;
+        		});
+        		element.add(obj[0], 'spread', 0, maxValue).name('方差').onChange(value => {
+        			const tempArray = [];
+        			for (i = 0; i < obj.length; i++) {
+        				tempArray.push(obj[i].spread);
+        			}
+        			emitterObj.spread = tempArray;
+        		});
+        		element.add(obj[0], 'randomise').name('随机').onChange(value => {
+        			const tempArray = [];
+        			for (i = 0; i < obj.length; i++) {
+        				tempArray.push(obj[i].randomise);
+        			}
+        			emitterObj.randomise = tempArray;
+        		});
+        		element.close();
+        	}
+        	folder.close();
+        }
+
+        function createDynamic(type) {
+        	switch (type) {
+        		case '颜色':
+        			return new Color();
+        			break;
+        		case '透明度':
+        			return new Opacity();
+        			break;
+        		case '大小':
+        			return new Size();
+        			break;
+        		case '角度':
+        			return new Angle();
+        			break;
+        	}
+        }
+
+        function initGUI() {
+        	const gui = new GUI();
+
+        	const initParams = {
+        		新建粒子组: function () {
+        			createParticleGroup(gui);
+        			newParticleGroupButton.disable();
+        			destroyParticleGroupButton.enable();
+        		},
+        		删除粒子组: function () {
+        			removeParticleGroup();
+        			destroyParticleGroupButton.disable();
+        			newParticleGroupButton.enable();
+        		}
+        	};
+
+        	const newParticleGroupButton = gui.add(initParams, '新建粒子组');
+        	const destroyParticleGroupButton = gui.add(initParams, '删除粒子组').disable();
+        }
+
+        function animate() {
+        	requestAnimationFrame(animate);
+
+        	controller.update();
+
+        	if (particleGroup) {
+        		particleGroup.tick(clock.getDelta(), camera);
+        	}
+
+        	scene.updateMatrix();
+        	scene.updateRenderStates(camera);
+        	scene.updateRenderQueue(camera);
+
+        	renderer.renderPass.renderTarget.setRenderTarget(backRenderTarget);
+        	renderer.renderPass.clear(true, true, false);
+        	renderer.renderScene(scene, camera);
+        }
+
+        init();
+        initGUI();
+
+        setTimeout(animate, 0);
+
+        function onWindowResize() {
+        	width = window.innerWidth || 2;
+        	height = window.innerHeight || 2;
+
+        	camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 10000);
+
+        	backRenderTarget.resize(width, height);
+        }
+
+        window.addEventListener("resize", onWindowResize, false);
+    </script>
+</body>
+
+</html>
