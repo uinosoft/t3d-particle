@@ -12,6 +12,12 @@ export class MeshParticleEmitter extends AbstractParticleEmitter {
 
 	tick(dt, camera) {
 		if (this.isStatic) {
+			for (let i = 0, len = this._activeParticles.length; i < len; i++) {
+				if (this._activeParticles[i].isAlive()) {
+					const group = this.group;
+					this._activeParticles[i].submit(group.$instanceBuffer.array, group.$allocBufferIndex());
+				}
+			}
 			return;
 		}
 

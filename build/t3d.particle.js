@@ -2323,6 +2323,12 @@
 		var _proto = MeshParticleEmitter.prototype;
 		_proto.tick = function tick(dt, camera) {
 			if (this.isStatic) {
+				for (var i = 0, len = this._activeParticles.length; i < len; i++) {
+					if (this._activeParticles[i].isAlive()) {
+						var group = this.group;
+						this._activeParticles[i].submit(group.$instanceBuffer.array, group.$allocBufferIndex());
+					}
+				}
 				return;
 			}
 			if (this.alive === false) {
@@ -2337,7 +2343,7 @@
 				var activationCount = this._activeParticles.length;
 				var ppsDt = this.particlesPerSecond * this.activeMultiplier * dt;
 				var spawnCount = Math.min(activationCount + ppsDt, this.particleCount) - activationCount;
-				for (var i = 0; i < spawnCount; i++) {
+				for (var _i = 0; _i < spawnCount; _i++) {
 					var particle = this._particlePool.length <= 0 ? new MeshParticle() : this._particlePool.shift();
 					this._resetParticle(particle);
 					this._activeParticles.push(particle);
@@ -2346,16 +2352,16 @@
 
 			// tick particles
 
-			for (var _i = 0, len = this._activeParticles.length; _i < len; _i++) {
-				this._activeParticles[_i].tick(dt, camera, this);
-				if (this._activeParticles[_i].isAlive()) {
-					var group = this.group;
-					this._activeParticles[_i].submit(group.$instanceBuffer.array, group.$allocBufferIndex());
+			for (var _i2 = 0, _len = this._activeParticles.length; _i2 < _len; _i2++) {
+				this._activeParticles[_i2].tick(dt, camera, this);
+				if (this._activeParticles[_i2].isAlive()) {
+					var _group = this.group;
+					this._activeParticles[_i2].submit(_group.$instanceBuffer.array, _group.$allocBufferIndex());
 				} else {
-					this._particlePool.push(this._activeParticles[_i]);
-					this._activeParticles.splice(_i, 1);
-					len--;
-					_i--;
+					this._particlePool.push(this._activeParticles[_i2]);
+					this._activeParticles.splice(_i2, 1);
+					_len--;
+					_i2--;
 				}
 			}
 
