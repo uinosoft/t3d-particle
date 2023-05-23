@@ -2063,9 +2063,7 @@ class ParticleEmitter extends AbstractParticleEmitter {
 			// when frame rates are on the lower side of 60fps
 			// or not constant (a very real possibility!)
 			dtValue = dtPerParticle * (i - activationStart);
-			if (dtValue <= params[index + 1]) {
-				params[index + 1] = direction === -1 ? params[index + 2] - dtValue : dtValue;
-			}
+			params[index + 1] = direction === -1 ? params[index + 2] - dtValue : dtValue;
 
 			this._updateAttributeUpdateRange('params', i);
 		}
