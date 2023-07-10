@@ -302,6 +302,7 @@ export class ParticleGroup extends AbstractParticleGroup {
 
 		// Ensure this group's particle count is correct.
 		this.particleCount -= emitter.particleCount;
+		this.geometry.groups[0].count = this.particleCount;
 
 		// Call the emitter's remove method.
 		emitter._onRemove();

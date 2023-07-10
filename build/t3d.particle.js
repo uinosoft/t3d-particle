@@ -1299,10 +1299,6 @@
 			// Holds a reference to this emitter's group's attributes object
 			// for easier access.
 			_this.attributes = null;
-
-			// Holds a reference to the params attribute's typed array
-			// for quicker access.
-			_this.paramsArray = null;
 			_this.bufferUpdateRanges = {};
 			_this.attributeKeys = null;
 			_this.attributeCount = 0;
@@ -1323,12 +1319,9 @@
 			if (this.isStatic) {
 				return;
 			}
-			if (this.paramsArray === null) {
-				this.paramsArray = this.attributes.params.buffer.array;
-			}
 			var start = this.attributeOffset,
 				end = start + this.particleCount,
-				params = this.paramsArray,
+				params = this.attributes.params.buffer.array,
 				// vec3( alive, age, maxAge, wiggle )
 				ppsDt = this.particlesPerSecond * this.activeMultiplier * dt,
 				activationIndex = this.activationIndex;
@@ -1384,7 +1377,7 @@
 			if (force === true) {
 				var start = this.attributeOffset,
 					end = start + this.particleCount,
-					array = this.paramsArray,
+					array = this.attributes.params.buffer.array,
 					attr = this.attributes.params;
 				for (var i = end - 1, index; i >= start; --i) {
 					index = i * 4;
@@ -1500,7 +1493,6 @@
 			this.activeParticleCount = 0;
 			this.group = null;
 			this.attributes = null;
-			this.paramsArray = null;
 			this.age = 0.0;
 		};
 		_proto._decrementParticleCount = function _decrementParticleCount() {
@@ -1953,6 +1945,7 @@
 
 			// Ensure this group's particle count is correct.
 			this.particleCount -= emitter.particleCount;
+			this.geometry.groups[0].count = this.particleCount;
 
 			// Call the emitter's remove method.
 			emitter._onRemove();

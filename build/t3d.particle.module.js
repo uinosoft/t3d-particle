@@ -1738,10 +1738,6 @@ class ParticleEmitter extends AbstractParticleEmitter {
 		// for easier access.
 		this.attributes = null;
 
-		// Holds a reference to the params attribute's typed array
-		// for quicker access.
-		this.paramsArray = null;
-
 		this.bufferUpdateRanges = {};
 		this.attributeKeys = null;
 		this.attributeCount = 0;
@@ -1761,13 +1757,9 @@ class ParticleEmitter extends AbstractParticleEmitter {
 			return;
 		}
 
-		if (this.paramsArray === null) {
-			this.paramsArray = this.attributes.params.buffer.array;
-		}
-
 		const start = this.attributeOffset,
 			end = start + this.particleCount,
-			params = this.paramsArray, // vec3( alive, age, maxAge, wiggle )
+			params = this.attributes.params.buffer.array, // vec3( alive, age, maxAge, wiggle )
 			ppsDt = this.particlesPerSecond * this.activeMultiplier * dt,
 			activationIndex = this.activationIndex;
 
@@ -1826,7 +1818,7 @@ class ParticleEmitter extends AbstractParticleEmitter {
 		if (force === true) {
 			const start = this.attributeOffset,
 				end = start + this.particleCount,
-				array = this.paramsArray,
+				array = this.attributes.params.buffer.array,
 				attr = this.attributes.params;
 
 			for (let i = end - 1, index; i >= start; --i) {
@@ -1975,7 +1967,6 @@ class ParticleEmitter extends AbstractParticleEmitter {
 		this.activeParticleCount = 0;
 		this.group = null;
 		this.attributes = null;
-		this.paramsArray = null;
 		this.age = 0.0;
 	}
 
@@ -2474,6 +2465,7 @@ class ParticleGroup extends AbstractParticleGroup {
 
 		// Ensure this group's particle count is correct.
 		this.particleCount -= emitter.particleCount;
+		this.geometry.groups[0].count = this.particleCount;
 
 		// Call the emitter's remove method.
 		emitter._onRemove();
