@@ -32,7 +32,7 @@
 	 * @property {Number} ParticleProperties.distributions.DISC Values will be distributed within a 2D disc.
 	 */
 
-	var ParticleProperties = {
+	const ParticleProperties = {
 		/**
 				* A map of supported distribution types used
 				* by Emitter instances.
@@ -92,56 +92,12 @@
 		valueOverLifetimeLength: 4
 	};
 
-	function _defineProperties(target, props) {
-		for (var i = 0; i < props.length; i++) {
-			var descriptor = props[i];
-			descriptor.enumerable = descriptor.enumerable || false;
-			descriptor.configurable = true;
-			if ("value" in descriptor) descriptor.writable = true;
-			Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor);
-		}
-	}
-	function _createClass(Constructor, protoProps, staticProps) {
-		if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-		if (staticProps) _defineProperties(Constructor, staticProps);
-		Object.defineProperty(Constructor, "prototype", {
-			writable: false
-		});
-		return Constructor;
-	}
-	function _inheritsLoose(subClass, superClass) {
-		subClass.prototype = Object.create(superClass.prototype);
-		subClass.prototype.constructor = subClass;
-		_setPrototypeOf(subClass, superClass);
-	}
-	function _setPrototypeOf(o, p) {
-		_setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) {
-			o.__proto__ = p;
-			return o;
-		};
-		return _setPrototypeOf(o, p);
-	}
-	function _toPrimitive(input, hint) {
-		if (typeof input !== "object" || input === null) return input;
-		var prim = input[Symbol.toPrimitive];
-		if (prim !== undefined) {
-			var res = prim.call(input, hint || "default");
-			if (typeof res !== "object") return res;
-			throw new TypeError("@@toPrimitive must return a primitive value.");
-		}
-		return (hint === "string" ? String : Number)(input);
-	}
-	function _toPropertyKey(arg) {
-		var key = _toPrimitive(arg, "string");
-		return typeof key === "symbol" ? key : String(key);
-	}
-
 	/**
 	 * A bunch of utility functions used throughout the library.
 	 * @namespace
 	 * @type {Object}
 	 */
-	var Utils = {
+	const Utils = {
 		/**
 		 * A map of types used by `Utils.ensureTypedArg` and
 		 * `Utils.ensureArrayTypedArg` to compare types against.
@@ -180,7 +136,7 @@
 		 * @param	{(boolean|string|number|object)} defaultValue A default value to fallback on if the type check fails.
 		 * @return {(boolean|string|number|object)}							The given value if type check passes, or the default value if it fails.
 		 */
-		ensureTypedArg: function ensureTypedArg(arg, type, defaultValue) {
+		ensureTypedArg: function (arg, type, defaultValue) {
 			if (typeof arg === type) {
 				return arg;
 			} else {
@@ -199,12 +155,12 @@
 		 * @param	{(boolean|string|number|object)} defaultValue A default fallback value.
 		 * @return {(boolean|string|number|object)}							The given value if type check passes, or the default value if it fails.
 		 */
-		ensureArrayTypedArg: function ensureArrayTypedArg(arg, type, defaultValue) {
+		ensureArrayTypedArg: function (arg, type, defaultValue) {
 			// If the argument being checked is an array, loop through
 			// it and ensure all the values are of the correct type,
 			// falling back to the defaultValue if any aren't.
 			if (Array.isArray(arg)) {
-				for (var i = arg.length - 1; i >= 0; --i) {
+				for (let i = arg.length - 1; i >= 0; --i) {
 					if (typeof arg[i] !== type) {
 						return defaultValue;
 					}
@@ -224,7 +180,7 @@
 		 * @param	{Object} defaultValue A default fallback value if instance check fails
 		 * @return {Object}							The given value if type check passes, or the default value if it fails.
 		 */
-		ensureInstanceOf: function ensureInstanceOf(arg, instance, defaultValue) {
+		ensureInstanceOf: function (arg, instance, defaultValue) {
 			if (instance !== undefined && arg instanceof instance) {
 				return arg;
 			} else {
@@ -243,12 +199,12 @@
 		 * @param	{Object} defaultValue A default fallback value if instance check fails
 		 * @return {Object}							The given value if type check passes, or the default value if it fails.
 		 */
-		ensureArrayInstanceOf: function ensureArrayInstanceOf(arg, instance, defaultValue) {
+		ensureArrayInstanceOf: function (arg, instance, defaultValue) {
 			// If the argument being checked is an array, loop through
 			// it and ensure all the values are of the correct type,
 			// falling back to the defaultValue if any aren't.
 			if (Array.isArray(arg)) {
-				for (var i = arg.length - 1; i >= 0; --i) {
+				for (let i = arg.length - 1; i >= 0; --i) {
 					if (instance !== undefined && arg[i] instanceof instance === false) {
 						return defaultValue;
 					}
@@ -272,7 +228,7 @@
 		 * @param	{Number} minLength The minimum length of the array to create.
 		 * @param	{Number} maxLength The maximum length of the array to create.
 		 */
-		ensureValueOverLifetimeCompliance: function ensureValueOverLifetimeCompliance(property, minLength, maxLength) {
+		ensureValueOverLifetimeCompliance: function (property, minLength, maxLength) {
 			minLength = minLength || 3;
 			maxLength = maxLength || 3;
 
@@ -283,7 +239,7 @@
 			if (Array.isArray(property._spread) === false) {
 				property._spread = [property._spread];
 			}
-			var valueLength = this.clamp(property._value.length, minLength, maxLength),
+			let valueLength = this.clamp(property._value.length, minLength, maxLength),
 				spreadLength = this.clamp(property._spread.length, minLength, maxLength),
 				desiredLength = Math.max(valueLength, spreadLength);
 			if (property._value.length !== desiredLength) {
@@ -305,12 +261,12 @@
 		 * @param	{Number} newLength The length the array should be interpolated to.
 		 * @return {Array}					 The interpolated array.
 		 */
-		interpolateArray: function interpolateArray(srcArray, newLength) {
-			var sourceLength = srcArray.length,
+		interpolateArray: function (srcArray, newLength) {
+			let sourceLength = srcArray.length,
 				newArray = [typeof srcArray[0].clone === 'function' ? srcArray[0].clone() : srcArray[0]],
 				factor = (sourceLength - 1) / (newLength - 1);
-			for (var i = 1; i < newLength - 1; ++i) {
-				var f = i * factor,
+			for (let i = 1; i < newLength - 1; ++i) {
+				let f = i * factor,
 					before = Math.floor(f),
 					after = Math.ceil(f),
 					delta = f - before;
@@ -326,7 +282,7 @@
 		 * @param	{Number} max	 The maximum value.
 		 * @return {Number}			 The clamped number.
 		 */
-		clamp: function clamp(value, min, max) {
+		clamp: function (value, min, max) {
 			return Math.max(min, Math.min(value, max));
 		},
 		/**
@@ -338,8 +294,8 @@
 		 * @param	{Boolean} randomise Whether the value should be randomised.
 		 * @return {Number}					 The result of the operation.
 		 */
-		zeroToEpsilon: function zeroToEpsilon(value, randomise) {
-			var epsilon = 0.00001,
+		zeroToEpsilon: function (value, randomise) {
+			let epsilon = 0.00001,
 				result = value;
 			result = randomise ? Math.random() * epsilon * 10 : epsilon;
 			if (value < 0 && value > -epsilon) {
@@ -368,8 +324,8 @@
 		 *																							 the start and end arguments aren't a supported type, or
 		 *																							 if their types do not match.
 		 */
-		lerpTypeAgnostic: function lerpTypeAgnostic(start, end, delta) {
-			var types = this.types,
+		lerpTypeAgnostic: function (start, end, delta) {
+			let types = this.types,
 				out;
 			if (typeof start === types.NUMBER && typeof end === types.NUMBER) {
 				return start + (end - start) * delta;
@@ -436,7 +392,7 @@
 		 * @param	{Number} delta The position to interpolate to.
 		 * @return {Number}			 The result of the lerp operation.
 		 */
-		lerp: function lerp(start, end, delta) {
+		lerp: function (start, end, delta) {
 			return start + (end - start) * delta;
 		},
 		/**
@@ -446,8 +402,8 @@
 		 * @param	{Number} multiple The multiple to round to.
 		 * @return {Number}					The result of the round operation.
 		 */
-		roundToNearestMultiple: function roundToNearestMultiple(n, multiple) {
-			var remainder = 0;
+		roundToNearestMultiple: function (n, multiple) {
+			let remainder = 0;
 			if (multiple === 0) {
 				return n;
 			}
@@ -466,8 +422,8 @@
 		 * @param	{Array} array The array of values to check equality of.
 		 * @return {Boolean}			 Whether the array's values are all equal or not.
 		 */
-		arrayValuesAreEqual: function arrayValuesAreEqual(array) {
-			for (var i = 0; i < array.length - 1; ++i) {
+		arrayValuesAreEqual: function (array) {
+			for (let i = 0; i < array.length - 1; ++i) {
 				if (array[i] !== array[i + 1]) {
 					return false;
 				}
@@ -481,11 +437,11 @@
 		 * @param	{Number} spread The size of the random variance to apply.
 		 * @return {Number}				A randomised number.
 		 */
-		randomFloat: function randomFloat(base, spread) {
+		randomFloat: function (base, spread) {
 			return base + spread * (Math.random() - 0.5);
 		},
-		getRandomVector3: function getRandomVector3(array, offset, base, spread, spreadClamp) {
-			var x = base.x + (Math.random() * spread.x - spread.x * 0.5),
+		getRandomVector3: function (array, offset, base, spread, spreadClamp) {
+			let x = base.x + (Math.random() * spread.x - spread.x * 0.5),
 				y = base.y + (Math.random() * spread.y - spread.y * 0.5),
 				z = base.z + (Math.random() * spread.z - spread.z * 0.5);
 			if (spreadClamp) {
@@ -498,8 +454,8 @@
 			array[offset + 2] = z;
 			return array;
 		},
-		getRandomVector3OnSphere: function getRandomVector3OnSphere(array, offset, base, radius, radiusSpread, radiusScale, radiusSpreadClamp) {
-			var depth = 2 * Math.random() - 1,
+		getRandomVector3OnSphere: function (array, offset, base, radius, radiusSpread, radiusScale, radiusSpreadClamp) {
+			let depth = 2 * Math.random() - 1,
 				t = 6.2832 * Math.random(),
 				r = Math.sqrt(1 - depth * depth),
 				rand = this.randomFloat(radius, radiusSpread),
@@ -529,8 +485,8 @@
 			array[offset + 2] = z;
 			return array;
 		},
-		getRandomVector3OnDisc: function getRandomVector3OnDisc(array, offset, base, radius, radiusSpread, radiusScale, radiusSpreadClamp) {
-			var t = 6.2832 * Math.random(),
+		getRandomVector3OnDisc: function (array, offset, base, radius, radiusSpread, radiusScale, radiusSpreadClamp) {
+			let t = 6.2832 * Math.random(),
 				rand = Math.abs(this.randomFloat(radius, radiusSpread)),
 				x = 0,
 				y = 0,
@@ -557,7 +513,7 @@
 			return array;
 		},
 		getRandomVector3OnLine: function () {
-			var pos = new t3d__namespace.Vector3();
+			const pos = new t3d__namespace.Vector3();
 			return function (array, offset, start, end) {
 				pos.lerpVectors(start, end, Math.random());
 				pos.toArray(array, offset);
@@ -565,7 +521,7 @@
 			};
 		}(),
 		getRandomDirectionVector3OnSphere: function () {
-			var v = new t3d__namespace.Vector3();
+			const v = new t3d__namespace.Vector3();
 			return function (array, offset, posX, posY, posZ, emitterPosition, speed, speedSpread) {
 				v.copy(emitterPosition);
 				v.x -= posX;
@@ -577,7 +533,7 @@
 			};
 		}(),
 		getRandomDirectionVector3OnDisc: function () {
-			var v = new t3d__namespace.Vector3();
+			const v = new t3d__namespace.Vector3();
 			return function (array, offset, posX, posY, posZ, emitterPosition, speed, speedSpread) {
 				v.copy(emitterPosition);
 				v.x -= posX;
@@ -590,7 +546,7 @@
 			};
 		}(),
 		getRotationAxis: function () {
-			var vSpread = new t3d__namespace.Vector3();
+			const vSpread = new t3d__namespace.Vector3();
 
 			/**
 			 * Given a rotation axis, and a rotation axis spread vector,
@@ -853,10 +809,10 @@
 	 *
 	 */
 
-	var AbstractParticleEmitter = /*#__PURE__*/function () {
-		function AbstractParticleEmitter(options) {
+	class AbstractParticleEmitter {
+		constructor(options) {
 			this.uuid = t3d__namespace.generateUUID();
-			var types = Utils.types,
+			const types = Utils.types,
 				lifetimeLength = ParticleProperties.valueOverLifetimeLength;
 
 			// Ensure we have a map of options to play with,
@@ -991,7 +947,7 @@
 				opacity: 'opacity',
 				angle: 'angle'
 			};
-			for (var i in this.updateMap) {
+			for (const i in this.updateMap) {
 				if (this.updateMap.hasOwnProperty(i)) {
 					this.updateCounts[this.updateMap[i]] = 0.0;
 					this.updateFlags[this.updateMap[i]] = false;
@@ -1038,12 +994,11 @@
 			// it's added to one.
 			this.group = null;
 		}
-		var _proto = AbstractParticleEmitter.prototype;
-		_proto._createGetterSetters = function _createGetterSetters(propObj, propName) {
-			var self = this;
-			for (var i in propObj) {
+		_createGetterSetters(propObj, propName) {
+			const self = this;
+			for (const i in propObj) {
 				if (propObj.hasOwnProperty(i)) {
-					var name = i.replace('_', '');
+					const name = i.replace('_', '');
 					Object.defineProperty(propObj, name, {
 						get: function (prop) {
 							return function () {
@@ -1052,7 +1007,7 @@
 						}(i),
 						set: function (prop) {
 							return function (value) {
-								var mapName = self.updateMap[propName],
+								const mapName = self.updateMap[propName],
 									prevValue = this[prop],
 									length = ParticleProperties.valueOverLifetimeLength;
 								if (prop === '_randomise') {
@@ -1080,10 +1035,10 @@
 		 * Calculate the `particlesPerSecond` value for this emitter. It's used
 		 * when determining which particles should die and which should live to
 		 * see another day. Or be born, for that matter. The "God" property.
-		 */;
-		_proto.calculatePPSValue = function calculatePPSValue() {
-			var particleCount = this.particleCount;
-			var maxAge = this.maxAge._value + Math.abs(this.maxAge._spread * 0.5);
+		 */
+		calculatePPSValue() {
+			const particleCount = this.particleCount;
+			const maxAge = this.maxAge._value + Math.abs(this.maxAge._spread * 0.5);
 			if (this.duration !== null) {
 				this.particlesPerSecond = particleCount / Math.min(maxAge, this.duration);
 			} else {
@@ -1097,8 +1052,8 @@
 		 * will start emitting particles.
 		 *
 		 * @return {Emitter} This emitter instance.
-		 */;
-		_proto.enable = function enable() {
+		 */
+		enable() {
 			this.alive = true;
 			return this;
 		}
@@ -1110,8 +1065,8 @@
 		 * be allowed to finish their lifecycle.
 		 *
 		 * @return {Emitter} This emitter instance.
-		 */;
-		_proto.disable = function disable() {
+		 */
+		disable() {
 			this.alive = false;
 			return this;
 		}
@@ -1126,19 +1081,19 @@
 		 * @return {Emitter} This emitter instance.
 		 *
 		 * @see ParticleGroup.prototype.removeEmitter
-		 */;
-		_proto.remove = function remove() {
+		 */
+		remove() {
 			if (this.group !== null) {
 				this.group.removeEmitter(this);
 			} else {
 				console.error('Emitter does not belong to a group, cannot remove.');
 			}
 			return this;
-		};
-		_proto.reset = function reset(force) {};
-		_proto._assignValue = function _assignValue() {};
-		_proto._assignPositionValue = function _assignPositionValue(array, offset) {
-			var distributions = ParticleProperties.distributions,
+		}
+		reset(force) {}
+		_assignValue() {}
+		_assignPositionValue(array, offset) {
+			const distributions = ParticleProperties.distributions,
 				prop = this.position,
 				value = prop._value,
 				spread = prop._spread,
@@ -1158,9 +1113,9 @@
 					break;
 			}
 			return array;
-		};
-		_proto._assignForceValue = function _assignForceValue(array, offset, attrName, particlePos) {
-			var distributions = ParticleProperties.distributions,
+		}
+		_assignForceValue(array, offset, attrName, particlePos) {
+			const distributions = ParticleProperties.distributions,
 				prop = this[attrName],
 				value = prop._value,
 				spread = prop._spread,
@@ -1180,15 +1135,15 @@
 					break;
 			}
 			if (attrName === 'acceleration') {
-				var drag = Utils.clamp(Utils.randomFloat(this.drag._value, this.drag._spread), 0, 1);
+				const drag = Utils.clamp(Utils.randomFloat(this.drag._value, this.drag._spread), 0, 1);
 				array[offset + 3] = drag;
 			}
 			return array;
-		};
-		_proto._assignAbsLifetimeValue = function _assignAbsLifetimeValue(array, offset, attrName) {
-			var prop = this[attrName];
+		}
+		_assignAbsLifetimeValue(array, offset, attrName) {
+			const prop = this[attrName];
 			if (Utils.arrayValuesAreEqual(prop._value) && Utils.arrayValuesAreEqual(prop._spread)) {
-				var value = Math.abs(Utils.randomFloat(prop._value[0], prop._spread[0]));
+				const value = Math.abs(Utils.randomFloat(prop._value[0], prop._spread[0]));
 				array[offset + 0] = value;
 				array[offset + 1] = value;
 				array[offset + 2] = value;
@@ -1200,11 +1155,11 @@
 				array[offset + 3] = Math.abs(Utils.randomFloat(prop._value[3], prop._spread[3]));
 			}
 			return array;
-		};
-		_proto._assignAngleValue = function _assignAngleValue(array, offset) {
-			var prop = this.angle;
+		}
+		_assignAngleValue(array, offset) {
+			const prop = this.angle;
 			if (Utils.arrayValuesAreEqual(prop._value) && Utils.arrayValuesAreEqual(prop._spread)) {
-				var value = Utils.randomFloat(prop._value[0], prop._spread[0]);
+				const value = Utils.randomFloat(prop._value[0], prop._spread[0]);
 				array[offset + 0] = value;
 				array[offset + 1] = value;
 				array[offset + 2] = value;
@@ -1216,8 +1171,8 @@
 				array[offset + 3] = Utils.randomFloat(prop._value[3], prop._spread[3]);
 			}
 			return array;
-		};
-		_proto._assignParamsValue = function _assignParamsValue(array, offset, init) {
+		}
+		_assignParamsValue(array, offset, init) {
 			if (init) {
 				array[offset + 0] = this.isStatic ? 1 : 0;
 			} else {
@@ -1227,9 +1182,9 @@
 			array[offset + 2] = Utils.randomFloat(this.maxAge._value, this.maxAge._spread);
 			array[offset + 3] = Utils.randomFloat(this.wiggle._value, this.wiggle._spread);
 			return array;
-		};
-		_proto._assignRotationValue = function _assignRotationValue(array, offset, array2, offset2, pack) {
-			var rotationAxis = Utils.getRotationAxis(_vec3_1$1, this.rotation._axis, this.rotation._axisSpread);
+		}
+		_assignRotationValue(array, offset, array2, offset2, pack) {
+			const rotationAxis = Utils.getRotationAxis(_vec3_1$1, this.rotation._axis, this.rotation._axisSpread);
 			if (pack) {
 				rotationAxis.x += 1;
 				rotationAxis.y += 1;
@@ -1247,13 +1202,13 @@
 				array[offset + 4] = this.rotation._static ? 0 : 1;
 			}
 			this.rotation._center.toArray(array2, offset2);
-		};
-		_proto._assignColorValue = function _assignColorValue(array, offset, pack) {
-			var base = this.color._value;
-			var spread = this.color._spread;
-			var numItems = base.length;
-			for (var i = 0; i < numItems; ++i) {
-				var spreadVector = spread[i];
+		}
+		_assignColorValue(array, offset, pack) {
+			const base = this.color._value;
+			const spread = this.color._spread;
+			const numItems = base.length;
+			for (let i = 0; i < numItems; ++i) {
+				const spreadVector = spread[i];
 				_col3_1.copy(base[i]);
 				_col3_1.r += Math.random() * spreadVector.x - spreadVector.x * 0.5;
 				_col3_1.g += Math.random() * spreadVector.y - spreadVector.y * 0.5;
@@ -1267,42 +1222,38 @@
 					_col3_1.toArray(array, offset + i * 3);
 				}
 			}
-		};
-		return AbstractParticleEmitter;
-	}();
-	var _vec3_1$1 = new t3d__namespace.Vector3();
-	var _col3_1 = new t3d__namespace.Color3();
+		}
+	}
+	const _vec3_1$1 = new t3d__namespace.Vector3();
+	const _col3_1 = new t3d__namespace.Color3();
 
-	var ParticleEmitter = /*#__PURE__*/function (_AbstractParticleEmit) {
-		_inheritsLoose(ParticleEmitter, _AbstractParticleEmit);
-		function ParticleEmitter(options) {
-			var _this;
-			_this = _AbstractParticleEmit.call(this, options) || this;
+	class ParticleEmitter extends AbstractParticleEmitter {
+		constructor(options) {
+			super(options);
 
 			// The following properties are set internally and are not
 			// user-controllable.
 
 			// The current particle index for which particles should
 			// be marked as active on the next update cycle.
-			_this.activationIndex = 0;
+			this.activationIndex = 0;
 
 			// The offset in the typed arrays this emitter's
 			// particle's values will start at
-			_this.attributeOffset = 0;
+			this.attributeOffset = 0;
 
 			// The end of the range in the attribute buffers
-			_this.attributeEnd = 0;
+			this.attributeEnd = 0;
 
 			// Holds the number of currently-alive particles
-			_this.activeParticleCount = 0.0;
+			this.activeParticleCount = 0.0;
 
 			// Holds a reference to this emitter's group's attributes object
 			// for easier access.
-			_this.attributes = null;
-			_this.bufferUpdateRanges = {};
-			_this.attributeKeys = null;
-			_this.attributeCount = 0;
-			return _this;
+			this.attributes = null;
+			this.bufferUpdateRanges = {};
+			this.attributeKeys = null;
+			this.attributeCount = 0;
 		}
 
 		/**
@@ -1314,12 +1265,11 @@
 		 *
 		 * @param	{Number} dt The number of seconds to simulate (deltaTime)
 		 */
-		var _proto = ParticleEmitter.prototype;
-		_proto.tick = function tick(dt) {
+		tick(dt) {
 			if (this.isStatic) {
 				return;
 			}
-			var start = this.attributeOffset,
+			const start = this.attributeOffset,
 				end = start + this.particleCount,
 				params = this.attributes.params.buffer.array,
 				// vec3( alive, age, maxAge, wiggle )
@@ -1347,7 +1297,7 @@
 				this.age = 0.0;
 				return;
 			}
-			var activationStart = this.particleCount === 1 ? activationIndex : activationIndex | 0,
+			const activationStart = this.particleCount === 1 ? activationIndex : activationIndex | 0,
 				activationEnd = Math.min(activationStart + ppsDt, this.activationEnd),
 				activationCount = activationEnd - this.activationIndex | 0,
 				dtPerParticle = activationCount > 0 ? dt / activationCount : 0;
@@ -1370,16 +1320,16 @@
 		 *
 		 * @param	{Boolean} [force=undefined] If true, all particles will be marked as dead instantly.
 		 * @return {ParticleEmitter}			 This emitter instance.
-		 */;
-		_proto.reset = function reset(force) {
+		 */
+		reset(force) {
 			this.age = 0.0;
 			this.alive = false;
 			if (force === true) {
-				var start = this.attributeOffset,
+				const start = this.attributeOffset,
 					end = start + this.particleCount,
 					array = this.attributes.params.buffer.array,
 					attr = this.attributes.params;
-				for (var i = end - 1, index; i >= start; --i) {
+				for (let i = end - 1, index; i >= start; --i) {
 					index = i * 4;
 					array[index] = 0.0;
 					array[index + 1] = 0.0;
@@ -1389,9 +1339,9 @@
 				attr.needsUpdate = true;
 			}
 			return this;
-		};
-		_proto._assignValue = function _assignValue(prop, index) {
-			var typedArray, typedArray2, positionX, positionY, positionZ;
+		}
+		_assignValue(prop, index) {
+			let typedArray, typedArray2, positionX, positionY, positionZ;
 			switch (prop) {
 				case 'position':
 					typedArray = this.attributes.position.buffer.array;
@@ -1431,14 +1381,14 @@
 					this._assignColorValue(typedArray, this.attributes.color.size * index, true);
 					break;
 			}
-		};
-		_proto._resetParticle = function _resetParticle(index) {
-			var resetFlags = this.resetFlags,
+		}
+		_resetParticle(index) {
+			const resetFlags = this.resetFlags,
 				updateFlags = this.updateFlags,
 				updateCounts = this.updateCounts,
 				keys = this.attributeKeys;
-			var key, updateFlag;
-			for (var i = this.attributeCount - 1; i >= 0; --i) {
+			let key, updateFlag;
+			for (let i = this.attributeCount - 1; i >= 0; --i) {
 				key = keys[i];
 				updateFlag = updateFlags[key];
 				if (resetFlags[key] === true || updateFlag === true) {
@@ -1452,39 +1402,39 @@
 					}
 				}
 			}
-		};
-		_proto._setBufferUpdateRanges = function _setBufferUpdateRanges(keys) {
+		}
+		_setBufferUpdateRanges(keys) {
 			this.attributeKeys = keys;
 			this.attributeCount = keys.length;
-			for (var i = this.attributeCount - 1; i >= 0; --i) {
+			for (let i = this.attributeCount - 1; i >= 0; --i) {
 				this.bufferUpdateRanges[keys[i]] = {
 					min: Number.POSITIVE_INFINITY,
 					max: Number.NEGATIVE_INFINITY
 				};
 			}
-		};
-		_proto._setAttributeOffset = function _setAttributeOffset(startIndex) {
+		}
+		_setAttributeOffset(startIndex) {
 			this.attributeOffset = startIndex;
 			this.activationIndex = startIndex;
 			this.activationEnd = startIndex + this.particleCount;
-		};
-		_proto._updateAttributeUpdateRange = function _updateAttributeUpdateRange(attr, i) {
-			var ranges = this.bufferUpdateRanges[attr];
+		}
+		_updateAttributeUpdateRange(attr, i) {
+			const ranges = this.bufferUpdateRanges[attr];
 			ranges.min = Math.min(i, ranges.min);
 			ranges.max = Math.max(i, ranges.max);
-		};
-		_proto._resetBufferRanges = function _resetBufferRanges() {
-			var ranges = this.bufferUpdateRanges,
+		}
+		_resetBufferRanges() {
+			const ranges = this.bufferUpdateRanges,
 				keys = this.bufferUpdateKeys;
-			var i = this.bufferUpdateCount - 1,
+			let i = this.bufferUpdateCount - 1,
 				key;
 			for (i; i >= 0; --i) {
 				key = keys[i];
 				ranges[key].min = Number.POSITIVE_INFINITY;
 				ranges[key].max = Number.NEGATIVE_INFINITY;
 			}
-		};
-		_proto._onRemove = function _onRemove() {
+		}
+		_onRemove() {
 			// Reset any properties of the emitter that were set by
 			// a group when it was added.
 			this.particlesPerSecond = 0;
@@ -1494,21 +1444,23 @@
 			this.group = null;
 			this.attributes = null;
 			this.age = 0.0;
-		};
-		_proto._decrementParticleCount = function _decrementParticleCount() {
+		}
+		_decrementParticleCount() {
 			--this.activeParticleCount;
 
 			// TODO:
 			//	- Trigger event if count === 0.
-		};
-		_proto._incrementParticleCount = function _incrementParticleCount() {
+		}
+
+		_incrementParticleCount() {
 			++this.activeParticleCount;
 
 			// TODO:
 			//	- Trigger event if count === this.particleCount.
-		};
-		_proto._checkParticleAges = function _checkParticleAges(start, end, params, dt) {
-			for (var i = end - 1, index, maxAge, age, alive; i >= start; --i) {
+		}
+
+		_checkParticleAges(start, end, params, dt) {
+			for (let i = end - 1, index, maxAge, age, alive; i >= start; --i) {
 				index = i * 4;
 				alive = params[index];
 				if (alive === 0.0) {
@@ -1537,10 +1489,10 @@
 				params[index + 1] = age;
 				this._updateAttributeUpdateRange('params', i);
 			}
-		};
-		_proto._activateParticles = function _activateParticles(activationStart, activationEnd, params, dtPerParticle) {
-			var direction = this.direction;
-			for (var i = activationStart, index, dtValue; i < activationEnd; ++i) {
+		}
+		_activateParticles(activationStart, activationEnd, params, dtPerParticle) {
+			const direction = this.direction;
+			for (let i = activationStart, index, dtValue; i < activationEnd; ++i) {
 				index = i * 4;
 
 				// Don't re-activate particles that aren't dead yet.
@@ -1571,9 +1523,8 @@
 				params[index + 1] = direction === -1 ? params[index + 2] - dtValue : dtValue;
 				this._updateAttributeUpdateRange('params', i);
 			}
-		};
-		return ParticleEmitter;
-	}(AbstractParticleEmitter);
+		}
+	}
 
 	/**
 	 * A map of options to configure an ParticleGroup instance.
@@ -1621,10 +1572,10 @@
 	 *													setting particle sizes to be relative to renderer size.
 	 */
 
-	var AbstractParticleGroup = /*#__PURE__*/function () {
-		function AbstractParticleGroup(options) {
+	class AbstractParticleGroup {
+		constructor(options) {
 			this.uuid = t3d__namespace.generateUUID();
-			var types = Utils.types;
+			const types = Utils.types;
 			options.texture = Utils.ensureTypedArg(options.texture, types.OBJECT, {});
 
 			// If no `deltaTime` value is passed to the `ParticleGroup.tick` function,
@@ -1637,13 +1588,12 @@
 			// out their days.
 			this._emitters = [];
 		}
-		var _proto = AbstractParticleGroup.prototype;
-		_proto.addEmitter = function addEmitter(emitter) {};
-		_proto.removeEmitter = function removeEmitter(emitter) {};
-		_proto.tick = function tick(dt) {};
-		_proto.dispose = function dispose() {};
-		_proto._setMaterial = function _setMaterial(material, options) {
-			var types = Utils.types;
+		addEmitter(emitter) {}
+		removeEmitter(emitter) {}
+		tick(dt) {}
+		dispose() {}
+		_setMaterial(material, options) {
+			const types = Utils.types;
 			material.uniforms.tex = Utils.ensureInstanceOf(options.texture.value, t3d__namespace.Texture2D, defaultTexture);
 			material.blending = Utils.ensureTypedArg(options.blending, types.STRING, t3d__namespace.BLEND_TYPE.ADD);
 			material.transparent = Utils.ensureTypedArg(options.transparent, types.BOOLEAN, true);
@@ -1651,10 +1601,9 @@
 			material.depthWrite = Utils.ensureTypedArg(options.depthWrite, types.BOOLEAN, false);
 			material.depthTest = Utils.ensureTypedArg(options.depthTest, types.BOOLEAN, true);
 			material.fog = Utils.ensureTypedArg(options.fog, types.BOOLEAN, true);
-		};
-		return AbstractParticleGroup;
-	}();
-	var defaultTexture = new t3d__namespace.Texture2D();
+		}
+	}
+	const defaultTexture = new t3d__namespace.Texture2D();
 	defaultTexture.image = {
 		data: new Uint8Array([255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]),
 		width: 2,
@@ -1664,7 +1613,7 @@
 	defaultTexture.minFilter = t3d__namespace.TEXTURE_FILTER.NEAREST;
 	defaultTexture.generateMipmaps = false;
 
-	var componentSizeMap = {
+	const componentSizeMap = {
 		position: 3,
 		acceleration: 4,
 		// w component is drag
@@ -1678,45 +1627,43 @@
 		color: 4,
 		opacity: 4
 	};
-	var ParticleGroup = /*#__PURE__*/function (_AbstractParticleGrou) {
-		_inheritsLoose(ParticleGroup, _AbstractParticleGrou);
-		function ParticleGroup(options) {
-			var _this;
-			var utils = Utils,
+	class ParticleGroup extends AbstractParticleGroup {
+		constructor(options) {
+			let utils = Utils,
 				types = utils.types;
 
 			// Ensure we have a map of options to play with
 			options = Utils.ensureTypedArg(options, types.OBJECT, {});
-			_this = _AbstractParticleGrou.call(this, options) || this;
-			_this.maxParticleCount = utils.ensureTypedArg(options.maxParticleCount, types.NUMBER, null);
-			if (_this.maxParticleCount === null) {
+			super(options);
+			this.maxParticleCount = utils.ensureTypedArg(options.maxParticleCount, types.NUMBER, null);
+			if (this.maxParticleCount === null) {
 				console.warn('ParticleGroup: No maxParticleCount specified. Adding emitters after rendering will probably cause errors.');
 			}
 
 			// Set properties used in the uniforms map, starting with the
 			// texture stuff.
 
-			_this.textureFrames = Utils.ensureInstanceOf(options.texture.frames, t3d__namespace.Vector2, new t3d__namespace.Vector2(1, 1));
-			_this.textureFrames.max(new t3d__namespace.Vector2(1, 1));
-			_this.textureFrameCount = Utils.ensureTypedArg(options.texture.frameCount, types.NUMBER, _this.textureFrames.x * _this.textureFrames.y);
-			_this.textureLoop = Utils.ensureTypedArg(options.texture.loop, types.NUMBER, 1);
+			this.textureFrames = Utils.ensureInstanceOf(options.texture.frames, t3d__namespace.Vector2, new t3d__namespace.Vector2(1, 1));
+			this.textureFrames.max(new t3d__namespace.Vector2(1, 1));
+			this.textureFrameCount = Utils.ensureTypedArg(options.texture.frameCount, types.NUMBER, this.textureFrames.x * this.textureFrames.y);
+			this.textureLoop = Utils.ensureTypedArg(options.texture.loop, types.NUMBER, 1);
 
 			// Create the ShaderMaterial instance that'll help render the
 			// particles.
 
-			_this.material = new t3d__namespace.ShaderMaterial({
+			this.material = new t3d__namespace.ShaderMaterial({
 				defines: {
-					HAS_PERSPECTIVE: _this.hasPerspective,
-					COLORIZE: _this.colorize,
+					HAS_PERSPECTIVE: this.hasPerspective,
+					COLORIZE: this.colorize,
 					VALUE_OVER_LIFETIME_LENGTH: ParticleProperties.valueOverLifetimeLength,
 					SHOULD_ROTATE_TEXTURE: false,
 					SHOULD_ROTATE_PARTICLES: false,
 					SHOULD_WIGGLE_PARTICLES: false,
-					SHOULD_CALCULATE_SPRITE: _this.textureFrames.x > 1 || _this.textureFrames.y > 1
+					SHOULD_CALCULATE_SPRITE: this.textureFrames.x > 1 || this.textureFrames.y > 1
 				},
 				uniforms: {
 					tex: null,
-					textureAnimation: [_this.textureFrames.x, _this.textureFrames.y, _this.textureFrameCount, Math.max(Math.abs(_this.textureLoop), 1.0)],
+					textureAnimation: [this.textureFrames.x, this.textureFrames.y, this.textureFrameCount, Math.max(Math.abs(this.textureLoop), 1.0)],
 					scale: utils.ensureTypedArg(options.scale, types.NUMBER, 300),
 					deltaTime: 0,
 					runTime: 0
@@ -1724,21 +1671,21 @@
 				vertexShader: Shaders.vertex,
 				fragmentShader: Shaders.fragment
 			});
-			_this._setMaterial(_this.material, options);
-			_this.material.drawMode = t3d__namespace.DRAW_MODE.POINTS;
-			_this.uniforms = _this.material.uniforms;
-			_this.defines = _this.material.defines;
+			this._setMaterial(this.material, options);
+			this.material.drawMode = t3d__namespace.DRAW_MODE.POINTS;
+			this.uniforms = this.material.uniforms;
+			this.defines = this.material.defines;
 
 			// Create the BufferGeometry and Points instances, ensuring
 			// the geometry and material are given to the latter.
 
-			_this.geometry = new t3d__namespace.Geometry();
-			_this.geometry.addGroup(0, _this.particleCount, 0);
-			_this.mesh = new t3d__namespace.Mesh(_this.geometry, [_this.material]);
-			_this.mesh.frustumCulled = false;
+			this.geometry = new t3d__namespace.Geometry();
+			this.geometry.addGroup(0, this.particleCount, 0);
+			this.mesh = new t3d__namespace.Mesh(this.geometry, [this.material]);
+			this.mesh.frustumCulled = false;
 
 			// Map of all attributes to be applied to the particles.
-			_this.attributes = {
+			this.attributes = {
 				position: null,
 				acceleration: null,
 				velocity: null,
@@ -1750,17 +1697,16 @@
 				color: null,
 				opacity: null
 			};
-			_this.attributeKeys = Object.keys(_this.attributes);
-			_this.attributeCount = _this.attributeKeys.length;
+			this.attributeKeys = Object.keys(this.attributes);
+			this.attributeCount = this.attributeKeys.length;
 
 			// Whether all attributes should be forced to updated
 			// their entire buffer contents on the next tick.
 			//
 			// Used when an emitter is removed.
-			_this._attributesNeedRefresh = false;
-			_this._attributesNeedDynamicReset = false;
-			_this.particleCount = 0;
-			return _this;
+			this._attributesNeedRefresh = false;
+			this._attributesNeedDynamicReset = false;
+			this.particleCount = 0;
 		}
 
 		/**
@@ -1769,8 +1715,7 @@
 		 *
 		 * @param {ParticleEmitter} emitter The emitter to add to this group.
 		 */
-		var _proto = ParticleGroup.prototype;
-		_proto.addEmitter = function addEmitter(emitter) {
+		addEmitter(emitter) {
 			// Ensure an actual emitter instance is passed here.
 			//
 			// Decided not to throw here, just in case a scene's
@@ -1790,7 +1735,7 @@
 				console.error('ParticleEmitter already belongs to another group. Will not add to requested group.');
 				return;
 			}
-			var attributes = this.attributes,
+			let attributes = this.attributes,
 				start = this.particleCount,
 				end = start + emitter.particleCount;
 
@@ -1821,21 +1766,21 @@
 
 			// Ensure the attributes and their attribute exist, and their
 			// buffer arrays are of the correct size.
-			for (var attr in attributes) {
+			for (const attr in attributes) {
 				if (attributes.hasOwnProperty(attr)) {
 					// When creating a buffer, pass through the maxParticle count
 					// if one is specified.
-					var attribute = attributes[attr];
-					var size = this.maxParticleCount !== null ? this.maxParticleCount : this.particleCount;
+					let attribute = attributes[attr];
+					let size = this.maxParticleCount !== null ? this.maxParticleCount : this.particleCount;
 					if (attribute !== null && attribute.buffer.array !== null) {
 						// Make sure the buffer array is present and correct.
 						if (attribute.buffer.array.length !== size * attribute.size) {
-							var currentArraySize = attribute.buffer.array.length;
-							var bufferSize = size * attribute.size;
+							let currentArraySize = attribute.buffer.array.length;
+							const bufferSize = size * attribute.size;
 							if (bufferSize < currentArraySize) {
 								attribute.buffer.array = attribute.buffer.array.subarray(0, bufferSize);
 							} else {
-								var existingArray = attribute.buffer.array,
+								let existingArray = attribute.buffer.array,
 									newArray = new Float32Array(bufferSize);
 								newArray.set(existingArray);
 								attribute.buffer.array = newArray;
@@ -1852,7 +1797,7 @@
 
 			// Loop through each particle this emitter wants to have, and create the attributes values,
 			// storing them in the buffer array that each attribute holds.
-			for (var i = start; i < end; ++i) {
+			for (let i = start; i < end; ++i) {
 				emitter._assignValue('position', i);
 				emitter._assignValue('velocity', i);
 				emitter._assignValue('acceleration', i);
@@ -1885,9 +1830,9 @@
 		 * removed from the scene.
 		 *
 		 * @param {ParticleEmitter} emitter The emitter to add to this group.
-		 */;
-		_proto.removeEmitter = function removeEmitter(emitter) {
-			var emitterIndex = this._emitters.indexOf(emitter);
+		 */
+		removeEmitter(emitter) {
+			const emitterIndex = this._emitters.indexOf(emitter);
 
 			// Ensure an actual emitter instance is passed here.
 			//
@@ -1905,12 +1850,12 @@
 
 			// Kill all particles by marking them as dead
 			// and their age as 0.
-			var start = emitter.attributeOffset,
+			const start = emitter.attributeOffset,
 				end = start + emitter.particleCount,
 				params = this.attributes.params.buffer.array;
 
 			// Set alive and age to zero.
-			for (var i = start; i < end; ++i) {
+			for (let i = start; i < end; ++i) {
 				params[i * 4] = 0.0;
 				params[i * 4 + 1] = 0.0;
 			}
@@ -1921,16 +1866,16 @@
 			// Remove this emitter's attribute values from all attributes.
 			// Also marks each attribute's buffer
 			// as needing to update it's entire contents.
-			for (var attr in this.attributes) {
+			for (const attr in this.attributes) {
 				if (this.attributes.hasOwnProperty(attr)) {
-					var attribute = this.attributes[attr];
-					var startSize = start * attribute.size;
-					var endSize = end * attribute.size;
-					var data = [],
+					const attribute = this.attributes[attr];
+					const startSize = start * attribute.size;
+					const endSize = end * attribute.size;
+					let data = [],
 						array = attribute.buffer.array;
-					for (var _i = 0; _i < array.length; ++_i) {
-						if (_i < startSize || _i >= endSize) {
-							data.push(array[_i]);
+					for (let i = 0; i < array.length; ++i) {
+						if (i < startSize || i >= endSize) {
+							data.push(array[i]);
 						}
 					}
 					array = array.subarray(0, data.length);
@@ -1938,8 +1883,8 @@
 					this.attributes[attr].buffer.array = array;
 				}
 			}
-			for (var j = this._emitters.length - 1; j >= emitterIndex; j--) {
-				var attributeOffset = this._emitters[j].attributeOffset - emitter.particleCount;
+			for (let j = this._emitters.length - 1; j >= emitterIndex; j--) {
+				const attributeOffset = this._emitters[j].attributeOffset - emitter.particleCount;
 				this._emitters[j]._setAttributeOffset(attributeOffset);
 			}
 
@@ -1959,14 +1904,14 @@
 		 * Simulate all the emitter's belonging to this group, updating
 		 * attribute values along the way.
 		 * @param	{Number} [dt=Group's `fixedTimeStep` value] The number of seconds to simulate the group's emitters for (deltaTime)
-		 */;
-		_proto.tick = function tick(dt) {
-			var emitters = this._emitters,
+		 */
+		tick(dt) {
+			const emitters = this._emitters,
 				numEmitters = emitters.length,
 				deltaTime = dt || this.fixedTimeStep,
 				keys = this.attributeKeys,
 				attrs = this.attributes;
-			var i, j;
+			let i, j;
 
 			// Update uniform values.
 
@@ -1988,19 +1933,19 @@
 				emitters[j].tick(deltaTime);
 			}
 			for (i = this.attributeCount - 1; i >= 0; --i) {
-				var key = keys[i];
-				var particleUpdateMin = Infinity;
-				var particleUpdateMax = -Infinity;
+				const key = keys[i];
+				let particleUpdateMin = Infinity;
+				let particleUpdateMax = -Infinity;
 				for (j = 0; j < numEmitters; ++j) {
 					// Mark update range
-					var emitterRanges = emitters[j].bufferUpdateRanges;
-					var emitterAttr = emitterRanges[key];
+					const emitterRanges = emitters[j].bufferUpdateRanges;
+					const emitterAttr = emitterRanges[key];
 					particleUpdateMin = Math.min(emitterAttr.min, particleUpdateMin);
 					particleUpdateMax = Math.max(emitterAttr.max, particleUpdateMax);
 				}
 				if (particleUpdateMax - particleUpdateMin > 0) {
 					// Reset buffer update ranges.
-					var attr = attrs[key];
+					const attr = attrs[key];
 					attr.buffer.updateRange.offset = particleUpdateMin * attr.size;
 					attr.buffer.updateRange.count = Math.min((particleUpdateMax - particleUpdateMin + 1) * attr.size, attr.buffer.array.length);
 					attr.buffer.version++;
@@ -2041,19 +1986,19 @@
 		 * Dipose the geometry and material for the group.
 		 *
 		 * @return {ParticleGroup} ParticleGroup instance.
-		 */;
-		_proto.dispose = function dispose() {
+		 */
+		dispose() {
 			this.mesh.geometry.dispose();
 			this.mesh.material[0].dispose();
 
 			// TODO remove all emitters?
 
 			return this;
-		};
-		_proto.$updateDefines = function $updateDefines() {
-			var emitters = this._emitters,
+		}
+		$updateDefines() {
+			const emitters = this._emitters,
 				defines = this.defines;
-			var i = emitters.length - 1,
+			let i = emitters.length - 1,
 				emitter;
 			for (i; i >= 0; --i) {
 				emitter = emitters[i];
@@ -2070,16 +2015,16 @@
 
 			// Update the material since defines might have changed
 			this.material.needsUpdate = true;
-		};
-		_proto._applyAttributesToGeometry = function _applyAttributesToGeometry() {
-			var attributes = this.attributes,
+		}
+		_applyAttributesToGeometry() {
+			const attributes = this.attributes,
 				geometry = this.geometry,
 				geometryAttributes = geometry.attributes;
-			var attribute, geometryAttribute;
+			let attribute, geometryAttribute;
 
 			// Loop through all the attributes and assign (or re-assign)
 			// typed array buffers to each one.
-			for (var attr in attributes) {
+			for (const attr in attributes) {
 				if (attributes.hasOwnProperty(attr)) {
 					attribute = attributes[attr];
 					geometryAttribute = geometryAttributes[attr === 'position' ? 'a_Position' : attr];
@@ -2102,21 +2047,69 @@
 			// associated with a particle will be used in t3d's
 			// render cycle.
 			this.geometry.groups[0].count = this.particleCount;
-		};
-		return ParticleGroup;
-	}(AbstractParticleGroup);
+		}
+	}
 
-	var MeshParticleShader = {
+	const MeshParticleShader = {
 		name: 'mesh_particle_shader',
 		uniforms: {
 			tex: null
 		},
-		vertexShader: "\n\t\t#include <common_vert>\n\n\t\tattribute vec3 mcol0;\n\t\tattribute vec3 mcol1;\n\t\tattribute vec3 mcol2;\n\t\tattribute vec3 mcol3;\n\t\tattribute vec4 color;\n\n\t\tattribute vec2 a_Uv;\n\n\t\tvarying vec2 vUv;\n\t\tvarying vec4 varyColor;\n\n\t\t#include <logdepthbuf_pars_vert>\n\n\t\tvoid main() {\n\t\t\tmat4 matrix = mat4(\n\t\t\t\tvec4(mcol0, 0),\n\t\t\t\tvec4(mcol1, 0),\n\t\t\t\tvec4(mcol2, 0),\n\t\t\t\tvec4(mcol3, 1)\n\t\t\t);\n\n\t\t\tvec4 worldPosition = u_Model * matrix * vec4(a_Position, 1.0);\n\t\t\tgl_Position = u_ProjectionView * worldPosition;\n\n\t\t\tvaryColor = color;\n\t\t\tvUv = a_Uv;\n\n\t\t\t#include <logdepthbuf_vert>\n\t\t}\n\t",
-		fragmentShader: "\n\t\tuniform sampler2D tex;\n\n\t\t#include <common_frag>\n\t\t#include <fog_pars_frag>\n\t\t#include <logdepthbuf_pars_frag>\n\n\t\tvarying vec2 vUv;\n\t\tvarying vec4 varyColor;\n\n\t\tvoid main() {\n\t\t\t#include <logdepthbuf_frag>\n\n\t\t\tgl_FragColor = varyColor * texture2D(tex, vUv);\n\n\t\t\t#include <fog_frag>\n\t\t}\n\t"
+		vertexShader: `
+		#include <common_vert>
+
+		attribute vec3 mcol0;
+		attribute vec3 mcol1;
+		attribute vec3 mcol2;
+		attribute vec3 mcol3;
+		attribute vec4 color;
+
+		attribute vec2 a_Uv;
+
+		varying vec2 vUv;
+		varying vec4 varyColor;
+
+		#include <logdepthbuf_pars_vert>
+
+		void main() {
+			mat4 matrix = mat4(
+				vec4(mcol0, 0),
+				vec4(mcol1, 0),
+				vec4(mcol2, 0),
+				vec4(mcol3, 1)
+			);
+
+			vec4 worldPosition = u_Model * matrix * vec4(a_Position, 1.0);
+			gl_Position = u_ProjectionView * worldPosition;
+
+			varyColor = color;
+			vUv = a_Uv;
+
+			#include <logdepthbuf_vert>
+		}
+	`,
+		fragmentShader: `
+		uniform sampler2D tex;
+
+		#include <common_frag>
+		#include <fog_pars_frag>
+		#include <logdepthbuf_pars_frag>
+
+		varying vec2 vUv;
+		varying vec4 varyColor;
+
+		void main() {
+			#include <logdepthbuf_frag>
+
+			gl_FragColor = varyColor * texture2D(tex, vUv);
+
+			#include <fog_frag>
+		}
+	`
 	};
 
-	var MeshParticle = /*#__PURE__*/function () {
-		function MeshParticle() {
+	class MeshParticle {
+		constructor() {
 			this._matrix = new t3d__namespace.Matrix4();
 			this._color = new t3d__namespace.Color3(1, 1, 1);
 			this._opacity = 1;
@@ -2131,11 +2124,10 @@
 			this._originRotation = [0, 1, 0, 0, 0]; // Axis, Angle, Dynamic ( not static )
 			this._originRotationCenter = [0, 0, 0];
 		}
-		var _proto = MeshParticle.prototype;
-		_proto.isAlive = function isAlive() {
+		isAlive() {
 			return !!this._originParams[0];
-		};
-		_proto.tick = function tick(dt, camera, emitter) {
+		}
+		tick(dt, camera, emitter) {
 			this._originParams[1] += dt;
 
 			// if (emitter.duration !== null && this._originParams[1] > emitter.duration) {
@@ -2150,10 +2142,10 @@
 				return;
 			}
 			this._update(camera, emitter);
-		};
-		_proto.submit = function submit(array, index) {
-			var arrayIndex = index * 16;
-			var matrixElements = this._matrix.elements;
+		}
+		submit(array, index) {
+			const arrayIndex = index * 16;
+			const matrixElements = this._matrix.elements;
 			array[arrayIndex] = matrixElements[0];
 			array[arrayIndex + 1] = matrixElements[1];
 			array[arrayIndex + 2] = matrixElements[2];
@@ -2170,41 +2162,41 @@
 			array[arrayIndex + 13] = this._color.g;
 			array[arrayIndex + 14] = this._color.b;
 			array[arrayIndex + 15] = this._opacity;
-		};
-		_proto._update = function _update(camera, emitter) {
-			var age = this._originParams[1];
-			var positionInTime = age / this._originParams[2];
+		}
+		_update(camera, emitter) {
+			const age = this._originParams[1];
+			const positionInTime = age / this._originParams[2];
 
 			// position
 
-			var vA = _vec3_1.fromArray(this._originAcceleration);
+			const vA = _vec3_1.fromArray(this._originAcceleration);
 			if (emitter.SHOULD_DRAG_PARTICLES) {
-				var fDrag = 1.0 - positionInTime * 0.5 * this._originAcceleration[3];
+				const fDrag = 1.0 - positionInTime * 0.5 * this._originAcceleration[3];
 				vA.multiplyScalar(fDrag);
 			}
 			_position.fromArray(this._originVelocity).multiplyScalar(age);
-			var halfAt2 = vA.multiplyScalar(age * age * 0.5);
+			const halfAt2 = vA.multiplyScalar(age * age * 0.5);
 			_position.add(_vec3_2.fromArray(this._originPosition)).add(halfAt2);
 			if (emitter.SHOULD_WIGGLE_PARTICLES) {
-				var fWiggle = positionInTime * this._originParams[3] * Math.PI;
-				var fWiggleSin = Math.sin(fWiggle);
-				var fWiggleCos = Math.cos(fWiggle);
+				const fWiggle = positionInTime * this._originParams[3] * Math.PI;
+				const fWiggleSin = Math.sin(fWiggle);
+				const fWiggleCos = Math.cos(fWiggle);
 				_position.x += fWiggleSin;
 				_position.y += fWiggleCos;
 				_position.z += fWiggleSin;
 			}
 			if (emitter.SHOULD_ROTATE_PARTICLES) {
-				var rotationAngle = this._originRotation[3];
+				const rotationAngle = this._originRotation[3];
 				if (rotationAngle !== 0) {
-					var angle = 0.0;
+					let angle = 0.0;
 					if (this._originRotation[4] === 0) {
 						angle = rotationAngle;
 					} else {
 						angle = Utils.lerp(0.0, rotationAngle, positionInTime);
 					}
-					var axis = _vec3_1.fromArray(this._originRotation);
-					var rotationMatrix = _mat4_1.makeRotationAxis(axis, angle);
-					var translated = _vec3_1.fromArray(this._originRotationCenter).sub(_position);
+					const axis = _vec3_1.fromArray(this._originRotation);
+					const rotationMatrix = _mat4_1.makeRotationAxis(axis, angle);
+					const translated = _vec3_1.fromArray(this._originRotationCenter).sub(_position);
 					translated.applyMatrix4(rotationMatrix);
 					_position.fromArray(this._originRotationCenter).sub(translated);
 				}
@@ -2214,7 +2206,7 @@
 
 			_scale.set(1, 1, 1);
 			if (emitter.SHOULD_SIZE_PARTICLES) {
-				var s = getFloatOverLifetime(positionInTime, this._originSizeArray);
+				const s = getFloatOverLifetime(positionInTime, this._originSizeArray);
 				_scale.set(s, s, s);
 			}
 
@@ -2232,7 +2224,7 @@
 					_rotation.setFromUnitVectors(_vec3_1.set(0, 0, -1), _vec3_2.normalize());
 				}
 			} else if (emitter.SHOULD_ANGLE_PARTICLES) {
-				var r = getFloatOverLifetime(positionInTime, this._originAngleArray); // rotate all x, y, z ?
+				const r = getFloatOverLifetime(positionInTime, this._originAngleArray); // rotate all x, y, z ?
 				_euler_1.set(r, r, r);
 				_rotation.setFromEuler(_euler_1, false);
 			}
@@ -2250,26 +2242,25 @@
 				this._color.setRGB(1, 1, 1);
 				this._opacity = 1;
 			}
-		};
-		return MeshParticle;
-	}();
-	var _vec3_1 = new t3d__namespace.Vector3();
-	var _vec3_2 = new t3d__namespace.Vector3();
-	var _euler_1 = new t3d__namespace.Euler();
-	var _mat4_1 = new t3d__namespace.Matrix4();
-	var _position = new t3d__namespace.Vector3();
-	var _rotation = new t3d__namespace.Quaternion();
-	var _scale = new t3d__namespace.Vector3();
+		}
+	}
+	const _vec3_1 = new t3d__namespace.Vector3();
+	const _vec3_2 = new t3d__namespace.Vector3();
+	const _euler_1 = new t3d__namespace.Euler();
+	const _mat4_1 = new t3d__namespace.Matrix4();
+	const _position = new t3d__namespace.Vector3();
+	const _rotation = new t3d__namespace.Quaternion();
+	const _scale = new t3d__namespace.Vector3();
 	function getFloatOverLifetime(positionInTime, attr) {
-		var maxAge = ParticleProperties.valueOverLifetimeLength - 1;
-		var value = 0;
+		const maxAge = ParticleProperties.valueOverLifetimeLength - 1;
+		let value = 0;
 		if (positionInTime <= 0.0) {
 			value = 0;
 		} else if (positionInTime >= 1.0) {
 			value = attr[maxAge];
 		} else {
-			var deltaAge = positionInTime * maxAge;
-			for (var i = 0; i < maxAge; i++) {
+			const deltaAge = positionInTime * maxAge;
+			for (let i = 0; i < maxAge; i++) {
 				if (deltaAge > i && deltaAge < i + 1.0) {
 					value += Utils.lerp(attr[i], attr[i + 1], deltaAge - i);
 					break;
@@ -2279,15 +2270,15 @@
 		return value;
 	}
 	function getColorOverLifetime(positionInTime, attr, out) {
-		var maxAge = ParticleProperties.valueOverLifetimeLength - 1;
+		const maxAge = ParticleProperties.valueOverLifetimeLength - 1;
 		if (positionInTime <= 0.0) {
 			out.fromArray(attr, 0);
 		} else if (positionInTime >= 1.0) {
 			out.fromArray(attr, maxAge * 3);
 		} else {
-			var deltaAge = positionInTime * maxAge;
-			var ratio, index, nextIndex;
-			for (var i = 0; i < maxAge; i++) {
+			const deltaAge = positionInTime * maxAge;
+			let ratio, index, nextIndex;
+			for (let i = 0; i < maxAge; i++) {
 				if (deltaAge > i && deltaAge < i + 1.0) {
 					ratio = deltaAge - i;
 					index = i * 3;
@@ -2302,21 +2293,17 @@
 		return out;
 	}
 
-	var MeshParticleEmitter = /*#__PURE__*/function (_AbstractParticleEmit) {
-		_inheritsLoose(MeshParticleEmitter, _AbstractParticleEmit);
-		function MeshParticleEmitter(options) {
-			var _this;
-			_this = _AbstractParticleEmit.call(this, options) || this;
-			_this._activeParticles = new Array();
-			_this._particlePool = new Array();
-			return _this;
+	class MeshParticleEmitter extends AbstractParticleEmitter {
+		constructor(options) {
+			super(options);
+			this._activeParticles = new Array();
+			this._particlePool = new Array();
 		}
-		var _proto = MeshParticleEmitter.prototype;
-		_proto.tick = function tick(dt, camera) {
+		tick(dt, camera) {
 			if (this.isStatic) {
-				for (var i = 0, len = this._activeParticles.length; i < len; i++) {
+				for (let i = 0, len = this._activeParticles.length; i < len; i++) {
 					if (this._activeParticles[i].isAlive()) {
-						var group = this.group;
+						const group = this.group;
 						this._activeParticles[i].submit(group.$instanceBuffer.array, group.$allocBufferIndex());
 					}
 				}
@@ -2326,16 +2313,16 @@
 				this.age = 0.0;
 				return;
 			}
-			var outDuration = this.duration !== null && this.age > this.duration;
+			const outDuration = this.duration !== null && this.age > this.duration;
 
 			// spawn particles
 
 			if (!outDuration) {
-				var activationCount = this._activeParticles.length;
-				var ppsDt = this.particlesPerSecond * this.activeMultiplier * dt;
-				var spawnCount = Math.min(activationCount + ppsDt, this.particleCount) - activationCount;
-				for (var _i = 0; _i < spawnCount; _i++) {
-					var particle = this._particlePool.length <= 0 ? new MeshParticle() : this._particlePool.shift();
+				const activationCount = this._activeParticles.length;
+				const ppsDt = this.particlesPerSecond * this.activeMultiplier * dt;
+				const spawnCount = Math.min(activationCount + ppsDt, this.particleCount) - activationCount;
+				for (let i = 0; i < spawnCount; i++) {
+					const particle = this._particlePool.length <= 0 ? new MeshParticle() : this._particlePool.shift();
 					this._resetParticle(particle);
 					this._activeParticles.push(particle);
 				}
@@ -2343,16 +2330,16 @@
 
 			// tick particles
 
-			for (var _i2 = 0, _len = this._activeParticles.length; _i2 < _len; _i2++) {
-				this._activeParticles[_i2].tick(dt, camera, this);
-				if (this._activeParticles[_i2].isAlive()) {
-					var _group = this.group;
-					this._activeParticles[_i2].submit(_group.$instanceBuffer.array, _group.$allocBufferIndex());
+			for (let i = 0, len = this._activeParticles.length; i < len; i++) {
+				this._activeParticles[i].tick(dt, camera, this);
+				if (this._activeParticles[i].isAlive()) {
+					const group = this.group;
+					this._activeParticles[i].submit(group.$instanceBuffer.array, group.$allocBufferIndex());
 				} else {
-					this._particlePool.push(this._activeParticles[_i2]);
-					this._activeParticles.splice(_i2, 1);
-					_len--;
-					_i2--;
+					this._particlePool.push(this._activeParticles[i]);
+					this._activeParticles.splice(i, 1);
+					len--;
+					i--;
 				}
 			}
 
@@ -2368,24 +2355,24 @@
 			if (this.alive) {
 				this.age += dt;
 			}
-		};
-		_proto.reset = function reset(force) {
+		}
+		reset(force) {
 			this.alive = false;
 			this.age = 0.0;
 			if (force) {
 				this._activeParticles = [];
 				this._particlePool = [];
 			}
-		};
-		_proto.$updateFlags = function $updateFlags(group) {
+		}
+		$updateFlags(group) {
 			this.SHOULD_DRAG_PARTICLES = !!Math.max(this.drag._value, this.drag._spread);
 			this.SHOULD_WIGGLE_PARTICLES = !!Math.max(this.wiggle._value, this.wiggle._spread);
 			this.SHOULD_ROTATE_PARTICLES = !!Math.max(this.rotation._angle, this.rotation._angleSpread);
 			this.SHOULD_COLORIZE_PARTICLES = group.colorize;
 			this.SHOULD_SIZE_PARTICLES = true;
 			this.SHOULD_ANGLE_PARTICLES = true;
-		};
-		_proto._assignValue = function _assignValue(prop, out, particlePos, out2) {
+		}
+		_assignValue(prop, out, particlePos, out2) {
 			switch (prop) {
 				case 'position':
 					this._assignPositionValue(out, 0);
@@ -2411,8 +2398,8 @@
 					this._assignColorValue(out, 0);
 					break;
 			}
-		};
-		_proto._resetParticle = function _resetParticle(particle) {
+		}
+		_resetParticle(particle) {
 			this._assignValue('position', particle._originPosition);
 			this._assignValue('velocity', particle._originVelocity, particle._originPosition);
 			this._assignValue('acceleration', particle._originAcceleration, particle._originPosition);
@@ -2422,41 +2409,36 @@
 			this._assignValue('color', particle._originColorArray);
 			this._assignValue('params', particle._originParams);
 			this._assignValue('rotation', particle._originRotation, undefined, particle._originRotationCenter);
-		};
-		return MeshParticleEmitter;
-	}(AbstractParticleEmitter);
+		}
+	}
 
-	var MeshParticleGroup = /*#__PURE__*/function (_AbstractParticleGrou) {
-		_inheritsLoose(MeshParticleGroup, _AbstractParticleGrou);
-		function MeshParticleGroup(options) {
-			var _this;
-			var types = Utils.types;
+	class MeshParticleGroup extends AbstractParticleGroup {
+		constructor(options) {
+			const types = Utils.types;
 
 			// Ensure we have a map of options to play with
 			options = Utils.ensureTypedArg(options, types.OBJECT, {});
-			_this = _AbstractParticleGrou.call(this, options) || this;
+			super(options);
 			if (options.maxParticleCount === undefined) {
 				console.warn("MeshParticleGroup: options.maxParticleCount is not provided, set to 1000 by default.");
 				options.maxParticleCount = 1000;
 			}
-			_this.maxParticleCount = options.maxParticleCount;
+			this.maxParticleCount = options.maxParticleCount;
 			if (!options.geometry || !(options.geometry instanceof t3d__namespace.Geometry)) {
 				console.warn("MeshParticleGroup: options.geometry is not provided, set a box geometry by default.");
 				options.geometry = new t3d__namespace.BoxGeometry(1, 1, 1);
 			}
-			var geometry = generateInstancedGeometry(options.geometry, _this.maxParticleCount);
-			var material = new t3d__namespace.ShaderMaterial(MeshParticleShader);
-			_this._setMaterial(material, options);
-			_this.mesh = new t3d__namespace.Mesh(geometry, material);
-			_this.mesh.frustumCulled = false;
-			_this.$instanceBuffer = geometry.attributes.mcol0.buffer;
-			_this._geometry = geometry;
-			_this._particleCount = 0;
-			_this._aliveParticleCount = 0;
-			return _this;
+			const geometry = generateInstancedGeometry(options.geometry, this.maxParticleCount);
+			const material = new t3d__namespace.ShaderMaterial(MeshParticleShader);
+			this._setMaterial(material, options);
+			this.mesh = new t3d__namespace.Mesh(geometry, material);
+			this.mesh.frustumCulled = false;
+			this.$instanceBuffer = geometry.attributes.mcol0.buffer;
+			this._geometry = geometry;
+			this._particleCount = 0;
+			this._aliveParticleCount = 0;
 		}
-		var _proto = MeshParticleGroup.prototype;
-		_proto.addEmitter = function addEmitter(emitter) {
+		addEmitter(emitter) {
 			if (emitter instanceof MeshParticleEmitter === false) {
 				console.error('`emitter` argument must be instance of MeshParticleEmitter. Was provided with:', emitter);
 				return;
@@ -2475,9 +2457,9 @@
 			this._emitters.push(emitter);
 			this.$updateDefines(emitter);
 			return this;
-		};
-		_proto.removeEmitter = function removeEmitter(emitter) {
-			var emitterIndex = this._emitters.indexOf(emitter);
+		}
+		removeEmitter(emitter) {
+			const emitterIndex = this._emitters.indexOf(emitter);
 			if (emitter instanceof MeshParticleEmitter === false) {
 				console.error('`emitter` argument must be instance of MeshParticleEmitter. Was provided with:', emitter);
 				return;
@@ -2489,60 +2471,54 @@
 			emitter.group = null;
 			this._emitters.splice(emitterIndex, 1);
 			return this;
-		};
-		_proto.tick = function tick(dt, camera) {
-			var emitters = this._emitters,
+		}
+		tick(dt, camera) {
+			const emitters = this._emitters,
 				numEmitters = emitters.length,
 				deltaTime = dt || this.fixedTimeStep;
 			if (numEmitters === 0) {
 				return;
 			}
 			this._aliveParticleCount = 0;
-			for (var i = 0; i < numEmitters; i++) {
+			for (let i = 0; i < numEmitters; i++) {
 				emitters[i].tick(deltaTime, camera);
 			}
 			this.$instanceBuffer.version++;
 			this._geometry.instanceCount = this._aliveParticleCount;
-		};
-		_proto.dispose = function dispose() {
+		}
+		dispose() {
 			this.mesh.geometry.dispose();
 			this.mesh.material.dispose();
-			for (var i = 0, l = this._emitters.length; i < l; i++) {
+			for (let i = 0, l = this._emitters.length; i < l; i++) {
 				this._emitters[i].group = null;
 			}
 			this._emitters = [];
 			this._particleCount = 0;
 			this._aliveParticleCount = 0;
 			return this;
-		};
-		_proto.$updateDefines = function $updateDefines(emitter) {
+		}
+		get particleCount() {
+			return this._particleCount;
+		}
+		get aliveParticleCount() {
+			return this._aliveParticleCount;
+		}
+		$updateDefines(emitter) {
 			emitter.$updateFlags(this);
-		};
-		_proto.$allocBufferIndex = function $allocBufferIndex() {
+		}
+		$allocBufferIndex() {
 			return this._aliveParticleCount++;
-		};
-		_createClass(MeshParticleGroup, [{
-			key: "particleCount",
-			get: function get() {
-				return this._particleCount;
-			}
-		}, {
-			key: "aliveParticleCount",
-			get: function get() {
-				return this._aliveParticleCount;
-			}
-		}]);
-		return MeshParticleGroup;
-	}(AbstractParticleGroup);
+		}
+	}
 	function generateInstancedGeometry(geometry, count) {
-		var instancedGeometry = geometry.clone();
-		var buffer = new t3d__namespace.Buffer(new Float32Array(count * 16), 16);
+		const instancedGeometry = geometry.clone();
+		const buffer = new t3d__namespace.Buffer(new Float32Array(count * 16), 16);
 		buffer.usage = t3d__namespace.BUFFER_USAGE.DYNAMIC_DRAW;
-		var mcol0 = new t3d__namespace.Attribute(buffer, 3, 0);
-		var mcol1 = new t3d__namespace.Attribute(buffer, 3, 3);
-		var mcol2 = new t3d__namespace.Attribute(buffer, 3, 6);
-		var mcol3 = new t3d__namespace.Attribute(buffer, 3, 9);
-		var colors = new t3d__namespace.Attribute(buffer, 4, 12);
+		const mcol0 = new t3d__namespace.Attribute(buffer, 3, 0);
+		const mcol1 = new t3d__namespace.Attribute(buffer, 3, 3);
+		const mcol2 = new t3d__namespace.Attribute(buffer, 3, 6);
+		const mcol3 = new t3d__namespace.Attribute(buffer, 3, 9);
+		const colors = new t3d__namespace.Attribute(buffer, 4, 12);
 		mcol0.divisor = 1;
 		mcol1.divisor = 1;
 		mcol2.divisor = 1;
