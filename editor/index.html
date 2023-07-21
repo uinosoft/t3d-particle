@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>Particlr Editor</title>
+    <title>Particle Editor</title>
     <meta name="viewport"
         content="user-scalable=no, width=device-width, initial-scale=1.0, minimum-scale=1.0,maximum-scale=1.0" />
     <link rel="stylesheet" type="text/css" href="css/style.css">
@@ -27,32 +27,38 @@
         import {
         	ParticleGroup, ParticleEmitter, MeshParticleGroup, MeshParticleEmitter
         } from 't3d-particle';
-        import { Clock } from 't3d/examples/jsm/Clock.js';
         import { OrbitControls } from 't3d/examples/jsm/controls/OrbitControls.js';
         import { GUI } from './js/lil-gui.esm.min.js';
         import { Texture2DLoader } from 't3d/examples/jsm/loaders/Texture2DLoader.js';
         import { GeometryUtils } from 't3d/examples/jsm/geometries/GeometryUtils.js';
+        import { importFileJSON, exportFileJSON } from './js/Utils.js';
         import {
         	ParticleData,
         	ParticleGroupData,
         	ParticleEmitterData,
-        	GroupTexture,
-        	MaxAge,
-        	Position,
-        	Velocity,
-        	Acceleration,
-        	Drag,
-        	Wiggle,
-        	Rotation,
         	Color,
         	Opacity,
         	Size,
         	Angle
         } from './js/ParticleData.js';
 
-        let width, height, scene, camera, renderer, backRenderTarget, clock, controller;
+        let width, height, scene, camera, renderer, backRenderTarget, controller;
 
-        let particleGroup, emitterArray, particleData;
+        let particleGroups = [];
+        let particleData = new ParticleData();
+        const texArray = {
+        	smoke1: new Texture2DLoader().load('../examples/resources/img/smokeparticle.png'),
+        	point: new Texture2DLoader().load('https://static.3dmomoda.com/textures/181009160bscjqf1tmbysoz2uvtuvilz.jpg'),
+        	fire: new Texture2DLoader().load('https://static.3dmomoda.com/textures/18100916vuhgsdtljucvrysf9wftwufb.jpg'),
+        	smoke2: new Texture2DLoader().load('https://static.3dmomoda.com/textures/18100916fmqvpceomi9sxmao1pvicn2n.png'),
+        	star: new Texture2DLoader().load('http://static.3dmomoda.com/textures/18092617nyspq5moaka1i2fhvs1hh66s.png'),
+        	cloud: new Texture2DLoader().load('../examples/resources/img/cloud.png'),
+        	flame: new Texture2DLoader().load('../examples/resources/img/sprite-flame2.jpg')
+        };
+        const texture = {
+        	value: 'smoke1',
+        	array: ['smoke1', 'point', 'fire', 'smoke2', 'star', 'cloud', 'flame']
+        }
 
         function init() {
         	width = window.innerWidth || 2;
@@ -74,85 +80,154 @@
         	camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 10000);
         	camera.position.z = 50;
         	scene.add(camera);
+        	scene.fog = new t3d.Fog(undefined, 1, 100);
 
         	renderer = new t3d.Renderer(gl);
         	renderer.renderPass.state.colorBuffer.setClear(0, 0, 0, 1);
         	backRenderTarget = new t3d.RenderTargetBack(canvas);
 
-        	clock = new Clock();
-
         	controller = new OrbitControls(camera, canvas);
-
-        	emitterArray = [];
         }
 
-        function createParticleGroup(topGui) {
-        	particleGroup = new ParticleGroup({
+        function createParticleGroup(topGui, data) {
+        	let particleGroupData = data || new ParticleGroupData();
+        	particleData.listGroups.push(particleGroupData);
+        	let particleGroup = new ParticleGroup({
         		texture: {
-        			value: new Texture2DLoader().load('../examples/resources/img/smokeparticle.png')
+        			value: new Texture2DLoader().load(particleGroupData.texture.url),
+        			frames: particleGroupData.texture.vec2Frames,
+        			frameCount: particleGroupData.texture.iFrameCount,
+        			loop: particleGroupData.texture.iLoop
         		},
-        		maxParticleCount: 2000
+        		fixedTimeStep: particleGroupData.fixedTimeStep,
+        		hasPerspective: particleGroupData.hasPerspective,
+        		colorize: particleGroupData.isColorize,
+        		blending: particleGroupData.blendingMode,
+        		transparent: particleGroupData.isTransparent,
+        		alphaTest: particleGroupData.alphaTest,
+        		depthWrite: particleGroupData.isDepthWrite,
+        		depthTest: particleGroupData.isDepthTest,
+        		fog: particleGroupData.isFog,
+        		scale: particleGroupData.scale,
+        		maxParticleCount: particleGroupData.maxParticleCount
         	});
-        	particleData = new ParticleData();
+        	particleGroups.push(particleGroup);
 
         	const groupFolder = topGui.addFolder('粒子组');
-        	groupFolder.add(particleData.listGroups[0], 'useMesh').name('是否启用网格').onChange(value => {
-        		particleData.reset();
-        		particleData.listGroups[0].useMesh = value;
+        	groupFolder.add(texture, 'value', texture.array).name('纹理').onChange(value => {
+        		const mat = particleGroup.mesh.material instanceof t3d.ShaderMaterial ? particleGroup.mesh.material : particleGroup.mesh.material[0];
+        		mat.uniforms.tex = texArray[value];
+        		particleGroupData.texture.name = value;
+        		particleGroupData.texture.url = texArray[value].image.attributes.src.nodeValue;
+        	});
+        	const tex_frame = groupFolder.addFolder('纹理帧').onChange(() => {
+        		if (!particleGroupData.useMesh) {
+        			particleGroup.textureFrames = particleGroupData.texture.vec2Frames;
+        			particleGroup.material.defines["SHOULD_CALCULATE_SPRITE"] = particleGroupData.texture.vec2Frames.x > 1 || particleGroupData.texture.vec2Frames.y > 1;
+        			particleGroup.material.uniforms.textureAnimation[0] = particleGroupData.texture.vec2Frames.x;
+        			particleGroup.material.uniforms.textureAnimation[1] = particleGroupData.texture.vec2Frames.y;
+        			particleGroup.textureFrameCount = particleGroupData.texture.vec2Frames.x * particleGroupData.texture.vec2Frames.y;
+        			particleGroup.material.uniforms.textureAnimation[2] = particleGroup.textureFrameCount;
+        			particleGroup.textureLoop = particleGroupData.texture.iLoop;
+        			particleGroup.material.uniforms.textureAnimation[3] = Math.max(Math.abs(particleGroupData.texture.iLoop), 1.0);
+        			particleGroup.material.needsUpdate = true;
+        		}
+        	}).close();
+        	tex_frame.add(particleGroupData.texture.vec2Frames, 'x', 1, 10);
+        	tex_frame.add(particleGroupData.texture.vec2Frames, 'y', 1, 10);
+        	groupFolder.add(particleGroupData.texture, 'iLoop', 0, 5).name('纹理循环');
+        	const useMeshGui = groupFolder.add(particleGroupData, 'useMesh').name('是否启用网格').onChange(value => {
+        		particleGroupData.useMesh = value;
 
         		if (value) {
-        			groupFolder.add(particleData.listGroups[0], 'meshUrl', ["BuildIn/Box", "BuildIn/Plane", "BuildIn/Sphere"]).name('网格模型').onChange(value => {
-        				if (particleData.listGroups[0].useMesh) {
-        					createMSPEParticleGroup(value, groupFolder);
+        			groupFolder.add(particleGroupData, 'meshUrl', ["BuildIn/Box", "BuildIn/Plane", "BuildIn/Sphere"]).name('网格模型').onChange(value => {
+        				if (particleGroupData.useMesh) {
+        					particleGroupData.meshUrl = value;
+
+        					particleGroup = createMSPEParticleGroup(particleGroupData, particleGroup, groupFolder);
+
+        					particleGroups.push(particleGroup);
+        					particleGroup.gui = groupFolder;
+        					particleGroupData.listEmitters.forEach((emitterData) => {
+        						createEmitter(emitterData, particleGroup, true);
+        					});
+        					scene.add(particleGroup.mesh);
         				}
         			});
 
-        			createMSPEParticleGroup(particleData.listGroups[0].meshUrl, groupFolder);
+        			particleGroup = createMSPEParticleGroup(particleGroupData, particleGroup);
+
+        			particleGroups.push(particleGroup);
+        			particleGroup.gui = groupFolder;
+        			particleGroupData.listEmitters.forEach((emitterData) => {
+        				createEmitter(emitterData, particleGroup, true);
+        			});
+        			scene.add(particleGroup.mesh);
 
         			resetGroupGui(groupFolder);
-        			groupFolder.controllers[1].disable();
+        			groupFolder.controllers[3].disable();
         		} else {
+        			particleGroups.splice(particleGroups.indexOf(particleGroup), 1);
+        			particleGroup._emitters.forEach(emitter => {
+        				emitter.gui.destroy();
+        			})
         			particleGroup.dispose();
         			scene.remove(particleGroup.mesh);
         			particleGroup = null;
-        			emitterArray.forEach(element => {
-        				element.gui.destroy();
-        			});
-        			emitterArray = [];
 
         			particleGroup = new ParticleGroup({
         				texture: {
-        					value: new Texture2DLoader().load('../examples/resources/img/smokeparticle.png')
+        					value: new Texture2DLoader().load(particleGroupData.texture.url),
+        					frames: particleGroupData.texture.vec2Frames,
+        					frameCount: particleGroupData.texture.iFrameCount,
+        					loop: particleGroupData.texture.iLoop
         				},
-        				maxParticleCount: 2000
+        				fixedTimeStep: particleGroupData.fixedTimeStep,
+        				hasPerspective: particleGroupData.hasPerspective,
+        				colorize: particleGroupData.isColorize,
+        				blending: particleGroupData.blendingMode,
+        				transparent: particleGroupData.isTransparent,
+        				alphaTest: particleGroupData.alphaTest,
+        				depthWrite: particleGroupData.isDepthWrite,
+        				depthTest: particleGroupData.isDepthTest,
+        				fog: particleGroupData.isFog,
+        				scale: particleGroupData.scale,
+        				maxParticleCount: particleGroupData.maxParticleCount
         			});
 
-        			createEmitter(groupFolder);
-        			scene.add(particleGroup.mesh);
+        			particleGroups.push(particleGroup);
         			particleGroup.gui = groupFolder;
+        			particleGroupData.listEmitters.forEach((emitterData) => {
+        				createEmitter(emitterData, particleGroup);
+        			});
+        			scene.add(particleGroup.mesh);
 
         			resetGroupGui(groupFolder);
-        			groupFolder.controllers[1].enable();
-        			groupFolder.controllers[10].destroy();
+        			groupFolder.controllers[3].enable();
+        			groupFolder.controllers[14] && groupFolder.controllers[14].destroy();
         		}
         	});
 
-        	groupFolder.add(particleData.listGroups[0], 'hasPerspective').name('透视').onChange(value => {
-        		if (!particleData.listGroups[0].useMesh) {
+        	groupFolder.add(particleGroupData, 'hasPerspective').name('透视').onChange(value => {
+        		if (!particleGroupData.useMesh) {
         			particleGroup.material.defines["HAS_PERSPECTIVE"] = value;
         			particleGroup.material.needsUpdate = true;
         		}
         	});
 
-        	groupFolder.add(particleData.listGroups[0], 'isColorize').name('上色').onChange(value => {
-        		if (!particleData.listGroups[0].useMesh) {
+        	groupFolder.add(particleGroupData, 'isColorize').name('上色').onChange(value => {
+        		if (!particleGroupData.useMesh) {
         			particleGroup.material.defines["COLORIZE"] = value;
         			particleGroup.material.needsUpdate = true;
+        		} else {
+        			particleGroup._emitters.forEach(emitter => {
+        				emitter.SHOULD_COLORIZE_PARTICLES = value;
+        			})
         		}
         	});
 
-        	groupFolder.add(particleData.listGroups[0], 'isTransparent').name('透明').onChange(value => {
-        		if (particleData.listGroups[0].useMesh) {
+        	groupFolder.add(particleGroupData, 'isTransparent').name('透明').onChange(value => {
+        		if (particleGroupData.useMesh) {
         			particleGroup.mesh.material.transparent = value;
         			particleGroup.mesh.material.needsUpdate = true;
         		} else {
@@ -161,8 +236,8 @@
         		}
         	});
 
-        	groupFolder.add(particleData.listGroups[0], 'blendingMode', ["none", "normal", "add", "sub", "mul", "custom"]).name('混合模式').onChange(value => {
-        		if (particleData.listGroups[0].useMesh) {
+        	groupFolder.add(particleGroupData, 'blendingMode', ["none", "normal", "add", "sub", "mul", "custom"]).name('混合模式').onChange(value => {
+        		if (particleGroupData.useMesh) {
         			particleGroup.mesh.material.blending = value;
         			particleGroup.mesh.material.needsUpdate = true;
         		} else {
@@ -171,8 +246,8 @@
         		}
         	});
 
-        	groupFolder.add(particleData.listGroups[0], 'alphaTest', 0, 1, 0.1).name('alpha测试').onChange(value => {
-        		if (particleData.listGroups[0].useMesh) {
+        	groupFolder.add(particleGroupData, 'alphaTest', 0, 1, 0.1).name('alpha测试').onChange(value => {
+        		if (particleGroupData.useMesh) {
         			particleGroup.mesh.material.alphaTest = value;
         			particleGroup.mesh.material.needsUpdate = true;
         		} else {
@@ -181,8 +256,8 @@
         		}
         	});
 
-        	groupFolder.add(particleData.listGroups[0], 'isDepthWrite').name('深度写入').onChange(value => {
-        		if (particleData.listGroups[0].useMesh) {
+        	groupFolder.add(particleGroupData, 'isDepthWrite').name('深度写入').onChange(value => {
+        		if (particleGroupData.useMesh) {
         			particleGroup.mesh.material.depthWrite = value;
         			particleGroup.mesh.material.needsUpdate = true;
         		} else {
@@ -191,8 +266,8 @@
         		}
         	});
 
-        	groupFolder.add(particleData.listGroups[0], 'isDepthTest').name('深度测试').onChange(value => {
-        		if (particleData.listGroups[0].useMesh) {
+        	groupFolder.add(particleGroupData, 'isDepthTest').name('深度测试').onChange(value => {
+        		if (particleGroupData.useMesh) {
         			particleGroup.mesh.material.depthTest = value;
         			particleGroup.mesh.material.needsUpdate = true;
         		} else {
@@ -201,8 +276,8 @@
         		}
         	});
 
-        	groupFolder.add(particleData.listGroups[0], 'isFog').name('是否启用雾').onChange(value => {
-        		if (particleData.listGroups[0].useMesh) {
+        	groupFolder.add(particleGroupData, 'isFog').name('是否启用雾').onChange(value => {
+        		if (particleGroupData.useMesh) {
         			particleGroup.mesh.material.fog = value;
         			particleGroup.mesh.material.needsUpdate = true;
         		} else {
@@ -211,26 +286,49 @@
         		}
         	});
 
-        	groupFolder.add(particleData.listGroups[0], 'fixedTimeStep').name('更新频率').onFinishChange(value => {
+        	groupFolder.add(particleGroupData, 'fixedTimeStep').name('更新频率').onFinishChange(value => {
         		particleGroup.fixedTimeStep = value;
         	});
 
-        	createEmitter(groupFolder);
-        	scene.add(particleGroup.mesh);
+        	const updateEmitter = {
+        		'添加粒子发射器': function() {
+        			const emitterData = new ParticleEmitterData();
+        			particleGroupData.listEmitters.push(emitterData);
+        			createEmitter(emitterData, particleGroup, particleGroupData.useMesh);
+        			particleGroup._emitters.length > 1 ? delectEmitter.enable() : delectEmitter.disable();
+        		},
+        		'删除粒子发射器': function() {
+        			const index = particleGroup._emitters.length - 1;
+        			particleGroupData.listEmitters.splice(index, 1);
+        			const destroyEmitter = particleGroup._emitters[index];
+        			destroyEmitter.gui.destroy();
+        			particleGroup.removeEmitter(destroyEmitter);
+        			particleGroup._emitters.length > 1 ? delectEmitter.enable() : delectEmitter.disable();
+        		}
+        	}
+        	groupFolder.add(updateEmitter, '添加粒子发射器');
+        	const delectEmitter = groupFolder.add(updateEmitter, '删除粒子发射器');
+
         	particleGroup.gui = groupFolder;
+        	particleGroupData.listEmitters.forEach((emitterData) => {
+        		createEmitter(emitterData, particleGroup);
+        	});
+        	particleGroup._emitters.length > 1 ? delectEmitter.enable() : delectEmitter.disable();
+        	scene.add(particleGroup.mesh);
+
+        	useMeshGui._callOnChange(particleGroupData.useMesh);
         }
 
-        function createMSPEParticleGroup(geometryType, groupGui) {
+        function createMSPEParticleGroup(groupData, particleGroup) {
+        	particleGroups.splice(particleGroups.indexOf(particleGroup), 1);
+        	let geometry;
+        	particleGroup._emitters.forEach(emitter => {
+        		emitter.gui.destroy();
+        	})
         	particleGroup.dispose();
         	scene.remove(particleGroup.mesh);
         	particleGroup = null;
-        	emitterArray.forEach(element => {
-        		element.gui.destroy();
-        	});
-        	emitterArray = [];
-
-        	let geometry;
-        	switch (geometryType) {
+        	switch (groupData.meshUrl) {
         		case "BuildIn/Plane":
         			const rotationMatrix = new t3d.Matrix4();
         			const euler = new t3d.Euler(Math.PI / 2, 0, 0);
@@ -253,25 +351,33 @@
         			value: new Texture2DLoader().load('../examples/resources/img/smokeparticle.png')
         		},
         		geometry: geometry,
-        		maxParticleCount: 2000
+        		fixedTimeStep: groupData.fixedTimeStep,
+        		hasPerspective: groupData.hasPerspective,
+        		colorize: groupData.isColorize,
+        		blending: groupData.blendingMode,
+        		transparent: groupData.isTransparent,
+        		alphaTest: groupData.alphaTest,
+        		depthWrite: groupData.isDepthWrite,
+        		depthTest: groupData.isDepthTest,
+        		fog: groupData.isFog,
+        		scale: groupData.scale,
+        		maxParticleCount: groupData.maxParticleCount
         	});
-
-        	createEmitter(groupGui, true);
-        	scene.add(particleGroup.mesh);
-        	particleGroup.gui = groupGui;
+        	return particleGroup;
         }
 
         function removeParticleGroup() {
-        	particleGroup.dispose();
-        	scene.remove(particleGroup.mesh);
-        	particleGroup.gui.destroy();
-        	particleGroup = null;
-        	emitterArray = [];
+        	const index = particleGroups.length - 1;
+        	particleGroups[index].dispose();
+        	particleData.listGroups.splice(index, 1);
+        	scene.remove(particleGroups[index].mesh);
+        	particleGroups[index].gui.destroy();
+        	particleGroups.splice(index, 1);
         }
 
         function resetGroupGui(groupGui) {
+        	groupGui.controllers[0].reset();
         	groupGui.controllers[1].reset();
-        	groupGui.controllers[2].reset();
         	groupGui.controllers[3].reset();
         	groupGui.controllers[4].reset();
         	groupGui.controllers[5].reset();
@@ -279,104 +385,73 @@
         	groupGui.controllers[7].reset();
         	groupGui.controllers[8].reset();
         	groupGui.controllers[9].reset();
+        	groupGui.controllers[10].reset();
+        	groupGui.controllers[11].reset();
+        	groupGui.controllers[12].reset();
+        	groupGui.folders[0].reset();
+        	groupGui.folders[0].controllers[0].reset();
+        	groupGui.folders[0].controllers[1].reset();
         }
 
-        function createEmitter(groupGui, isMesh = false) {
+        function createEmitter(emitterData, group, isMesh = false) {
         	let emitter;
-        	const emitterFolder = groupGui.addFolder('粒子发射器');
+        	parseArrayAttribute(emitterData);
+        	const emitterFolder = group.gui.addFolder('粒子发射器');
         	if (isMesh) {
-        		emitter = new MeshParticleEmitter({
-        			type: 1,
-        			maxAge: {
-        				value: 2
-        			},
-        			position: {
-        				value: new t3d.Vector3(0, 0, 0),
-        				spread: new t3d.Vector3(0, 0, 0)
-        			},
-        			acceleration: {
-        				value: new t3d.Vector3(0, -10, 0),
-        				spread: new t3d.Vector3(10, 0, 10)
-        			},
-        			velocity: {
-        				value: new t3d.Vector3(0, 25, 0),
-        				spread: new t3d.Vector3(10, 7.5, 10)
-        			},
-        			color: {
-        				value: [new t3d.Color3().setHex(0xd53369), new t3d.Color3().setHex(0xcbad6d)]
-        			},
-        			size: {
-        				value: 1
-        			},
-        			particleCount: 100
-        		});
-
-        		particleData.listGroups[0].listEmitters[0].particleCount = 100;
+        		emitter = new MeshParticleEmitter(emitterData);
 
         		// 朝向摄像机
-        		emitterFolder.add(particleData.listGroups[0].listEmitters[0], 'isLookAtCamera').name("朝向摄像机").onChange(value => {
+        		emitterFolder.add(emitterData, 'isLookAtCamera').name("朝向摄像机").onChange(value => {
         			emitter.isLookAtCamera = value;
         		});
 
         		// 锁Y轴
-        		emitterFolder.add(particleData.listGroups[0].listEmitters[0], 'isLookAtCameraOnlyY').name("锁Y轴").onChange(value => {
+        		emitterFolder.add(emitterData, 'isLookAtCameraOnlyY').name("锁Y轴").onChange(value => {
         			emitter.isLookAtCameraOnlyY = value;
         		});
         	} else {
-        		emitter = new ParticleEmitter({
-        			type: 1,
-        			maxAge: {
-        				value: 2
-        			},
-        			position: {
-        				value: new t3d.Vector3(0, 0, 0),
-        				spread: new t3d.Vector3(0, 0, 0)
-        			},
-        			acceleration: {
-        				value: new t3d.Vector3(0, -10, 0),
-        				spread: new t3d.Vector3(10, 0, 10)
-        			},
-        			velocity: {
-        				value: new t3d.Vector3(0, 25, 0),
-        				spread: new t3d.Vector3(10, 7.5, 10)
-        			},
-        			color: {
-        				value: [new t3d.Color3().setHex(0xd53369), new t3d.Color3().setHex(0xcbad6d)]
-        			},
-        			size: {
-        				value: 1
-        			},
-        			particleCount: 1000
-        		});
-
-        		particleData.listGroups[0].listEmitters[0].particleCount = 1000;
+        		emitter = new ParticleEmitter(emitterData);
         	}
 
-        	particleData.listGroups[0].listEmitters[0].listColor.push(new Color());
-        	particleData.listGroups[0].listEmitters[0].listColor[0].value = 0xd53369;
-        	particleData.listGroups[0].listEmitters[0].listColor[1].value = 0xcbad6d;
-        	particleData.listGroups[0].listEmitters[0].maxAge.value = emitter.maxAge.value;
-        	particleData.listGroups[0].listEmitters[0].acceleration.value = emitter.acceleration.value;
-        	particleData.listGroups[0].listEmitters[0].acceleration.spread = emitter.acceleration.spread;
-        	particleData.listGroups[0].listEmitters[0].velocity.value = emitter.velocity.value;
-        	particleData.listGroups[0].listEmitters[0].velocity.spread = emitter.velocity.spread;
-
-        	particleGroup.addEmitter(emitter);
-        	emitterArray.push(emitter);
+        	group.addEmitter(emitter);
 
         	emitterFolder.close();
 
+        	// 粒子数
+        	emitterFolder.add(emitterData, 'particleCount', 0, 500, 1).name("粒子数").onChange(value => {
+        		const emitters = [];
+        		for (let i = 0, l = group._emitters.length; i < l; i++) {
+        			emitters.push(group._emitters[0]);
+        			group.removeEmitter(group._emitters[0]);
+        		}
+        		emitter.particleCount = value;
+        		for (let i = 0; i < emitters.length; i++) {
+        			emitters[i].calculatePPSValue();
+        			group.addEmitter(emitters[i]);
+        		}
+        	})
+
         	// 静态
-        	emitterFolder.add(particleData.listGroups[0].listEmitters[0], 'isStatic').name("静态").onChange(value => {
+        	emitterFolder.add(emitterData, 'isStatic').name("静态").onChange(value => {
         		emitter.isStatic = value;
         	});
 
+        	// 方向
+        	emitterFolder.add(emitterData, "direction", [1, -1]).name("方向").onChange(value => {
+        		emitter.direction = value;
+        	})
+
+        	// 发射百分比
+        	emitterFolder.add(emitterData, "activeMultiplier", 0, 1).name("发射百分比").onChange(value => {
+        		emitter.activeMultiplier = value;
+        	})
+
         	// 最大生命周期
         	const maxAgeFolder = emitterFolder.addFolder('最大生命周期');
-        	maxAgeFolder.add(particleData.listGroups[0].listEmitters[0].maxAge, 'value', 0, 10).name('数值').onFinishChange(value => {
+        	maxAgeFolder.add(emitterData.maxAge, 'value', 0, 10).name('数值').onFinishChange(value => {
         		emitter.maxAge.value = value;
         	});
-        	maxAgeFolder.add(particleData.listGroups[0].listEmitters[0].maxAge, 'spread', 0, 10).name('方差').onFinishChange(value => {
+        	maxAgeFolder.add(emitterData.maxAge, 'spread', 0, 10).name('方差').onFinishChange(value => {
         		emitter.maxAge.spread = value;
         	});
         	maxAgeFolder.close();
@@ -385,7 +460,7 @@
 
         	// 位置
         	staticGui({
-        		obj: particleData.listGroups[0].listEmitters[0].position,
+        		obj: emitterData.position,
         		emitterObj: emitter.position,
         		parentGui: emitterFolder,
         		folderName: '位置', maxValue: 100
@@ -393,7 +468,7 @@
 
         	// 速度
         	staticGui({
-        		obj: particleData.listGroups[0].listEmitters[0].velocity,
+        		obj: emitterData.velocity,
         		emitterObj: emitter.velocity,
         		parentGui: emitterFolder,
         		folderName: '速度', maxValue: 50
@@ -401,7 +476,7 @@
 
         	// 加速度
         	staticGui({
-        		obj: particleData.listGroups[0].listEmitters[0].acceleration,
+        		obj: emitterData.acceleration,
         		emitterObj: emitter.acceleration,
         		parentGui: emitterFolder,
         		folderName: '加速度', maxValue: 50
@@ -409,13 +484,13 @@
 
         	// 阻力
         	const dragFolder = emitterFolder.addFolder('阻力');
-        	dragFolder.add(particleData.listGroups[0].listEmitters[0].drag, 'value', 0, 2).name('数值').onChange(value => {
+        	dragFolder.add(emitterData.drag, 'value', 0, 1).name('数值').onChange(value => {
         		emitter.drag.value = value;
         	});
-        	dragFolder.add(particleData.listGroups[0].listEmitters[0].drag, 'spread', 0, 2).name('方差').onChange(value => {
+        	dragFolder.add(emitterData.drag, 'spread', 0, 1).name('方差').onChange(value => {
         		emitter.drag.spread = value;
         	});
-        	dragFolder.add(particleData.listGroups[0].listEmitters[0].drag, 'randomise').name('随机').onChange(value => {
+        	dragFolder.add(emitterData.drag, 'randomise').name('随机').onChange(value => {
         		emitter.drag.randomise = value;
         	});
         	dragFolder.close();
@@ -426,26 +501,26 @@
         	const rotationAxisSpread = rotationFolder.addFolder('轴向方差');
         	const rotationCenter = rotationFolder.addFolder('中心点');
         	for (i = 0; i < vec3Components.length; ++i) {
-        		rotationAxisValue.add(particleData.listGroups[0].listEmitters[0].rotation.axis, vec3Components[i], 0, 100).listen().onChange(function () {
-        			emitter.rotation.axis = emitter.rotation.axis;
+        		rotationAxisValue.add(emitterData.rotation.axis, vec3Components[i], 0, 1).listen().onChange(value => {
+        			emitter.rotation.axis = emitterData.rotation.axis;
         		});
-        		rotationAxisSpread.add(particleData.listGroups[0].listEmitters[0].rotation.axisSpread, vec3Components[i], 0, 100).listen().onChange(function () {
-        			emitter.rotation.axisSpread = emitter.rotation.axisSpread;
+        		rotationAxisSpread.add(emitterData.rotation.axisSpread, vec3Components[i], 0, 1).listen().onChange(function () {
+        			emitter.rotation.axisSpread = emitterData.rotation.axisSpread;
         		});
-        		rotationCenter.add(particleData.listGroups[0].listEmitters[0].rotation.center, vec3Components[i], 0, 100).listen().onChange(function () {
-        			emitter.rotation.center = emitter.rotation.center;
+        		rotationCenter.add(emitterData.rotation.center, vec3Components[i], 0, 100).listen().onChange(function () {
+        			emitter.rotation.center = emitterData.rotation.center;
         		});
         	}
-        	rotationFolder.add(particleData.listGroups[0].listEmitters[0].rotation, 'angle', 0, 6.28).name('弧度').onChange(value => {
+        	rotationFolder.add(emitterData.rotation, 'angle', 0, 6.28).name('弧度').onChange(value => {
         		emitter.rotation.angle = value;
         	});
-        	rotationFolder.add(particleData.listGroups[0].listEmitters[0].rotation, 'angleSpread', 0, 6.28).name('弧度方差').onChange(value => {
+        	rotationFolder.add(emitterData.rotation, 'angleSpread', 0, 6.28).name('弧度方差').onChange(value => {
         		emitter.rotation.angleSpread = value;
         	});
-        	rotationFolder.add(particleData.listGroups[0].listEmitters[0].rotation, 'isStatic').name('静态').onChange(value => {
+        	rotationFolder.add(emitterData.rotation, 'isStatic').name('静态').onChange(value => {
         		emitter.rotation.static = value;
         	});
-        	rotationFolder.add(particleData.listGroups[0].listEmitters[0].rotation, 'randomise').name('随机').onChange(value => {
+        	rotationFolder.add(emitterData.rotation, 'randomise').name('随机').onChange(value => {
         		emitter.rotation.randomise = value;
         	});
         	rotationFolder.close();
@@ -455,7 +530,7 @@
 
         	// 颜色
         	dynamicGui({
-        		obj: particleData.listGroups[0].listEmitters[0].listColor,
+        		obj: emitterData.listColor,
         		emitterObj: emitter.color,
         		parentGui: emitterFolder,
         		folderName: '颜色',
@@ -463,26 +538,32 @@
 
         	// 透明度
         	dynamicGui({
-        		obj: particleData.listGroups[0].listEmitters[0].listOpacity,
+        		obj: emitterData.listOpacity,
         		emitterObj: emitter.opacity,
         		parentGui: emitterFolder,
-        		folderName: '透明度', maxValue: 1
+        		folderName: '透明度',
+        		minValue: 0,
+        		maxValue: 1
         	});
 
         	// 大小
         	dynamicGui({
-        		obj: particleData.listGroups[0].listEmitters[0].listSize,
+        		obj: emitterData.listSize,
         		emitterObj: emitter.size,
         		parentGui: emitterFolder,
-        		folderName: '大小', maxValue: 10
+        		folderName: '大小',
+        		minValue: 0,
+        		maxValue: 100
         	});
 
         	// 角度
         	dynamicGui({
-        		obj: particleData.listGroups[0].listEmitters[0].listAngle,
+        		obj: emitterData.listAngle,
         		emitterObj: emitter.angle,
         		parentGui: emitterFolder,
-        		folderName: '角度', maxValue: 6.28
+        		folderName: '角度',
+        		minValue: -6.28,
+        		maxValue: 6.28
         	});
 
         	emitter.gui = emitterFolder;
@@ -515,7 +596,7 @@
         }
 
         function dynamicGui(params) {
-        	const { obj, emitterObj, parentGui, folderName, maxValue } = params;
+        	const { obj, emitterObj, parentGui, folderName, minValue, maxValue } = params;
         	let vec3Components = ['x', 'y', 'z'], i;
 
         	const folder = parentGui.addFolder(folderName);
@@ -567,14 +648,14 @@
         				}
         				spreadElement.close();
         			} else {
-        				element.add(data, 'value', 0, maxValue).name('数值').onChange(value => {
+        				element.add(data, 'value', minValue, maxValue).name('数值').onChange(value => {
         					const tempArray = [];
         					for (i = 0; i < obj.length; i++) {
         						tempArray.push(obj[i].value);
         					}
         					emitterObj.value = tempArray;
         				});
-        				element.add(data, 'spread', 0, maxValue).name('方差').onChange(value => {
+        				element.add(data, 'spread', minValue, maxValue).name('方差').onChange(value => {
         					const tempArray = [];
         					for (i = 0; i < obj.length; i++) {
         						tempArray.push(obj[i].spread);
@@ -680,14 +761,14 @@
         	} else {
         		destroyButton = folder.add(folderParams, '删除').disable();
         		let element = folder.addFolder(folderName + '_0');
-        		element.add(obj[0], 'value', 0, maxValue).name('数值').onChange(value => {
+        		element.add(obj[0], 'value', minValue, maxValue).name('数值').onChange(value => {
         			const tempArray = [];
         			for (i = 0; i < obj.length; i++) {
         				tempArray.push(obj[i].value);
         			}
         			emitterObj.value = tempArray;
         		});
-        		element.add(obj[0], 'spread', 0, maxValue).name('方差').onChange(value => {
+        		element.add(obj[0], 'spread', minValue, maxValue).name('方差').onChange(value => {
         			const tempArray = [];
         			for (i = 0; i < obj.length; i++) {
         				tempArray.push(obj[i].spread);
@@ -706,21 +787,96 @@
         	folder.close();
         }
 
+        function parseArrayAttribute(emitterData) {
+        	const colorLen = emitterData.listColor.length;
+        	const colorValue = [], colorSpread = [], colorRandomise = [];
+        	for (let i = 0; i < colorLen; i++) {
+        		colorValue.push(new t3d.Color3().setHex(emitterData.listColor[i].value));
+        		colorSpread.push(emitterData.listColor[i].spread);
+        		colorRandomise.push(emitterData.listColor[i].randomise);
+        	}
+        	emitterData.color = {
+        		value: colorValue,
+        		spread: colorSpread,
+        		randomise: colorRandomise
+        	}
+        	const opacityLen = emitterData.listOpacity.length;
+        	const opacityValue = [], opacitySpread = [], opacityRandomise = [];
+        	for (let i = 0; i < opacityLen; i++) {
+        		opacityValue.push(emitterData.listOpacity[i].value);
+        		opacitySpread.push(emitterData.listOpacity[i].spread);
+        		opacityRandomise.push(emitterData.listOpacity[i].randomise);
+        	}
+        	emitterData.opacity = {
+        		value: opacityValue,
+        		spread: opacitySpread,
+        		randomise: opacityRandomise
+        	}
+        	const sizeLen = emitterData.listSize.length;
+        	const sizeValue = [], sizeSpread = [], sizeRandomise = [];
+        	for (let i = 0; i < sizeLen; i++) {
+        		sizeValue.push(emitterData.listSize[i].value);
+        		sizeSpread.push(emitterData.listSize[i].spread);
+        		sizeRandomise.push(emitterData.listSize[i].randomise);
+        	}
+        	emitterData.size = {
+        		value: sizeValue,
+        		spread: sizeSpread,
+        		randomise: sizeRandomise
+        	}
+        	const angleLen = emitterData.listAngle.length;
+        	const angleValue = [], angleSpread = [], angleRandomise = [];
+        	for (let i = 0; i < angleLen; i++) {
+        		angleValue.push(emitterData.listAngle[i].value);
+        		angleSpread.push(emitterData.listAngle[i].spread);
+        		angleRandomise.push(emitterData.listAngle[i].randomise);
+        	}
+        	emitterData.angle = {
+        		value: angleValue,
+        		spread: angleSpread,
+        		randomise: angleRandomise
+        	}
+        }
+
         function createDynamic(type) {
         	switch (type) {
         		case '颜色':
         			return new Color();
-        			break;
         		case '透明度':
         			return new Opacity();
-        			break;
         		case '大小':
         			return new Size();
-        			break;
         		case '角度':
         			return new Angle();
-        			break;
         	}
+        }
+
+        function convertVector(data) {
+        	data.forEach(groupData => {
+        		groupData.texture.vec2Frames = new t3d.Vector2(groupData.texture.vec2Frames.x, groupData.texture.vec2Frames.y);
+        		groupData.listEmitters.forEach(emitterData => {
+        			emitterData.position.value = new t3d.Vector3().copy(emitterData.position.value);
+        			emitterData.position.spread = new t3d.Vector3().copy(emitterData.position.spread);
+        			emitterData.position.spreadClamp = new t3d.Vector3().copy(emitterData.position.spreadClamp);
+        			emitterData.position.radiusScale = new t3d.Vector3().copy(emitterData.position.radiusScale);
+
+        			emitterData.velocity.value = new t3d.Vector3().copy(emitterData.velocity.value);
+        			emitterData.velocity.spread = new t3d.Vector3().copy(emitterData.velocity.spread);
+
+        			emitterData.acceleration.value = new t3d.Vector3().copy(emitterData.acceleration.value);
+        			emitterData.acceleration.spread = new t3d.Vector3().copy(emitterData.acceleration.spread);
+
+        			emitterData.rotation.axis = new t3d.Vector3().copy(emitterData.rotation.axis);
+        			emitterData.rotation.axisSpread = new t3d.Vector3().copy(emitterData.rotation.axisSpread);
+        			emitterData.rotation.center = new t3d.Vector3().copy(emitterData.rotation.center);
+
+        			emitterData.listColor.forEach(color => {
+        				color.spread = new t3d.Vector3().copy(color.spread);
+        			})
+        		})
+        	});
+
+        	return data;
         }
 
         function initGUI() {
@@ -729,18 +885,42 @@
         	const initParams = {
         		新建粒子组: function () {
         			createParticleGroup(gui);
-        			newParticleGroupButton.disable();
         			destroyParticleGroupButton.enable();
+        			exportDataButton.enable();
         		},
         		删除粒子组: function () {
         			removeParticleGroup();
-        			destroyParticleGroupButton.disable();
+        			!particleGroups.length && destroyParticleGroupButton.disable();
         			newParticleGroupButton.enable();
+        			!particleGroups.length && exportDataButton.disable();
+        		},
+        		导入粒子数据: function() {
+        			importFileJSON(data => {
+        				let length = particleGroups.length;
+        				for (let i = 0; i < length; i++) {
+        					removeParticleGroup();
+        				}
+        				data = convertVector(data);
+        				data.forEach((groupData) => {
+        					createParticleGroup(gui, groupData);
+        				})
+        				if (data.length > 1) {
+        					destroyParticleGroupButton.enable();
+        				} else {
+        					destroyParticleGroupButton.disable();
+        				}
+        				exportDataButton.enable();
+        			});
+        		},
+        		导出粒子数据: function () {
+        			exportFileJSON(particleData.getData());
         		}
         	};
 
         	const newParticleGroupButton = gui.add(initParams, '新建粒子组');
         	const destroyParticleGroupButton = gui.add(initParams, '删除粒子组').disable();
+        	const importDataButton = gui.add(initParams, '导入粒子数据');
+        	const exportDataButton = gui.add(initParams, '导出粒子数据').disable();
         }
 
         function animate() {
@@ -748,8 +928,10 @@
 
         	controller.update();
 
-        	if (particleGroup) {
-        		particleGroup.tick(clock.getDelta(), camera);
+        	if (particleGroups.length) {
+        		particleGroups.forEach(particleGroup => {
+        			particleGroup.tick(particleGroup.fixedTimeStep, camera);
+        		})
         	}
 
         	scene.updateMatrix();

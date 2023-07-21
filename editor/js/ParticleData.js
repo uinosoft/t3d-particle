@@ -1,14 +1,17 @@
 import * as t3d from 't3d';
+
 class ParticleData {
 
 	constructor() {
 		this.listGroups = new Array();
-		this.listGroups[0] = new ParticleGroupData();
+	}
+
+	getData() {
+		return this.listGroups;
 	}
 
 	reset() {
 		this.listGroups.length = 0;
-		this.listGroups[0] = new ParticleGroupData();
 	}
 
 }
@@ -17,7 +20,7 @@ class ParticleGroupData {
 
 	constructor() {
 		this.texture = new GroupTexture();
-		this.fixedTimeStep = 0.33;
+		this.fixedTimeStep = 0.016;
 		this.useMesh = false;
 		this.meshUrl = "BuildIn/Plane";
 
@@ -27,8 +30,8 @@ class ParticleGroupData {
 		this.isTransparent = true;
 		this.alphaTest = 0.0;
 		this.isDepthWrite = false;
-		this.isDepthTest = false;
-		this.isFog = false;
+		this.isDepthTest = true;
+		this.isFog = true;
 		this.scale = window.innerHeight / 2.0;
 		this.maxParticleCount = 2000;
 		this.vec4Quaternion = new t3d.Vector4(0, 0, 0, 1);
@@ -42,9 +45,9 @@ class ParticleGroupData {
 class ParticleEmitterData {
 
 	constructor() {
-		this.distribution = 1;
-		this.particleCount = 1000;
-		this.duration = -1;
+		this.type = 1;
+		this.particleCount = 200;
+		this.duration = null;
 		this.isStatic = false;
 		this.isLookAtCamera = false;
 		this.isLookAtCameraOnlyY = false;
@@ -77,8 +80,8 @@ class ParticleEmitterData {
 class GroupTexture {
 
 	constructor() {
-		this.name = "32x32_star.png";
-		this.url = "http://static.3dmomoda.com/textures/18092617nyspq5moaka1i2fhvs1hh66s.png";
+		this.name = "smokeparticle.png";
+		this.url = "../examples/resources/img/smokeparticle.png";
 		this.vec2Frames = new t3d.Vector2(1, 1);
 		this.iFrameCount = 1;
 		this.iLoop = 1;
@@ -89,8 +92,8 @@ class GroupTexture {
 class MaxAge {
 
 	constructor() {
-		this.value = 1.0;
-		this.spread = 1.0;
+		this.value = 2.0;
+		this.spread = 0.0;
 	}
 
 }
@@ -112,8 +115,8 @@ class Position {
 class Velocity {
 
 	constructor() {
-		this.value = new t3d.Vector3(0, 10, 0);
-		this.spread = new t3d.Vector3(10, 0, 10);
+		this.value = new t3d.Vector3(0, 25, 0);
+		this.spread = new t3d.Vector3(10, 7.5, 10);
 		this.distribution = 1;
 		this.randomise = false;
 	}
@@ -123,8 +126,8 @@ class Velocity {
 class Acceleration {
 
 	constructor() {
-		this.value = new t3d.Vector3(0, 0, 0);
-		this.spread = new t3d.Vector3(0, 0, 0);
+		this.value = new t3d.Vector3(0, -10, 0);
+		this.spread = new t3d.Vector3(10, 0, 10);
 		this.distribution = 1;
 		this.randomise = false;
 	}
