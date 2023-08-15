@@ -5,8 +5,7 @@
 	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.t3d = global.t3d || {}, global.t3d));
 })(this, (function (exports, t3d) { 'use strict';
 
-	function _interopNamespace(e) {
-		if (e && e.__esModule) return e;
+	function _interopNamespaceDefault(e) {
 		var n = Object.create(null);
 		if (e) {
 			Object.keys(e).forEach(function (k) {
@@ -19,11 +18,11 @@
 				}
 			});
 		}
-		n["default"] = e;
+		n.default = e;
 		return Object.freeze(n);
 	}
 
-	var t3d__namespace = /*#__PURE__*/_interopNamespace(t3d);
+	var t3d__namespace = /*#__PURE__*/_interopNamespaceDefault(t3d);
 
 	/**
 	 * @typedef {Number} distribution
@@ -2537,7 +2536,5 @@
 	exports.ParticleEmitter = ParticleEmitter;
 	exports.ParticleGroup = ParticleGroup;
 	exports.ParticleProperties = ParticleProperties;
-
-	Object.defineProperty(exports, '__esModule', { value: true });
 
 }));

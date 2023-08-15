@@ -61,8 +61,8 @@
 			camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 10000);
 			scene.add(camera);
 
-			renderer = new t3d.Renderer(gl);
-			renderer.renderPass.setClearColor(0, 0, 0, 1);
+			renderer = new t3d.WebGLRenderer(gl);
+			renderer.setClearColor(0, 0, 0, 1);
 			backRenderTarget = new t3d.RenderTargetBack(canvas);
 
 			stats = new Stats();
@@ -127,8 +127,8 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
-			renderer.renderPass.clear(true, true, false);
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, false);
 			renderer.renderScene(scene, camera);
 
 			stats.update();

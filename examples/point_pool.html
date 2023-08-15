@@ -225,8 +225,8 @@
 			);
 			scene.add(referenceCube);
 
-			renderer = new t3d.Renderer(gl);
-			renderer.renderPass.setClearColor(0, 0, 0, 1);
+			renderer = new t3d.WebGLRenderer(gl);
+			renderer.setClearColor(0, 0, 0, 1);
 			backRenderTarget = new t3d.RenderTargetBack(canvas);
 
 			clock = new Clock();
@@ -268,8 +268,8 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
-			renderer.renderPass.clear(true, true, false);
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, false);
 			renderer.renderScene(scene, camera);
 		}
 

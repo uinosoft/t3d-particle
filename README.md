@@ -3,7 +3,7 @@ t3d-particle
 
 [![NPM Package][npm]][npm-url]
 
-This is a particle system based on [t3d.js](https://github.com/UINOSOFT/t3d.js).
+This is a particle system based on [t3d.js](https://github.com/uinosoft/t3d.js).
 Inspired by [ShaderParticleEngine](https://github.com/squarefeet/ShaderParticleEngine).
 Added support for mesh particles.
 

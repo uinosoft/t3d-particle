@@ -2,11 +2,12 @@
   "name": "t3d-particle",
   "version": "0.0.4",
   "description": "Particle System for t3d.js",
+  "type": "module",
   "main": "./build/t3d.particle.js",
   "module": "./build/t3d.particle.module.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/UINOSOFT/t3d-particle"
+    "url": "https://github.com/uinosoft/t3d-particle"
   },
   "files": [
     "build/t3d.particle.js",
@@ -44,14 +45,14 @@
   "devDependencies": {
     "@babel/core": "^7.17.9",
     "@babel/preset-env": "^7.18.10",
-    "@rollup/plugin-babel": "^5.3.1",
-    "eslint": "^7.32.0",
-    "eslint-plugin-html": "^7.1.0",
-    "rollup": "^2.78.1",
-    "rollup-plugin-terser": "^7.0.2"
+    "rollup": "^3.18.0",
+    "@rollup/plugin-babel": "^6.0.3",
+    "@rollup/plugin-terser": "^0.4.0",
+    "eslint": "^8.24.0",
+    "eslint-plugin-html": "^7.1.0"
   },
   "peerDependencies": {
-    "t3d": "^0.1.1"
+    "t3d": "^0.2.0"
   },
   "scripts": {
     "build": "rollup -c",

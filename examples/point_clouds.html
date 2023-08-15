@@ -59,8 +59,8 @@
 			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 			scene.add(camera);
 
-			renderer = new t3d.Renderer(gl);
-			renderer.renderPass.setClearColor(0.25882352941176473, 0.7803921568627451, 1, 1);
+			renderer = new t3d.WebGLRenderer(gl);
+			renderer.setClearColor(0.25882352941176473, 0.7803921568627451, 1, 1);
 			backRenderTarget = new t3d.RenderTargetBack(canvas);
 
 			scene.fog = new t3d.Fog(0x42c7ff, 20, 0);
@@ -125,8 +125,8 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
-			renderer.renderPass.clear(true, true, false);
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, false);
 			renderer.renderScene(scene, camera);
 		}
 
