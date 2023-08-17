@@ -485,10 +485,10 @@ const Utils = {
 			y = base.y + (Math.random() * spread.y - (spread.y * 0.5)),
 			z = base.z + (Math.random() * spread.z - (spread.z * 0.5));
 
-		if (spreadClamp) {
-			x = -spreadClamp.x * 0.5 + this.roundToNearestMultiple(x, spreadClamp.x);
-			y = -spreadClamp.y * 0.5 + this.roundToNearestMultiple(y, spreadClamp.y);
-			z = -spreadClamp.z * 0.5 + this.roundToNearestMultiple(z, spreadClamp.z);
+		if (spreadClamp && spreadClamp.x) {
+			x = -spreadClamp.x * 0.5 + Utils.roundToNearestMultiple(x, spreadClamp.x);
+			y = -spreadClamp.y * 0.5 + Utils.roundToNearestMultiple(y, spreadClamp.y);
+			z = -spreadClamp.z * 0.5 + Utils.roundToNearestMultiple(z, spreadClamp.z);
 		}
 
 		array[offset + 0] = x;
@@ -498,17 +498,17 @@ const Utils = {
 		return array;
 	},
 
-	getRandomVector3OnSphere: function(array, offset, base, radius, radiusSpread, radiusScale, radiusSpreadClamp) {
+	getRandomVector3OnSphere: function(array, offset, base, radiusSpread, radiusSpreadClamp, radius, radiusScale) {
 		let depth = 2 * Math.random() - 1,
 			t = 6.2832 * Math.random(),
 			r = Math.sqrt(1 - depth * depth),
-			rand = this.randomFloat(radius, radiusSpread),
+			rand = Utils.randomFloat(radius, radiusSpread.x),
 			x = 0,
 			y = 0,
 			z = 0;
 
-		if (radiusSpreadClamp) {
-			rand = Math.round(rand / radiusSpreadClamp) * radiusSpreadClamp;
+		if (radiusSpreadClamp.x) {
+			rand = Math.round(rand / radiusSpreadClamp.x) * radiusSpreadClamp.x;
 		}
 
 		// Set position on sphere
@@ -533,15 +533,15 @@ const Utils = {
 		return array;
 	},
 
-	getRandomVector3OnDisc: function(array, offset, base, radius, radiusSpread, radiusScale, radiusSpreadClamp) {
+	getRandomVector3OnDisc: function(array, offset, base, radiusSpread, radiusSpreadClamp, radius, radiusScale) {
 		let t = 6.2832 * Math.random(),
-			rand = Math.abs(this.randomFloat(radius, radiusSpread)),
+			rand = Math.abs(Utils.randomFloat(radius, radiusSpread.x)),
 			x = 0,
 			y = 0,
 			z = 0;
 
-		if (radiusSpreadClamp) {
-			rand = Math.round(rand / radiusSpreadClamp) * radiusSpreadClamp;
+		if (radiusSpreadClamp.x) {
+			rand = Math.round(rand / radiusSpreadClamp.x) * radiusSpreadClamp.x;
 		}
 
 		// Set position on sphere
@@ -577,14 +577,14 @@ const Utils = {
 	getRandomDirectionVector3OnSphere: (function() {
 		const v = new t3d.Vector3();
 
-		return function (array, offset, posX, posY, posZ, emitterPosition, speed, speedSpread) {
+		return function (array, offset, speed, speedSpread, posX, posY, posZ, emitterPosition) {
 			v.copy(emitterPosition);
 
 			v.x -= posX;
 			v.y -= posY;
 			v.z -= posZ;
 
-			v.normalize().multiplyScalar(-this.randomFloat(speed, speedSpread));
+			v.normalize().multiplyScalar(-Utils.randomFloat(speed.x, speedSpread.x));
 
 			v.toArray(array, offset);
 
@@ -595,14 +595,14 @@ const Utils = {
 	getRandomDirectionVector3OnDisc: (function() {
 		const v = new t3d.Vector3();
 
-		return function (array, offset, posX, posY, posZ, emitterPosition, speed, speedSpread) {
+		return function (array, offset, speed, speedSpread, posX, posY, posZ, emitterPosition) {
 			v.copy(emitterPosition);
 
 			v.x -= posX;
 			v.y -= posY;
 			v.z -= posZ;
 
-			v.normalize().multiplyScalar(-this.randomFloat(speed, speedSpread));
+			v.normalize().multiplyScalar(-Utils.randomFloat(speed.x, speedSpread.x));
 
 			v.toArray(array, offset);
 
@@ -1253,25 +1253,28 @@ class AbstractParticleEmitter {
 			_value: Utils.ensureInstanceOf(options.position.value, t3d.Vector3, new t3d.Vector3()),
 			_spread: Utils.ensureInstanceOf(options.position.spread, t3d.Vector3, new t3d.Vector3()),
 			_spreadClamp: Utils.ensureInstanceOf(options.position.spreadClamp, t3d.Vector3, new t3d.Vector3()),
-			_distribution: Utils.ensureTypedArg(options.position.distribution, types.NUMBER, this.type),
+			_distribution: options.position.distribution || this.type,
 			_randomise: Utils.ensureTypedArg(options.position.randomise, types.BOOLEAN, false),
 			_radius: Utils.ensureTypedArg(options.position.radius, types.NUMBER, 10),
 			_radiusScale: Utils.ensureInstanceOf(options.position.radiusScale, t3d.Vector3, new t3d.Vector3(1, 1, 1))
 		};
+		this._setDistributeFunctions("position", this.position._distribution);
 
 		this.velocity = {
 			_value: Utils.ensureInstanceOf(options.velocity.value, t3d.Vector3, new t3d.Vector3()),
 			_spread: Utils.ensureInstanceOf(options.velocity.spread, t3d.Vector3, new t3d.Vector3()),
-			_distribution: Utils.ensureTypedArg(options.velocity.distribution, types.NUMBER, this.type),
+			_distribution: options.velocity.distribution || this.type,
 			_randomise: Utils.ensureTypedArg(options.velocity.randomise, types.BOOLEAN, false)
 		};
+		this._setDistributeFunctions("velocity", this.velocity._distribution);
 
 		this.acceleration = {
 			_value: Utils.ensureInstanceOf(options.acceleration.value, t3d.Vector3, new t3d.Vector3()),
 			_spread: Utils.ensureInstanceOf(options.acceleration.spread, t3d.Vector3, new t3d.Vector3()),
-			_distribution: Utils.ensureTypedArg(options.acceleration.distribution, types.NUMBER, this.type),
+			_distribution: options.acceleration.distribution || this.type,
 			_randomise: Utils.ensureTypedArg(options.acceleration.randomise, types.BOOLEAN, false)
 		};
+		this._setDistributeFunctions("acceleration", this.acceleration._distribution);
 
 		this.drag = {
 			_value: Utils.ensureTypedArg(options.drag.value, types.NUMBER, 0),
@@ -1444,6 +1447,9 @@ class AbstractParticleEmitter {
 							if (prop === '_randomise') {
 								self.resetFlags[mapName] = value;
 							} else {
+								if (prop === '_distribution') {
+									self._setDistributeFunctions(mapName, value);
+								}
 								self.updateFlags[mapName] = true;
 								self.updateCounts[mapName] = 0.0;
 							}
@@ -1532,67 +1538,22 @@ class AbstractParticleEmitter {
 	_assignValue() {}
 
 	_assignPositionValue(array, offset) {
-		const distributions = ParticleProperties.distributions,
-			prop = this.position,
+		const prop = this.position,
 			value = prop._value,
 			spread = prop._spread,
-			distribution = prop._distribution;
+			spreadClamp = prop._spreadClamp;
 
-		switch (distribution) {
-			case distributions.BOX:
-				Utils.getRandomVector3(array, offset, value, spread, prop._spreadClamp);
-				break;
-			case distributions.SPHERE:
-				Utils.getRandomVector3OnSphere(array, offset, value, prop._radius, prop._spread.x, prop._radiusScale, prop._spreadClamp.x);
-				break;
-			case distributions.DISC:
-				Utils.getRandomVector3OnDisc(array, offset, value, prop._radius, prop._spread.x, prop._radiusScale, prop._spreadClamp.x);
-				break;
-			case distributions.LINE:
-				Utils.getRandomVector3OnLine(array, offset, value, spread);
-				break;
-		}
+		prop._getDistributionFunction(array, offset, value, spread, spreadClamp, prop._radius, prop._radiusScale);
 
 		return array;
 	}
 
 	_assignForceValue(array, offset, attrName, particlePos) {
-		const distributions = ParticleProperties.distributions,
-			prop = this[attrName],
+		const prop = this[attrName],
 			value = prop._value,
-			spread = prop._spread,
-			distribution = prop._distribution;
+			spread = prop._spread;
 
-		switch (distribution) {
-			case distributions.BOX:
-				Utils.getRandomVector3(array, offset, value, spread);
-				break;
-			case distributions.SPHERE:
-				Utils.getRandomDirectionVector3OnSphere(
-					array, offset,
-					particlePos[0],
-					particlePos[1],
-					particlePos[2],
-					this.position._value,
-					value.x,
-					spread.x
-				);
-				break;
-			case distributions.DISC:
-				Utils.getRandomDirectionVector3OnDisc(
-					array, offset,
-					particlePos[0],
-					particlePos[1],
-					particlePos[2],
-					this.position._value,
-					value.x,
-					spread.x
-				);
-				break;
-			case distributions.LINE:
-				Utils.getRandomVector3OnLine(array, offset, value, spread);
-				break;
-		}
+		prop._getDistributionFunction(array, offset, value, spread, particlePos[0], particlePos[1], particlePos[2], this.position._value);
 
 		if (attrName === 'acceleration') {
 			const drag = Utils.clamp(Utils.randomFloat(this.drag._value, this.drag._spread), 0, 1);
@@ -1707,10 +1668,39 @@ class AbstractParticleEmitter {
 		}
 	}
 
+	_setDistributeFunctions(attributeName, type) {
+		if (typeof type === "function") {
+			this[attributeName]._getDistributionFunction = type;
+		} else {
+			this[attributeName]._getDistributionFunction = getRandomFunctions[attributeName][type];
+		}
+	}
+
 }
 
 const _vec3_1$1 = new t3d.Vector3();
 const _col3_1 = new t3d.Color3();
+
+const getRandomFunctions = {
+	"position": {
+		1: Utils.getRandomVector3,
+		2: Utils.getRandomVector3OnSphere,
+		3: Utils.getRandomVector3OnDisc,
+		4: Utils.getRandomVector3OnLine
+	},
+	"velocity": {
+		1: Utils.getRandomVector3,
+		2: Utils.getRandomDirectionVector3OnSphere,
+		3: Utils.getRandomDirectionVector3OnDisc,
+		4: Utils.getRandomVector3OnLine
+	},
+	"acceleration": {
+		1: Utils.getRandomVector3,
+		2: Utils.getRandomDirectionVector3OnSphere,
+		3: Utils.getRandomDirectionVector3OnDisc,
+		4: Utils.getRandomVector3OnLine
+	}
+};
 
 class ParticleEmitter extends AbstractParticleEmitter {
 

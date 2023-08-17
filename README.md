@@ -111,20 +111,20 @@ const particleEmitter = new MeshParticleEmitter({/*...Emitter...*/});
 <b>position</b>(<i>Object</i>):&emsp;An object describing this emitter's position.  
 |  |  |  |
 | --- | --- | :--: |
-| <b>value</b>(<i>Vector3 or Array<Vector3></i>) | A t3d.Vector3 instance describing this emitter's base position. | Default is Vector3(0,0,0) |
-| <b>spread</b>(<i>Vector3 or Array<Vector3></i>) | A t3d.Vector3 instance describing this emitter's position variance on a per-particle basis. | Default is Vector3(0,0,0) |
-| <b>spreadClamp</b>(<i>Vector3 or Array<Vector3></i>) | A t3d.Vector3 instance describing the numeric multiples the particle's should be spread out over. | Default is Vector3(0,0,0) |
-| <b>radius</b>(<i>Number<Vector3></i>) | This emitter's base radius. | Default is 10 |
-| <b>radiusScale</b>(<i>Vector3<Vector3></i>) | A t3d.Vector3 instance describing the radius's scale in all three axes. Allows a SPHERE or DISC to be squashed or stretched. | Default is Vector3(0,0,0) |
-| <b>distribution</b>(<i>Number<Vector3></i>) | A specific distribution to use when radiusing particles. Overrides the `type` option. | Default is `type` option. |
-| <b>randomise</b>(<i>Boolean<Vector3></i>) | When a particle is re-spawned, whether it's position should be re-randomised or not. Can incur a performance hit. | Default is false |  
+| <b>value</b>(<i>Vector3</i>) | A t3d.Vector3 instance describing this emitter's base position. | Default is Vector3(0,0,0) |
+| <b>spread</b>(<i>Vector3</i>) | A t3d.Vector3 instance describing this emitter's position variance on a per-particle basis. | Default is Vector3(0,0,0) |
+| <b>spreadClamp</b>(<i>Vector3</i>) | A t3d.Vector3 instance describing the numeric multiples the particle's should be spread out over. | Default is Vector3(0,0,0) |
+| <b>radius</b>(<i>Number</i>) | This emitter's base radius. | Default is 10 |
+| <b>radiusScale</b>(<i>Vector3</i>) | A t3d.Vector3 instance describing the radius's scale in all three axes. Allows a SPHERE or DISC to be squashed or stretched. | Default is Vector3(0,0,0) |
+| <b>distribution</b>(<i>Number or Function</i>) | A specific distribution to use when radiusing particles. Overrides the `type` option. | Default is `type` option. |
+| <b>randomise</b>(<i>Boolean</i>) | When a particle is re-spawned, whether it's position should be re-randomised or not. Can incur a performance hit. | Default is false |  
 
 <b>velocity</b>(<i>Object</i>):&emsp;An object describing this particle velocity.  
 |  |  |  |
 | --- | --- | :--: |
 | <b>value</b>(<i>Vector3</i>) | A t3d.Vector3 instance describing this emitter's base velocity. | Default is Vector3(0,0,0) |
 | <b>spread</b>(<i>Vector3</i>) | A t3d.Vector3 instance describing this emitter's velocity variance on a per-particle basis.Note that when using a SPHERE or DISC distribution, only the x-component of this vector is used. | Default is Vector3(0,0,0) |
-| <b>distribution</b>(<i>Number</i>) | A specific distribution to use when calculating a particle's velocity. Overrides the `type` option. | Default is `type` option. |
+| <b>distribution</b>(<i>Number or Function</i>) | A specific distribution to use when calculating a particle's velocity. Overrides the `type` option. | Default is `type` option. |
 | <b>randomise</b>(<i>Boolean</i>) | When a particle is re-spawned, whether it's velocity should be re-randomised or not. Can incur a performance hit. | Default is false |  
 
 <b>acceleration</b>(<i>Object</i>):&emsp;An object describing this particle's acceleration.  
@@ -132,7 +132,7 @@ const particleEmitter = new MeshParticleEmitter({/*...Emitter...*/});
 | --- | --- | :--: |
 | <b>value</b>(<i>Vector3</i>) | A t3d.Vector3 instance describing this emitter's base acceleration. | Default is Vector3(0,0,0) |
 | <b>spread</b>(<i>Vector3</i>) | A t3d.Vector3 instance describing this emitter's acceleration variance on a per-particle basis. Note that when using a SPHERE or DISC distribution, only the x-component of this vector is used. | Default is Vector3(0,0,0) |
-| <b>distribution</b>(<i>Number</i>) | A specific distribution to use when calculating a particle's acceleration. Overrides the `type` option. | Default is `type` option. |
+| <b>distribution</b>(<i>Number or Function</i>) | A specific distribution to use when calculating a particle's acceleration. Overrides the `type` option. | Default is `type` option. |
 | <b>randomise</b>(<i>Boolean</i>) | When a particle is re-spawned, whether it's acceleration should be re-randomised or not. Can incur a performance hit. | Default is false |  
 
 <b>drag</b>(<i>Object</i>):&emsp;An object describing this particle drag. Drag is applied to both velocity and acceleration values.  

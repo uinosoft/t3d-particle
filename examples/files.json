@@ -5,6 +5,7 @@
 		"point_clock",
 		"point_clouds",
 		"point_distributions",
+		"point_distribution_custom",
 		"point_explosion",
 		"point_fog",
 		"point_mouse_follow",

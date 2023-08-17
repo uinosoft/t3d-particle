@@ -91,7 +91,7 @@
 			for (let i = 0; i < numEmitters; ++i) {
 				emitter = new ParticleEmitter({
 					maxAge: 5,
-					type: Math.random() * 4 | 0,
+					type: Math.ceil(Math.random() * 4),
 					position: {
 						value: new t3d.Vector3(
 							getRandomNumber(200),

@@ -1,0 +1,190 @@
+<html>
+<head>
+    <title>Custom Distribution</title>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+	<link rel="stylesheet" type="text/css" href="./main.css">
+</head>
+<body>
+    <p class="numParticles"></p>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "./libs/t3d/build/t3d.module.js",
+                "t3d/examples/jsm/": "./libs/t3d/examples/jsm/",
+                "t3d-particle": "../build/t3d.particle.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from 't3d/examples/jsm/Clock.js';
+		import { OrbitControls } from 't3d/examples/jsm/controls/OrbitControls.js';
+
+		import {
+			ParticleGroup, ParticleEmitter
+		} from 't3d-particle';
+
+		// variables used in init()
+		let width, height, scene, camera, renderer, backRenderTarget, clock, controller;
+
+		// Used in initParticles()
+		let emitter, particleGroup;
+
+		// Setup the scene
+		function init() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			document.body.appendChild(canvas);
+
+			const gl = canvas.getContext("webgl2", {
+				antialias: true,
+				alpha: false,
+				stencil: true
+			});
+
+			scene = new t3d.Scene();
+			camera = new t3d.Camera();
+			camera.position.z = 100;
+			camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 1000);
+			scene.add(camera);
+
+			renderer = new t3d.WebGLRenderer(gl);
+			renderer.setClearColor(0, 0, 0, 1);
+			backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+			clock = new Clock();
+
+			controller = new OrbitControls(camera, canvas);
+		}
+
+		// set custom distribution function for position (attribute.buffer.array, attribute.offset, posotion.value, position.spread)
+		function setPositionDistribution(array, offset, value, spread) {
+			getRandomPointInCross(array, offset, value, spread);
+		}
+
+		const armLength = 10;
+		const getRandomPointInCross = function(array, offset, value, spread) {
+			const horizontalOffset = Math.random() * armLength * 2 - armLength;
+			const verticalOffset = Math.random() * armLength * 2 - armLength;
+
+			if (Math.abs(horizontalOffset) <= armLength / 2 || Math.abs(verticalOffset) <= armLength / 2) {
+				const x = value.x + horizontalOffset;
+				const y = value.y + verticalOffset;
+				const z = value.z;
+
+				array[offset + 0] = x;
+				array[offset + 1] = y;
+				array[offset + 2] = z;
+
+				return array;
+			} else {
+				getRandomPointInCross(array, offset, value, spread);
+			}
+		}
+
+		// set custom distribution function for velecity (attribute.buffer.array, attribute.offset, velocity.value, velocity.spread, particlePosition.x, particlePosition.y, particlePosition.z, this.position.value)
+		function setVelocityDistribution(array, offset, value, spread, particlePosX, particlePosY, particlePosZ, positionValue) {
+			const armLength = 10;
+		
+			let x = value.x + (Math.random() * spread.x - (spread.x * 0.5)),
+				y = value.y + (Math.random() * spread.y - (spread.y * 0.5)),
+				z = value.z + (Math.random() * spread.z - (spread.z * 0.5));
+			if (Math.abs(particlePosY) <= armLength / 2 && Math.abs(particlePosX) > Math.abs(particlePosY)) {
+				x *= particlePosX - positionValue.x;
+				y = 0;
+			} else {
+				x = 0;
+				y *= particlePosY - positionValue.y;
+			}
+
+			array[offset + 0] = x;
+			array[offset + 1] = y;
+			array[offset + 2] = z;
+		
+			return array;
+		}
+
+		// Create particle group and emitter
+		function initParticles() {
+			particleGroup = new ParticleGroup({
+				maxParticleCount: 2000
+			});
+
+			emitter = new ParticleEmitter({
+				maxAge: {
+					value: 1
+				},
+				position: {
+					value: new t3d.Vector3(0, 0, 0),
+					spread: new t3d.Vector3(0, 0, 0),
+					distribution: setPositionDistribution
+				},
+				acceleration: {
+					value: new t3d.Vector3(2, 2, 1),
+					spread: new t3d.Vector3(0, 0, 0),
+					distribution: setVelocityDistribution
+				},
+				velocity: {
+					value: new t3d.Vector3(2, 2, -15),
+					spread: new t3d.Vector3(0, 0, 5),
+					distribution: setVelocityDistribution
+				},
+				color: {
+					value: [new t3d.Color3(1, 1, 1), new t3d.Color3(1, 0, 0)]
+				},
+				size: {
+					value: 1
+				},
+				particleCount: 2000
+			});
+
+			particleGroup.addEmitter(emitter);
+			scene.add(particleGroup.mesh);
+		}
+
+		function animate() {
+			requestAnimationFrame(animate);
+
+			controller.update();
+
+			if (particleGroup) {
+				particleGroup.tick(clock.getDelta());
+			}
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, false);
+			renderer.renderScene(scene, camera);
+		}
+
+		init();
+		initParticles();
+
+		setTimeout(animate, 0);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			backRenderTarget.resize(width, height);
+		}
+
+		window.addEventListener("resize", onWindowResize, false);
+    </script>
+</body>
+</html>

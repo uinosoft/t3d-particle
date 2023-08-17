@@ -410,10 +410,10 @@ export const Utils = {
 			y = base.y + (Math.random() * spread.y - (spread.y * 0.5)),
 			z = base.z + (Math.random() * spread.z - (spread.z * 0.5));
 
-		if (spreadClamp) {
-			x = -spreadClamp.x * 0.5 + this.roundToNearestMultiple(x, spreadClamp.x);
-			y = -spreadClamp.y * 0.5 + this.roundToNearestMultiple(y, spreadClamp.y);
-			z = -spreadClamp.z * 0.5 + this.roundToNearestMultiple(z, spreadClamp.z);
+		if (spreadClamp && spreadClamp.x) {
+			x = -spreadClamp.x * 0.5 + Utils.roundToNearestMultiple(x, spreadClamp.x);
+			y = -spreadClamp.y * 0.5 + Utils.roundToNearestMultiple(y, spreadClamp.y);
+			z = -spreadClamp.z * 0.5 + Utils.roundToNearestMultiple(z, spreadClamp.z);
 		}
 
 		array[offset + 0] = x;
@@ -423,17 +423,17 @@ export const Utils = {
 		return array;
 	},
 
-	getRandomVector3OnSphere: function(array, offset, base, radius, radiusSpread, radiusScale, radiusSpreadClamp) {
+	getRandomVector3OnSphere: function(array, offset, base, radiusSpread, radiusSpreadClamp, radius, radiusScale) {
 		let depth = 2 * Math.random() - 1,
 			t = 6.2832 * Math.random(),
 			r = Math.sqrt(1 - depth * depth),
-			rand = this.randomFloat(radius, radiusSpread),
+			rand = Utils.randomFloat(radius, radiusSpread.x),
 			x = 0,
 			y = 0,
 			z = 0;
 
-		if (radiusSpreadClamp) {
-			rand = Math.round(rand / radiusSpreadClamp) * radiusSpreadClamp;
+		if (radiusSpreadClamp.x) {
+			rand = Math.round(rand / radiusSpreadClamp.x) * radiusSpreadClamp.x;
 		}
 
 		// Set position on sphere
@@ -458,15 +458,15 @@ export const Utils = {
 		return array;
 	},
 
-	getRandomVector3OnDisc: function(array, offset, base, radius, radiusSpread, radiusScale, radiusSpreadClamp) {
+	getRandomVector3OnDisc: function(array, offset, base, radiusSpread, radiusSpreadClamp, radius, radiusScale) {
 		let t = 6.2832 * Math.random(),
-			rand = Math.abs(this.randomFloat(radius, radiusSpread)),
+			rand = Math.abs(Utils.randomFloat(radius, radiusSpread.x)),
 			x = 0,
 			y = 0,
 			z = 0;
 
-		if (radiusSpreadClamp) {
-			rand = Math.round(rand / radiusSpreadClamp) * radiusSpreadClamp;
+		if (radiusSpreadClamp.x) {
+			rand = Math.round(rand / radiusSpreadClamp.x) * radiusSpreadClamp.x;
 		}
 
 		// Set position on sphere
@@ -502,14 +502,14 @@ export const Utils = {
 	getRandomDirectionVector3OnSphere: (function() {
 		const v = new t3d.Vector3();
 
-		return function (array, offset, posX, posY, posZ, emitterPosition, speed, speedSpread) {
+		return function (array, offset, speed, speedSpread, posX, posY, posZ, emitterPosition) {
 			v.copy(emitterPosition);
 
 			v.x -= posX;
 			v.y -= posY;
 			v.z -= posZ;
 
-			v.normalize().multiplyScalar(-this.randomFloat(speed, speedSpread));
+			v.normalize().multiplyScalar(-Utils.randomFloat(speed.x, speedSpread.x));
 
 			v.toArray(array, offset);
 
@@ -520,14 +520,14 @@ export const Utils = {
 	getRandomDirectionVector3OnDisc: (function() {
 		const v = new t3d.Vector3();
 
-		return function (array, offset, posX, posY, posZ, emitterPosition, speed, speedSpread) {
+		return function (array, offset, speed, speedSpread, posX, posY, posZ, emitterPosition) {
 			v.copy(emitterPosition);
 
 			v.x -= posX;
 			v.y -= posY;
 			v.z -= posZ;
 
-			v.normalize().multiplyScalar(-this.randomFloat(speed, speedSpread));
+			v.normalize().multiplyScalar(-Utils.randomFloat(speed.x, speedSpread.x));
 
 			v.toArray(array, offset);
 

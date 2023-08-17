@@ -109,7 +109,7 @@
 		function animate() {
 			requestAnimationFrame(animate);
 
-			particleGroup.tick(clock.getDelta());
+			particleGroup.tick();
 
 			scene.updateMatrix();
 			scene.updateRenderStates(camera);
