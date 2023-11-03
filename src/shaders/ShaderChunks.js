@@ -229,16 +229,6 @@ var ShaderChunks = {
 	rotateTexture: [
 		'    vec2 vUv = vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y );',
 		'',
-		'    #ifdef SHOULD_ROTATE_TEXTURE',
-		'       float x = gl_PointCoord.x - 0.5;',
-		'       float y = 1.0 - gl_PointCoord.y - 0.5;',
-		'       float c = cos( -vAngle );',
-		'       float s = sin( -vAngle );',
-
-		'       vUv = vec2( c * x + s * y + 0.5, c * y - s * x + 0.5 );',
-		'    #endif',
-		'',
-
 		// Spritesheets overwrite angle calculations.
 		'    #ifdef SHOULD_CALCULATE_SPRITE',
 		'        float framesX = vSpriteSheet.x;',
@@ -249,6 +239,25 @@ var ShaderChunks = {
 		'        vUv.x = gl_PointCoord.x * framesX + columnNorm;',
 		'        vUv.y = 1.0 - (gl_PointCoord.y * framesY + rowNorm);',
 		'    #endif',
+
+		'    #ifdef SHOULD_ROTATE_TEXTURE',
+		'    	#ifdef SHOULD_CALCULATE_SPRITE',
+		'           float x = vUv.x - framesX * 0.5 - columnNorm;',
+		'           float y = vUv.y - ( 1.0 - rowNorm ) + framesY * 0.5;',
+		'           float c = cos( -vAngle );',
+		'           float s = sin( -vAngle );',
+
+		'           vUv = vec2( c * x + s * y + framesX * 0.5 + columnNorm, c * y - s * x + ( 1.0 - rowNorm ) - framesY * 0.5 );',
+		'		#else',
+		'           float x = vUv.x - 0.5;',
+		'           float y = vUv.y - 0.5;',
+		'           float c = cos( -vAngle );',
+		'           float s = sin( -vAngle );',
+
+		'           vUv = vec2( c * x + s * y + 0.5, c * y - s * x + 0.5 );',
+		'		#endif',
+		'    #endif',
+		'',
 
 		'',
 		'    vec4 rotatedTexture = texture2D( tex, vUv );',

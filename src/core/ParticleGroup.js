@@ -429,25 +429,17 @@ export class ParticleGroup extends AbstractParticleGroup {
 		for (i; i >= 0; --i) {
 			emitter = emitters[i];
 
-			// Only do angle calculation if there's no spritesheet defined.
-			//
-			// Saves calculations being done and then overwritten in the shaders.
-			if (!defines.SHOULD_CALCULATE_SPRITE) {
-				defines.SHOULD_ROTATE_TEXTURE = defines.SHOULD_ROTATE_TEXTURE || !!Math.max(
-					Math.max.apply(null, emitter.angle.value),
-					Math.max.apply(null, emitter.angle.spread)
-				);
-			}
+			defines.SHOULD_ROTATE_TEXTURE = defines.SHOULD_ROTATE_TEXTURE ||
+				Utils.hasNonZeroElement(emitter.angle.value) ||
+				Utils.hasNonZeroElement(emitter.angle.spread);
 
-			defines.SHOULD_ROTATE_PARTICLES = defines.SHOULD_ROTATE_PARTICLES || !!Math.max(
-				emitter.rotation.angle,
-				emitter.rotation.angleSpread
-			);
+			defines.SHOULD_ROTATE_PARTICLES = defines.SHOULD_ROTATE_PARTICLES ||
+				emitter.rotation.angle !== 0.0 ||
+				emitter.rotation.angleSpread !== 0.0;
 
-			defines.SHOULD_WIGGLE_PARTICLES = defines.SHOULD_WIGGLE_PARTICLES || !!Math.max(
-				emitter.wiggle.value,
-				emitter.wiggle.spread
-			);
+			defines.SHOULD_WIGGLE_PARTICLES = defines.SHOULD_WIGGLE_PARTICLES ||
+				emitter.wiggle.value !== 0.0 ||
+				emitter.wiggle.spread !== 0.0;
 		}
 
 		// Update the material since defines might have changed

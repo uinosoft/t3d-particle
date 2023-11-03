@@ -352,6 +352,15 @@ export const Utils = {
 	},
 
 	/**
+	 * Whether the array has non-zero elements.
+	 * @param {Array} array
+	 * @returns {Boolean}
+	 */
+	hasNonZeroElement: function(array) {
+		return array.some(element => element !== 0);
+	},
+
+	/**
 	 * Rounds a number to a nearest multiple.
 	 *
 	 * @param  {Number} n        The number to round.

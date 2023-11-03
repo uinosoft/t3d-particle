@@ -427,6 +427,15 @@ const Utils = {
 	},
 
 	/**
+	 * Whether the array has non-zero elements.
+	 * @param {Array} array
+	 * @returns {Boolean}
+	 */
+	hasNonZeroElement: function(array) {
+		return array.some(element => element !== 0);
+	},
+
+	/**
 	 * Rounds a number to a nearest multiple.
 	 *
 	 * @param  {Number} n        The number to round.
@@ -875,16 +884,6 @@ var ShaderChunks = {
 	rotateTexture: [
 		'    vec2 vUv = vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y );',
 		'',
-		'    #ifdef SHOULD_ROTATE_TEXTURE',
-		'       float x = gl_PointCoord.x - 0.5;',
-		'       float y = 1.0 - gl_PointCoord.y - 0.5;',
-		'       float c = cos( -vAngle );',
-		'       float s = sin( -vAngle );',
-
-		'       vUv = vec2( c * x + s * y + 0.5, c * y - s * x + 0.5 );',
-		'    #endif',
-		'',
-
 		// Spritesheets overwrite angle calculations.
 		'    #ifdef SHOULD_CALCULATE_SPRITE',
 		'        float framesX = vSpriteSheet.x;',
@@ -895,6 +894,25 @@ var ShaderChunks = {
 		'        vUv.x = gl_PointCoord.x * framesX + columnNorm;',
 		'        vUv.y = 1.0 - (gl_PointCoord.y * framesY + rowNorm);',
 		'    #endif',
+
+		'    #ifdef SHOULD_ROTATE_TEXTURE',
+		'    	#ifdef SHOULD_CALCULATE_SPRITE',
+		'           float x = vUv.x - framesX * 0.5 - columnNorm;',
+		'           float y = vUv.y - ( 1.0 - rowNorm ) + framesY * 0.5;',
+		'           float c = cos( -vAngle );',
+		'           float s = sin( -vAngle );',
+
+		'           vUv = vec2( c * x + s * y + framesX * 0.5 + columnNorm, c * y - s * x + ( 1.0 - rowNorm ) - framesY * 0.5 );',
+		'		#else',
+		'           float x = vUv.x - 0.5;',
+		'           float y = vUv.y - 0.5;',
+		'           float c = cos( -vAngle );',
+		'           float s = sin( -vAngle );',
+
+		'           vUv = vec2( c * x + s * y + 0.5, c * y - s * x + 0.5 );',
+		'		#endif',
+		'    #endif',
+		'',
 
 		'',
 		'    vec4 rotatedTexture = texture2D( tex, vUv );',
@@ -2582,25 +2600,17 @@ class ParticleGroup extends AbstractParticleGroup {
 		for (i; i >= 0; --i) {
 			emitter = emitters[i];
 
-			// Only do angle calculation if there's no spritesheet defined.
-			//
-			// Saves calculations being done and then overwritten in the shaders.
-			if (!defines.SHOULD_CALCULATE_SPRITE) {
-				defines.SHOULD_ROTATE_TEXTURE = defines.SHOULD_ROTATE_TEXTURE || !!Math.max(
-					Math.max.apply(null, emitter.angle.value),
-					Math.max.apply(null, emitter.angle.spread)
-				);
-			}
+			defines.SHOULD_ROTATE_TEXTURE = defines.SHOULD_ROTATE_TEXTURE ||
+				Utils.hasNonZeroElement(emitter.angle.value) ||
+				Utils.hasNonZeroElement(emitter.angle.spread);
 
-			defines.SHOULD_ROTATE_PARTICLES = defines.SHOULD_ROTATE_PARTICLES || !!Math.max(
-				emitter.rotation.angle,
-				emitter.rotation.angleSpread
-			);
+			defines.SHOULD_ROTATE_PARTICLES = defines.SHOULD_ROTATE_PARTICLES ||
+				emitter.rotation.angle !== 0.0 ||
+				emitter.rotation.angleSpread !== 0.0;
 
-			defines.SHOULD_WIGGLE_PARTICLES = defines.SHOULD_WIGGLE_PARTICLES || !!Math.max(
-				emitter.wiggle.value,
-				emitter.wiggle.spread
-			);
+			defines.SHOULD_WIGGLE_PARTICLES = defines.SHOULD_WIGGLE_PARTICLES ||
+				emitter.wiggle.value !== 0.0 ||
+				emitter.wiggle.spread !== 0.0;
 		}
 
 		// Update the material since defines might have changed

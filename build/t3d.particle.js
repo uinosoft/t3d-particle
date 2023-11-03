@@ -395,6 +395,14 @@
 			return start + (end - start) * delta;
 		},
 		/**
+		 * Whether the array has non-zero elements.
+		 * @param {Array} array
+		 * @returns {Boolean}
+		 */
+		hasNonZeroElement: function (array) {
+			return array.some(element => element !== 0);
+		},
+		/**
 		 * Rounds a number to a nearest multiple.
 		 *
 		 * @param	{Number} n				The number to round.
@@ -615,9 +623,9 @@
 		// - http://www.neilmendoza.com/glsl-rotation-about-an-arbitrary-axis/
 		'#ifdef SHOULD_ROTATE_PARTICLES', '	 mat4 getRotationMatrix( in vec3 axis, in float angle) {', '			 axis = normalize(axis);', '			 float s = sin(angle);', '			 float c = cos(angle);', '			 float oc = 1.0 - c;', '', '			 return mat4(oc * axis.x * axis.x + c,					 oc * axis.x * axis.y - axis.z * s,	oc * axis.z * axis.x + axis.y * s,	0.0,', '									 oc * axis.x * axis.y + axis.z * s,	oc * axis.y * axis.y + c,					 oc * axis.y * axis.z - axis.x * s,	0.0,', '									 oc * axis.z * axis.x - axis.y * s,	oc * axis.y * axis.z + axis.x * s,	oc * axis.z * axis.z + c,					 0.0,', '									 0.0,																0.0,																0.0,																1.0);', '	 }', '', '	 vec3 getRotation( in vec3 pos, in float positionInTime ) {', '			if( rotation.y == 0.0 ) {', '					 return pos;', '			}', '', '			vec3 axis = unpackRotationAxis( rotation.x );', '			vec3 center = rotationCenter;', '			vec3 translated;', '			mat4 rotationMatrix;', '			float angle = 0.0;', '			angle += when_eq( rotation.z, 0.0 ) * rotation.y;', '			angle += when_gt( rotation.z, 0.0 ) * mix( 0.0, rotation.y, positionInTime );', '			translated = rotationCenter - pos;', '			rotationMatrix = getRotationMatrix( axis, angle );', '			return center - vec3( rotationMatrix * vec4( translated, 0.0 ) );', '	 }', '#endif'].join('\n'),
 		// Fragment chunks
-		rotateTexture: ['		vec2 vUv = vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y );', '', '		#ifdef SHOULD_ROTATE_TEXTURE', '			 float x = gl_PointCoord.x - 0.5;', '			 float y = 1.0 - gl_PointCoord.y - 0.5;', '			 float c = cos( -vAngle );', '			 float s = sin( -vAngle );', '			 vUv = vec2( c * x + s * y + 0.5, c * y - s * x + 0.5 );', '		#endif', '',
+		rotateTexture: ['		vec2 vUv = vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y );', '',
 		// Spritesheets overwrite angle calculations.
-		'		#ifdef SHOULD_CALCULATE_SPRITE', '				float framesX = vSpriteSheet.x;', '				float framesY = vSpriteSheet.y;', '				float columnNorm = vSpriteSheet.z;', '				float rowNorm = vSpriteSheet.w;', '				vUv.x = gl_PointCoord.x * framesX + columnNorm;', '				vUv.y = 1.0 - (gl_PointCoord.y * framesY + rowNorm);', '		#endif', '', '		vec4 rotatedTexture = texture2D( tex, vUv );'].join('\n')
+		'		#ifdef SHOULD_CALCULATE_SPRITE', '				float framesX = vSpriteSheet.x;', '				float framesY = vSpriteSheet.y;', '				float columnNorm = vSpriteSheet.z;', '				float rowNorm = vSpriteSheet.w;', '				vUv.x = gl_PointCoord.x * framesX + columnNorm;', '				vUv.y = 1.0 - (gl_PointCoord.y * framesY + rowNorm);', '		#endif', '		#ifdef SHOULD_ROTATE_TEXTURE', '			#ifdef SHOULD_CALCULATE_SPRITE', '					 float x = vUv.x - framesX * 0.5 - columnNorm;', '					 float y = vUv.y - ( 1.0 - rowNorm ) + framesY * 0.5;', '					 float c = cos( -vAngle );', '					 float s = sin( -vAngle );', '					 vUv = vec2( c * x + s * y + framesX * 0.5 + columnNorm, c * y - s * x + ( 1.0 - rowNorm ) - framesY * 0.5 );', '		#else', '					 float x = vUv.x - 0.5;', '					 float y = vUv.y - 0.5;', '					 float c = cos( -vAngle );', '					 float s = sin( -vAngle );', '					 vUv = vec2( c * x + s * y + 0.5, c * y - s * x + 0.5 );', '		#endif', '		#endif', '', '', '		vec4 rotatedTexture = texture2D( tex, vUv );'].join('\n')
 	};
 
 	var Shaders = {
@@ -2005,15 +2013,9 @@
 				emitter;
 			for (i; i >= 0; --i) {
 				emitter = emitters[i];
-
-				// Only do angle calculation if there's no spritesheet defined.
-				//
-				// Saves calculations being done and then overwritten in the shaders.
-				if (!defines.SHOULD_CALCULATE_SPRITE) {
-					defines.SHOULD_ROTATE_TEXTURE = defines.SHOULD_ROTATE_TEXTURE || !!Math.max(Math.max.apply(null, emitter.angle.value), Math.max.apply(null, emitter.angle.spread));
-				}
-				defines.SHOULD_ROTATE_PARTICLES = defines.SHOULD_ROTATE_PARTICLES || !!Math.max(emitter.rotation.angle, emitter.rotation.angleSpread);
-				defines.SHOULD_WIGGLE_PARTICLES = defines.SHOULD_WIGGLE_PARTICLES || !!Math.max(emitter.wiggle.value, emitter.wiggle.spread);
+				defines.SHOULD_ROTATE_TEXTURE = defines.SHOULD_ROTATE_TEXTURE || Utils.hasNonZeroElement(emitter.angle.value) || Utils.hasNonZeroElement(emitter.angle.spread);
+				defines.SHOULD_ROTATE_PARTICLES = defines.SHOULD_ROTATE_PARTICLES || emitter.rotation.angle !== 0.0 || emitter.rotation.angleSpread !== 0.0;
+				defines.SHOULD_WIGGLE_PARTICLES = defines.SHOULD_WIGGLE_PARTICLES || emitter.wiggle.value !== 0.0 || emitter.wiggle.spread !== 0.0;
 			}
 
 			// Update the material since defines might have changed

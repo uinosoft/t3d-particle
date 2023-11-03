@@ -12,7 +12,8 @@
 		"point_multiple_emitters",
 		"point_orbit",
 		"point_pool",
-		"point_rotation"
+		"point_rotation",
+		"point_lightning"
 	],
 	"mesh": [
 		"mesh_basic"
