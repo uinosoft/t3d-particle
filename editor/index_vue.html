@@ -1,0 +1,97 @@
+<html>
+<head>
+    <title>Particle Editor</title>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
+	<!-- Import style -->
+	<link rel="stylesheet" href="//unpkg.com/element-plus/dist/index.css" />
+	<link rel="stylesheet" href="//unpkg.com/element-plus/theme-chalk/dark/css-vars.css" />
+	<!-- Import Vue 3 -->
+	<script src="//unpkg.com/vue@3"></script>
+	<!-- Import component library -->
+	<script src="//unpkg.com/element-plus"></script>
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+		}
+		:root {
+			--el-header-background-color: rgb(212, 212, 212);
+		}
+		.el-main {
+			--el-main-padding: 0;
+		}
+		.el-container {
+			height: 100%;
+		}
+		.el-header {
+			background-color: var(--el-header-background-color);
+		}
+		.el-aside {
+			padding: 5px;
+			border-right: 2px solid var(--el-border-color);
+		}
+	</style>
+</head>
+<body>
+	<div id="app"></div>
+
+    <script type="module">
+		const { createApp, ref } = Vue;
+
+		const component = {
+			setup() {
+				const message = ref({
+					text: 'Hello World!',
+					colors: [
+						'#409EFF',
+						null
+					]
+				});
+		
+				const removeColor = (index) => {
+					message.value.colors.splice(index, 1);
+					console.log(message);
+				};
+				const addColor = () => {
+					message.value.colors.push(null);
+					console.log(message);
+				};
+		
+				return { message, removeColor, addColor };
+			},
+			template: `
+			<el-container>
+				<el-header>Header</el-header>
+
+				<el-container>
+					<el-aside>
+						<el-text>{{ message.text }}</el-text><br/>
+						<el-button type="primary">{{ message.text }}</el-button>
+
+						<el-divider/>
+						
+						<el-text>Color Gradient</el-text><br/>
+						<el-collapse>
+						<div v-for="(color, index) in message.colors">
+							<el-collapse-item title="ColorStop">
+								xxx-color{{index}}: <el-color-picker v-model="message.colors[index]" @change="(e) => { console.log(e) }"></el-color-picker>
+								<el-button type="primary" @click="removeColor">-</el-button>
+							</el-collapse-item>
+						</div>
+						</el-collapse>
+						<el-button type="primary" @click="addColor">+</el-button>
+
+						<el-divider/>
+					</el-aside>
+
+					<el-main>Main</el-main>
+				</el-container>
+			</el-container>
+			`
+		};
+
+		createApp(component).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>
