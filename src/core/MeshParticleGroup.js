@@ -1,8 +1,8 @@
-import * as t3d from "t3d";
-import { Utils } from "./Utils.js";
-import { MeshParticleShader } from "../shaders/MeshParticleShader.js";
-import { AbstractParticleGroup } from "./AbstractParticleGroup.js";
-import { MeshParticleEmitter } from "./MeshParticleEmitter.js";
+import * as t3d from 't3d';
+import { Utils } from './Utils.js';
+import { MeshParticleShader } from '../shaders/MeshParticleShader.js';
+import { AbstractParticleGroup } from './AbstractParticleGroup.js';
+import { MeshParticleEmitter } from './MeshParticleEmitter.js';
 
 export class MeshParticleGroup extends AbstractParticleGroup {
 
@@ -15,14 +15,14 @@ export class MeshParticleGroup extends AbstractParticleGroup {
 		super(options);
 
 		if (options.maxParticleCount === undefined) {
-			console.warn("MeshParticleGroup: options.maxParticleCount is not provided, set to 1000 by default.");
+			console.warn('MeshParticleGroup: options.maxParticleCount is not provided, set to 1000 by default.');
 			options.maxParticleCount = 1000;
 		}
 
 		this.maxParticleCount = options.maxParticleCount;
 
 		if (!options.geometry || !(options.geometry instanceof t3d.Geometry)) {
-			console.warn("MeshParticleGroup: options.geometry is not provided, set a box geometry by default.");
+			console.warn('MeshParticleGroup: options.geometry is not provided, set a box geometry by default.');
 			options.geometry = new t3d.BoxGeometry(1, 1, 1);
 		}
 

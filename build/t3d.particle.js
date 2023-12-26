@@ -238,7 +238,7 @@
 			if (Array.isArray(property._spread) === false) {
 				property._spread = [property._spread];
 			}
-			let valueLength = this.clamp(property._value.length, minLength, maxLength),
+			const valueLength = this.clamp(property._value.length, minLength, maxLength),
 				spreadLength = this.clamp(property._spread.length, minLength, maxLength),
 				desiredLength = Math.max(valueLength, spreadLength);
 			if (property._value.length !== desiredLength) {
@@ -261,11 +261,11 @@
 		 * @return {Array}					 The interpolated array.
 		 */
 		interpolateArray: function (srcArray, newLength) {
-			let sourceLength = srcArray.length,
+			const sourceLength = srcArray.length,
 				newArray = [typeof srcArray[0].clone === 'function' ? srcArray[0].clone() : srcArray[0]],
 				factor = (sourceLength - 1) / (newLength - 1);
 			for (let i = 1; i < newLength - 1; ++i) {
-				let f = i * factor,
+				const f = i * factor,
 					before = Math.floor(f),
 					after = Math.ceil(f),
 					delta = f - before;
@@ -294,8 +294,8 @@
 		 * @return {Number}					 The result of the operation.
 		 */
 		zeroToEpsilon: function (value, randomise) {
-			let epsilon = 0.00001,
-				result = value;
+			const epsilon = 0.00001;
+			let result = value;
 			result = randomise ? Math.random() * epsilon * 10 : epsilon;
 			if (value < 0 && value > -epsilon) {
 				result = -result;
@@ -324,8 +324,8 @@
 		 *																							 if their types do not match.
 		 */
 		lerpTypeAgnostic: function (start, end, delta) {
-			let types = this.types,
-				out;
+			const types = this.types;
+			let out;
 			if (typeof start === types.NUMBER && typeof end === types.NUMBER) {
 				return start + (end - start) * delta;
 			} else if (start instanceof t3d__namespace.Vector2 && end instanceof t3d__namespace.Vector2 || typeof start.x == types.NUMBER && typeof start.y == types.NUMBER && start.z == null && start.z == undefined && typeof end.x == types.NUMBER && typeof end.y == types.NUMBER && end.z == null && end.z == undefined) {
@@ -462,10 +462,10 @@
 			return array;
 		},
 		getRandomVector3OnSphere: function (array, offset, base, radiusSpread, radiusSpreadClamp, radius, radiusScale) {
-			let depth = 2 * Math.random() - 1,
+			const depth = 2 * Math.random() - 1,
 				t = 6.2832 * Math.random(),
-				r = Math.sqrt(1 - depth * depth),
-				rand = Utils.randomFloat(radius, radiusSpread.x),
+				r = Math.sqrt(1 - depth * depth);
+			let rand = Utils.randomFloat(radius, radiusSpread.x),
 				x = 0,
 				y = 0,
 				z = 0;
@@ -493,8 +493,8 @@
 			return array;
 		},
 		getRandomVector3OnDisc: function (array, offset, base, radiusSpread, radiusSpreadClamp, radius, radiusScale) {
-			let t = 6.2832 * Math.random(),
-				rand = Math.abs(Utils.randomFloat(radius, radiusSpread.x)),
+			const t = 6.2832 * Math.random();
+			let rand = Math.abs(Utils.randomFloat(radius, radiusSpread.x)),
 				x = 0,
 				y = 0,
 				z = 0;
@@ -581,7 +581,7 @@
 		}()
 	};
 
-	var ShaderChunks = {
+	const ShaderChunks = {
 		// Register color-packing define statements.
 		defines: ['#define PACKED_COLOR_SIZE 256.0', '#define PACKED_COLOR_DIVISOR 255.0'].join('\n'),
 		// All uniforms used by vertex / fragment shaders
@@ -628,7 +628,7 @@
 		'		#ifdef SHOULD_CALCULATE_SPRITE', '				float framesX = vSpriteSheet.x;', '				float framesY = vSpriteSheet.y;', '				float columnNorm = vSpriteSheet.z;', '				float rowNorm = vSpriteSheet.w;', '				vUv.x = gl_PointCoord.x * framesX + columnNorm;', '				vUv.y = 1.0 - (gl_PointCoord.y * framesY + rowNorm);', '		#endif', '		#ifdef SHOULD_ROTATE_TEXTURE', '			#ifdef SHOULD_CALCULATE_SPRITE', '					 float x = vUv.x - framesX * 0.5 - columnNorm;', '					 float y = vUv.y - ( 1.0 - rowNorm ) + framesY * 0.5;', '					 float c = cos( -vAngle );', '					 float s = sin( -vAngle );', '					 vUv = vec2( c * x + s * y + framesX * 0.5 + columnNorm, c * y - s * x + ( 1.0 - rowNorm ) - framesY * 0.5 );', '		#else', '					 float x = vUv.x - 0.5;', '					 float y = vUv.y - 0.5;', '					 float c = cos( -vAngle );', '					 float s = sin( -vAngle );', '					 vUv = vec2( c * x + s * y + 0.5, c * y - s * x + 0.5 );', '		#endif', '		#endif', '', '', '		vec4 rotatedTexture = texture2D( tex, vUv );'].join('\n')
 	};
 
-	var Shaders = {
+	const Shaders = {
 		vertex: [ShaderChunks.defines, ShaderChunks.uniforms, ShaderChunks.attributes, ShaderChunks.varyings, t3d__namespace.ShaderChunk.common_vert, t3d__namespace.ShaderChunk.logdepthbuf_pars_vert, ShaderChunks.branchAvoidanceFunctions, ShaderChunks.unpackColor, ShaderChunks.unpackRotationAxis, ShaderChunks.floatOverLifetime, ShaderChunks.colorOverLifetime, ShaderChunks.paramFetchingFunctions, ShaderChunks.forceFetchingFunctions, ShaderChunks.rotationFunctions, 'void main() {',
 		//
 		// Setup...
@@ -852,21 +852,21 @@
 				_radius: Utils.ensureTypedArg(options.position.radius, types.NUMBER, 10),
 				_radiusScale: Utils.ensureInstanceOf(options.position.radiusScale, t3d__namespace.Vector3, new t3d__namespace.Vector3(1, 1, 1))
 			};
-			this._setDistributeFunctions("position", this.position._distribution);
+			this._setDistributeFunctions('position', this.position._distribution);
 			this.velocity = {
 				_value: Utils.ensureInstanceOf(options.velocity.value, t3d__namespace.Vector3, new t3d__namespace.Vector3()),
 				_spread: Utils.ensureInstanceOf(options.velocity.spread, t3d__namespace.Vector3, new t3d__namespace.Vector3()),
 				_distribution: options.velocity.distribution || this.type,
 				_randomise: Utils.ensureTypedArg(options.velocity.randomise, types.BOOLEAN, false)
 			};
-			this._setDistributeFunctions("velocity", this.velocity._distribution);
+			this._setDistributeFunctions('velocity', this.velocity._distribution);
 			this.acceleration = {
 				_value: Utils.ensureInstanceOf(options.acceleration.value, t3d__namespace.Vector3, new t3d__namespace.Vector3()),
 				_spread: Utils.ensureInstanceOf(options.acceleration.spread, t3d__namespace.Vector3, new t3d__namespace.Vector3()),
 				_distribution: options.acceleration.distribution || this.type,
 				_randomise: Utils.ensureTypedArg(options.acceleration.randomise, types.BOOLEAN, false)
 			};
-			this._setDistributeFunctions("acceleration", this.acceleration._distribution);
+			this._setDistributeFunctions('acceleration', this.acceleration._distribution);
 			this.drag = {
 				_value: Utils.ensureTypedArg(options.drag.value, types.NUMBER, 0),
 				_spread: Utils.ensureTypedArg(options.drag.spread, types.NUMBER, 0),
@@ -1208,7 +1208,7 @@
 			}
 		}
 		_setDistributeFunctions(attributeName, type) {
-			if (typeof type === "function") {
+			if (typeof type === 'function') {
 				this[attributeName]._getDistributionFunction = type;
 			} else {
 				this[attributeName]._getDistributionFunction = getRandomFunctions[attributeName][type];
@@ -1218,19 +1218,19 @@
 	const _vec3_1$1 = new t3d__namespace.Vector3();
 	const _col3_1 = new t3d__namespace.Color3();
 	const getRandomFunctions = {
-		"position": {
+		'position': {
 			1: Utils.getRandomVector3,
 			2: Utils.getRandomVector3OnSphere,
 			3: Utils.getRandomVector3OnDisc,
 			4: Utils.getRandomVector3OnLine
 		},
-		"velocity": {
+		'velocity': {
 			1: Utils.getRandomVector3,
 			2: Utils.getRandomDirectionVector3OnSphere,
 			3: Utils.getRandomDirectionVector3OnDisc,
 			4: Utils.getRandomVector3OnLine
 		},
-		"acceleration": {
+		'acceleration': {
 			1: Utils.getRandomVector3,
 			2: Utils.getRandomDirectionVector3OnSphere,
 			3: Utils.getRandomDirectionVector3OnDisc,
@@ -1462,14 +1462,12 @@
 			// TODO:
 			//	- Trigger event if count === 0.
 		}
-
 		_incrementParticleCount() {
 			++this.activeParticleCount;
 
 			// TODO:
 			//	- Trigger event if count === this.particleCount.
 		}
-
 		_checkParticleAges(start, end, params, dt) {
 			for (let i = end - 1, index, maxAge, age, alive; i >= start; --i) {
 				index = i * 4;
@@ -1640,7 +1638,7 @@
 	};
 	class ParticleGroup extends AbstractParticleGroup {
 		constructor(options) {
-			let utils = Utils,
+			const utils = Utils,
 				types = utils.types;
 
 			// Ensure we have a map of options to play with
@@ -1746,7 +1744,7 @@
 				console.error('ParticleEmitter already belongs to another group. Will not add to requested group.');
 				return;
 			}
-			let attributes = this.attributes,
+			const attributes = this.attributes,
 				start = this.particleCount,
 				end = start + emitter.particleCount;
 
@@ -1781,17 +1779,17 @@
 				if (attributes.hasOwnProperty(attr)) {
 					// When creating a buffer, pass through the maxParticle count
 					// if one is specified.
-					let attribute = attributes[attr];
-					let size = this.maxParticleCount !== null ? this.maxParticleCount : this.particleCount;
+					const attribute = attributes[attr];
+					const size = this.maxParticleCount !== null ? this.maxParticleCount : this.particleCount;
 					if (attribute !== null && attribute.buffer.array !== null) {
 						// Make sure the buffer array is present and correct.
 						if (attribute.buffer.array.length !== size * attribute.size) {
-							let currentArraySize = attribute.buffer.array.length;
+							const currentArraySize = attribute.buffer.array.length;
 							const bufferSize = size * attribute.size;
 							if (bufferSize < currentArraySize) {
 								attribute.buffer.array = attribute.buffer.array.subarray(0, bufferSize);
 							} else {
-								let existingArray = attribute.buffer.array,
+								const existingArray = attribute.buffer.array,
 									newArray = new Float32Array(bufferSize);
 								newArray.set(existingArray);
 								attribute.buffer.array = newArray;
@@ -1882,8 +1880,8 @@
 					const attribute = this.attributes[attr];
 					const startSize = start * attribute.size;
 					const endSize = end * attribute.size;
-					let data = [],
-						array = attribute.buffer.array;
+					let array = attribute.buffer.array;
+					const data = [];
 					for (let i = 0; i < array.length; ++i) {
 						if (i < startSize || i >= endSize) {
 							data.push(array[i]);
@@ -2425,12 +2423,12 @@
 			options = Utils.ensureTypedArg(options, types.OBJECT, {});
 			super(options);
 			if (options.maxParticleCount === undefined) {
-				console.warn("MeshParticleGroup: options.maxParticleCount is not provided, set to 1000 by default.");
+				console.warn('MeshParticleGroup: options.maxParticleCount is not provided, set to 1000 by default.');
 				options.maxParticleCount = 1000;
 			}
 			this.maxParticleCount = options.maxParticleCount;
 			if (!options.geometry || !(options.geometry instanceof t3d__namespace.Geometry)) {
-				console.warn("MeshParticleGroup: options.geometry is not provided, set a box geometry by default.");
+				console.warn('MeshParticleGroup: options.geometry is not provided, set a box geometry by default.');
 				options.geometry = new t3d__namespace.BoxGeometry(1, 1, 1);
 			}
 			const geometry = generateInstancedGeometry(options.geometry, this.maxParticleCount);

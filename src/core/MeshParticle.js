@@ -1,6 +1,6 @@
-import * as t3d from "t3d";
-import { ParticleProperties } from "../ParticleProperties.js";
-import { Utils } from "./Utils.js";
+import * as t3d from 't3d';
+import { ParticleProperties } from '../ParticleProperties.js';
+import { Utils } from './Utils.js';
 
 export class MeshParticle {
 
@@ -93,7 +93,7 @@ export class MeshParticle {
 		_position.add(_vec3_2.fromArray(this._originPosition)).add(halfAt2);
 
 		if (emitter.SHOULD_WIGGLE_PARTICLES) {
-			const fWiggle = positionInTime *  this._originParams[3] * Math.PI;
+			const fWiggle = positionInTime * this._originParams[3] * Math.PI;
 			const fWiggleSin = Math.sin(fWiggle);
 			const fWiggleCos = Math.cos(fWiggle);
 
@@ -218,9 +218,9 @@ function getColorOverLifetime(positionInTime, attr, out) {
 				ratio = deltaAge - i;
 				index = i * 3;
 				nextIndex = index + 3;
-				out.r =  ratio * (attr[nextIndex + 0] - attr[index + 0]) + attr[index + 0];
-				out.g =  ratio * (attr[nextIndex + 1] - attr[index + 1]) + attr[index + 1];
-				out.b =  ratio * (attr[nextIndex + 2] - attr[index + 2]) + attr[index + 2];
+				out.r = ratio * (attr[nextIndex + 0] - attr[index + 0]) + attr[index + 0];
+				out.g = ratio * (attr[nextIndex + 1] - attr[index + 1]) + attr[index + 1];
+				out.b = ratio * (attr[nextIndex + 2] - attr[index + 2]) + attr[index + 2];
 				break;
 			}
 		}

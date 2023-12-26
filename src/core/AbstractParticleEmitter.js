@@ -1,6 +1,6 @@
-import * as t3d from "t3d";
-import { ParticleProperties } from "../ParticleProperties.js";
-import { Utils } from "./Utils.js";
+import * as t3d from 't3d';
+import { ParticleProperties } from '../ParticleProperties.js';
+import { Utils } from './Utils.js';
 
 /**
  * A map of options to configure an Emitter instance.
@@ -179,7 +179,7 @@ export class AbstractParticleEmitter {
 			_radius: Utils.ensureTypedArg(options.position.radius, types.NUMBER, 10),
 			_radiusScale: Utils.ensureInstanceOf(options.position.radiusScale, t3d.Vector3, new t3d.Vector3(1, 1, 1))
 		};
-		this._setDistributeFunctions("position", this.position._distribution);
+		this._setDistributeFunctions('position', this.position._distribution);
 
 		this.velocity = {
 			_value: Utils.ensureInstanceOf(options.velocity.value, t3d.Vector3, new t3d.Vector3()),
@@ -187,7 +187,7 @@ export class AbstractParticleEmitter {
 			_distribution: options.velocity.distribution || this.type,
 			_randomise: Utils.ensureTypedArg(options.velocity.randomise, types.BOOLEAN, false)
 		};
-		this._setDistributeFunctions("velocity", this.velocity._distribution);
+		this._setDistributeFunctions('velocity', this.velocity._distribution);
 
 		this.acceleration = {
 			_value: Utils.ensureInstanceOf(options.acceleration.value, t3d.Vector3, new t3d.Vector3()),
@@ -195,7 +195,7 @@ export class AbstractParticleEmitter {
 			_distribution: options.acceleration.distribution || this.type,
 			_randomise: Utils.ensureTypedArg(options.acceleration.randomise, types.BOOLEAN, false)
 		};
-		this._setDistributeFunctions("acceleration", this.acceleration._distribution);
+		this._setDistributeFunctions('acceleration', this.acceleration._distribution);
 
 		this.drag = {
 			_value: Utils.ensureTypedArg(options.drag.value, types.NUMBER, 0),
@@ -353,14 +353,14 @@ export class AbstractParticleEmitter {
 				const name = i.replace('_', '');
 
 				Object.defineProperty(propObj, name, {
-					get: (function (prop) {
-						return function () {
+					get: (function(prop) {
+						return function() {
 							return this[prop];
 						};
 					}(i)),
 
-					set: (function (prop) {
-						return function (value) {
+					set: (function(prop) {
+						return function(value) {
 							const mapName = self.updateMap[propName],
 								prevValue = this[prop],
 								length = ParticleProperties.valueOverLifetimeLength;
@@ -530,7 +530,7 @@ export class AbstractParticleEmitter {
 		}
 		array[offset + 1] = 0;
 		array[offset + 2] = Utils.randomFloat(this.maxAge._value, this.maxAge._spread);
-		array[offset + 3] =  Utils.randomFloat(this.wiggle._value, this.wiggle._spread);
+		array[offset + 3] = Utils.randomFloat(this.wiggle._value, this.wiggle._spread);
 
 		return array;
 	}
@@ -590,7 +590,7 @@ export class AbstractParticleEmitter {
 	}
 
 	_setDistributeFunctions(attributeName, type) {
-		if (typeof type === "function") {
+		if (typeof type === 'function') {
 			this[attributeName]._getDistributionFunction = type;
 		} else {
 			this[attributeName]._getDistributionFunction = getRandomFunctions[attributeName][type];
@@ -603,19 +603,19 @@ const _vec3_1 = new t3d.Vector3();
 const _col3_1 = new t3d.Color3();
 
 const getRandomFunctions = {
-	"position": {
+	'position': {
 		1: Utils.getRandomVector3,
 		2: Utils.getRandomVector3OnSphere,
 		3: Utils.getRandomVector3OnDisc,
 		4: Utils.getRandomVector3OnLine
 	},
-	"velocity": {
+	'velocity': {
 		1: Utils.getRandomVector3,
 		2: Utils.getRandomDirectionVector3OnSphere,
 		3: Utils.getRandomDirectionVector3OnDisc,
 		4: Utils.getRandomVector3OnLine
 	},
-	"acceleration": {
+	'acceleration': {
 		1: Utils.getRandomVector3,
 		2: Utils.getRandomDirectionVector3OnSphere,
 		3: Utils.getRandomDirectionVector3OnDisc,

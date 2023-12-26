@@ -71,7 +71,7 @@ const ParticleProperties = {
      *
      * @type {Number}
      */
-	valueOverLifetimeLength: 4,
+	valueOverLifetimeLength: 4
 
 };
 
@@ -123,7 +123,7 @@ const Utils = {
 	 * @param  {(boolean|string|number|object)} defaultValue A default value to fallback on if the type check fails.
 	 * @return {(boolean|string|number|object)}              The given value if type check passes, or the default value if it fails.
 	 */
-	ensureTypedArg: function (arg, type, defaultValue) {
+	ensureTypedArg: function(arg, type, defaultValue) {
 		if (typeof arg === type) {
 			return arg;
 		} else {
@@ -143,7 +143,7 @@ const Utils = {
 	 * @param  {(boolean|string|number|object)} defaultValue A default fallback value.
 	 * @return {(boolean|string|number|object)}              The given value if type check passes, or the default value if it fails.
 	 */
-	ensureArrayTypedArg: function (arg, type, defaultValue) {
+	ensureArrayTypedArg: function(arg, type, defaultValue) {
 		// If the argument being checked is an array, loop through
 		// it and ensure all the values are of the correct type,
 		// falling back to the defaultValue if any aren't.
@@ -170,7 +170,7 @@ const Utils = {
 	 * @param  {Object} defaultValue A default fallback value if instance check fails
 	 * @return {Object}              The given value if type check passes, or the default value if it fails.
 	 */
-	ensureInstanceOf: function (arg, instance, defaultValue) {
+	ensureInstanceOf: function(arg, instance, defaultValue) {
 		if (instance !== undefined && arg instanceof instance) {
 			return arg;
 		} else {
@@ -190,7 +190,7 @@ const Utils = {
 	 * @param  {Object} defaultValue A default fallback value if instance check fails
 	 * @return {Object}              The given value if type check passes, or the default value if it fails.
 	 */
-	ensureArrayInstanceOf: function (arg, instance, defaultValue) {
+	ensureArrayInstanceOf: function(arg, instance, defaultValue) {
 		// If the argument being checked is an array, loop through
 		// it and ensure all the values are of the correct type,
 		// falling back to the defaultValue if any aren't.
@@ -221,7 +221,7 @@ const Utils = {
 	 * @param  {Number} minLength The minimum length of the array to create.
 	 * @param  {Number} maxLength The maximum length of the array to create.
 	 */
-	ensureValueOverLifetimeCompliance: function (property, minLength, maxLength) {
+	ensureValueOverLifetimeCompliance: function(property, minLength, maxLength) {
 		minLength = minLength || 3;
 		maxLength = maxLength || 3;
 
@@ -234,7 +234,7 @@ const Utils = {
 			property._spread = [property._spread];
 		}
 
-		let valueLength = this.clamp(property._value.length, minLength, maxLength),
+		const valueLength = this.clamp(property._value.length, minLength, maxLength),
 			spreadLength = this.clamp(property._spread.length, minLength, maxLength),
 			desiredLength = Math.max(valueLength, spreadLength);
 
@@ -259,14 +259,14 @@ const Utils = {
 	 * @param  {Number} newLength The length the array should be interpolated to.
 	 * @return {Array}           The interpolated array.
 	 */
-	interpolateArray: function (srcArray, newLength) {
-		let sourceLength = srcArray.length,
+	interpolateArray: function(srcArray, newLength) {
+		const sourceLength = srcArray.length,
 			newArray = [typeof srcArray[0].clone === 'function' ? srcArray[0].clone() : srcArray[0]],
 			factor = (sourceLength - 1) / (newLength - 1);
 
 
 		for (let i = 1; i < newLength - 1; ++i) {
-			let f = i * factor,
+			const f = i * factor,
 				before = Math.floor(f),
 				after = Math.ceil(f),
 				delta = f - before;
@@ -290,7 +290,7 @@ const Utils = {
 	 * @param  {Number} max   The maximum value.
 	 * @return {Number}       The clamped number.
 	 */
-	clamp: function (value, min, max) {
+	clamp: function(value, min, max) {
 		return Math.max(min, Math.min(value, max));
 	},
 
@@ -303,9 +303,10 @@ const Utils = {
 	 * @param  {Boolean} randomise Whether the value should be randomised.
 	 * @return {Number}           The result of the operation.
 	 */
-	zeroToEpsilon: function (value, randomise) {
-		let epsilon = 0.00001,
-			result = value;
+	zeroToEpsilon: function(value, randomise) {
+		const epsilon = 0.00001;
+
+		let result = value;
 
 		result = randomise ? Math.random() * epsilon * 10 : epsilon;
 
@@ -336,9 +337,9 @@ const Utils = {
 	 *                                               the start and end arguments aren't a supported type, or
 	 *                                               if their types do not match.
 	 */
-	lerpTypeAgnostic: function (start, end, delta) {
-		let types = this.types,
-			out;
+	lerpTypeAgnostic: function(start, end, delta) {
+		const types = this.types;
+		let out;
 
 		if (typeof start === types.NUMBER && typeof end === types.NUMBER) {
 			return start + ((end - start) * delta);
@@ -422,7 +423,7 @@ const Utils = {
 	 * @param  {Number} delta The position to interpolate to.
 	 * @return {Number}       The result of the lerp operation.
 	 */
-	lerp: function (start, end, delta) {
+	lerp: function(start, end, delta) {
 		return start + ((end - start) * delta);
 	},
 
@@ -442,7 +443,7 @@ const Utils = {
 	 * @param  {Number} multiple The multiple to round to.
 	 * @return {Number}          The result of the round operation.
 	 */
-	roundToNearestMultiple: function (n, multiple) {
+	roundToNearestMultiple: function(n, multiple) {
 		let remainder = 0;
 
 		if (multiple === 0) {
@@ -468,7 +469,7 @@ const Utils = {
 	 * @param  {Array} array The array of values to check equality of.
 	 * @return {Boolean}       Whether the array's values are all equal or not.
 	 */
-	arrayValuesAreEqual: function (array) {
+	arrayValuesAreEqual: function(array) {
 		for (let i = 0; i < array.length - 1; ++i) {
 			if (array[i] !== array[i + 1]) {
 				return false;
@@ -485,11 +486,11 @@ const Utils = {
 	 * @param  {Number} spread The size of the random variance to apply.
 	 * @return {Number}        A randomised number.
 	 */
-	randomFloat: function (base, spread) {
+	randomFloat: function(base, spread) {
 		return base + spread * (Math.random() - 0.5);
 	},
 
-	getRandomVector3: function (array, offset, base, spread, spreadClamp) {
+	getRandomVector3: function(array, offset, base, spread, spreadClamp) {
 		let x = base.x + (Math.random() * spread.x - (spread.x * 0.5)),
 			y = base.y + (Math.random() * spread.y - (spread.y * 0.5)),
 			z = base.z + (Math.random() * spread.z - (spread.z * 0.5));
@@ -508,10 +509,10 @@ const Utils = {
 	},
 
 	getRandomVector3OnSphere: function(array, offset, base, radiusSpread, radiusSpreadClamp, radius, radiusScale) {
-		let depth = 2 * Math.random() - 1,
+		const depth = 2 * Math.random() - 1,
 			t = 6.2832 * Math.random(),
-			r = Math.sqrt(1 - depth * depth),
-			rand = Utils.randomFloat(radius, radiusSpread.x),
+			r = Math.sqrt(1 - depth * depth);
+		let rand = Utils.randomFloat(radius, radiusSpread.x),
 			x = 0,
 			y = 0,
 			z = 0;
@@ -543,8 +544,8 @@ const Utils = {
 	},
 
 	getRandomVector3OnDisc: function(array, offset, base, radiusSpread, radiusSpreadClamp, radius, radiusScale) {
-		let t = 6.2832 * Math.random(),
-			rand = Math.abs(Utils.randomFloat(radius, radiusSpread.x)),
+		const t = 6.2832 * Math.random();
+		let rand = Math.abs(Utils.randomFloat(radius, radiusSpread.x)),
 			x = 0,
 			y = 0,
 			z = 0;
@@ -586,7 +587,7 @@ const Utils = {
 	getRandomDirectionVector3OnSphere: (function() {
 		const v = new t3d.Vector3();
 
-		return function (array, offset, speed, speedSpread, posX, posY, posZ, emitterPosition) {
+		return function(array, offset, speed, speedSpread, posX, posY, posZ, emitterPosition) {
 			v.copy(emitterPosition);
 
 			v.x -= posX;
@@ -598,13 +599,13 @@ const Utils = {
 			v.toArray(array, offset);
 
 			return array;
-		}
+		};
 	}()),
 
 	getRandomDirectionVector3OnDisc: (function() {
 		const v = new t3d.Vector3();
 
-		return function (array, offset, speed, speedSpread, posX, posY, posZ, emitterPosition) {
+		return function(array, offset, speed, speedSpread, posX, posY, posZ, emitterPosition) {
 			v.copy(emitterPosition);
 
 			v.x -= posX;
@@ -618,7 +619,7 @@ const Utils = {
 			array[offset + 2] = 0;
 
 			return array;
-		}
+		};
 	}()),
 
 	getRotationAxis: (function() {
@@ -649,11 +650,11 @@ const Utils = {
 
 			return out;
 		};
-	}()),
+	}())
 
 };
 
-var ShaderChunks = {
+const ShaderChunks = {
 	// Register color-packing define statements.
 	defines: [
 		'#define PACKED_COLOR_SIZE 256.0',
@@ -666,7 +667,7 @@ var ShaderChunks = {
 		'uniform float runTime;',
 		'uniform sampler2D tex;',
 		'uniform vec4 textureAnimation;',
-		'uniform float scale;',
+		'uniform float scale;'
 	].join('\n'),
 
 	// All attributes used by the vertex shader.
@@ -731,7 +732,7 @@ var ShaderChunks = {
 
 		'float or(float a, float b) {',
 		'    return min(a + b, 1.0);',
-		'}',
+		'}'
 	].join('\n'),
 
 
@@ -751,7 +752,7 @@ var ShaderChunks = {
 		'   c.b = b / PACKED_COLOR_DIVISOR;',
 
 		'   return c;',
-		'}',
+		'}'
 	].join('\n'),
 
 	unpackRotationAxis: [
@@ -770,7 +771,7 @@ var ShaderChunks = {
 		'   c -= vec3( 1.0 );',
 
 		'   return c;',
-		'}',
+		'}'
 	].join('\n'),
 
 	floatOverLifetime: [
@@ -797,7 +798,7 @@ var ShaderChunks = {
 		'    }',
 		'',
 		'    return value;',
-		'}',
+		'}'
 	].join('\n'),
 
 	colorOverLifetime: [
@@ -807,7 +808,7 @@ var ShaderChunks = {
 		'    value.y = getFloatOverLifetime( positionInTime, vec4( color1.y, color2.y, color3.y, color4.y ) );',
 		'    value.z = getFloatOverLifetime( positionInTime, vec4( color1.z, color2.z, color3.z, color4.z ) );',
 		'    return value;',
-		'}',
+		'}'
 	].join('\n'),
 
 	paramFetchingFunctions: [
@@ -825,7 +826,7 @@ var ShaderChunks = {
 
 		'float getWiggle() {',
 		'   return params.w;',
-		'}',
+		'}'
 	].join('\n'),
 
 	forceFetchingFunctions: [
@@ -839,7 +840,7 @@ var ShaderChunks = {
 
 		'vec3 getAcceleration( in float age ) {',
 		'   return acceleration.xyz * age;',
-		'}',
+		'}'
 	].join('\n'),
 
 
@@ -915,11 +916,11 @@ var ShaderChunks = {
 		'',
 
 		'',
-		'    vec4 rotatedTexture = texture2D( tex, vUv );',
+		'    vec4 rotatedTexture = texture2D( tex, vUv );'
 	].join('\n')
 };
 
-var Shaders = {
+const Shaders = {
 	vertex: [
 		ShaderChunks.defines,
 		ShaderChunks.uniforms,
@@ -1276,7 +1277,7 @@ class AbstractParticleEmitter {
 			_radius: Utils.ensureTypedArg(options.position.radius, types.NUMBER, 10),
 			_radiusScale: Utils.ensureInstanceOf(options.position.radiusScale, t3d.Vector3, new t3d.Vector3(1, 1, 1))
 		};
-		this._setDistributeFunctions("position", this.position._distribution);
+		this._setDistributeFunctions('position', this.position._distribution);
 
 		this.velocity = {
 			_value: Utils.ensureInstanceOf(options.velocity.value, t3d.Vector3, new t3d.Vector3()),
@@ -1284,7 +1285,7 @@ class AbstractParticleEmitter {
 			_distribution: options.velocity.distribution || this.type,
 			_randomise: Utils.ensureTypedArg(options.velocity.randomise, types.BOOLEAN, false)
 		};
-		this._setDistributeFunctions("velocity", this.velocity._distribution);
+		this._setDistributeFunctions('velocity', this.velocity._distribution);
 
 		this.acceleration = {
 			_value: Utils.ensureInstanceOf(options.acceleration.value, t3d.Vector3, new t3d.Vector3()),
@@ -1292,7 +1293,7 @@ class AbstractParticleEmitter {
 			_distribution: options.acceleration.distribution || this.type,
 			_randomise: Utils.ensureTypedArg(options.acceleration.randomise, types.BOOLEAN, false)
 		};
-		this._setDistributeFunctions("acceleration", this.acceleration._distribution);
+		this._setDistributeFunctions('acceleration', this.acceleration._distribution);
 
 		this.drag = {
 			_value: Utils.ensureTypedArg(options.drag.value, types.NUMBER, 0),
@@ -1450,14 +1451,14 @@ class AbstractParticleEmitter {
 				const name = i.replace('_', '');
 
 				Object.defineProperty(propObj, name, {
-					get: (function (prop) {
-						return function () {
+					get: (function(prop) {
+						return function() {
 							return this[prop];
 						};
 					}(i)),
 
-					set: (function (prop) {
-						return function (value) {
+					set: (function(prop) {
+						return function(value) {
 							const mapName = self.updateMap[propName],
 								prevValue = this[prop],
 								length = ParticleProperties.valueOverLifetimeLength;
@@ -1627,7 +1628,7 @@ class AbstractParticleEmitter {
 		}
 		array[offset + 1] = 0;
 		array[offset + 2] = Utils.randomFloat(this.maxAge._value, this.maxAge._spread);
-		array[offset + 3] =  Utils.randomFloat(this.wiggle._value, this.wiggle._spread);
+		array[offset + 3] = Utils.randomFloat(this.wiggle._value, this.wiggle._spread);
 
 		return array;
 	}
@@ -1687,7 +1688,7 @@ class AbstractParticleEmitter {
 	}
 
 	_setDistributeFunctions(attributeName, type) {
-		if (typeof type === "function") {
+		if (typeof type === 'function') {
 			this[attributeName]._getDistributionFunction = type;
 		} else {
 			this[attributeName]._getDistributionFunction = getRandomFunctions[attributeName][type];
@@ -1700,19 +1701,19 @@ const _vec3_1$1 = new t3d.Vector3();
 const _col3_1 = new t3d.Color3();
 
 const getRandomFunctions = {
-	"position": {
+	'position': {
 		1: Utils.getRandomVector3,
 		2: Utils.getRandomVector3OnSphere,
 		3: Utils.getRandomVector3OnDisc,
 		4: Utils.getRandomVector3OnLine
 	},
-	"velocity": {
+	'velocity': {
 		1: Utils.getRandomVector3,
 		2: Utils.getRandomDirectionVector3OnSphere,
 		3: Utils.getRandomDirectionVector3OnDisc,
 		4: Utils.getRandomVector3OnLine
 	},
-	"acceleration": {
+	'acceleration': {
 		1: Utils.getRandomVector3,
 		2: Utils.getRandomDirectionVector3OnSphere,
 		3: Utils.getRandomDirectionVector3OnDisc,
@@ -2192,7 +2193,7 @@ const componentSizeMap = {
 class ParticleGroup extends AbstractParticleGroup {
 
 	constructor(options) {
-		let utils = Utils,
+		const utils = Utils,
 			types = utils.types;
 
 		// Ensure we have a map of options to play with
@@ -2312,7 +2313,7 @@ class ParticleGroup extends AbstractParticleGroup {
 			return;
 		}
 
-		let attributes = this.attributes,
+		const attributes = this.attributes,
 			start = this.particleCount,
 			end = start + emitter.particleCount;
 
@@ -2347,20 +2348,20 @@ class ParticleGroup extends AbstractParticleGroup {
 			if (attributes.hasOwnProperty(attr)) {
 				// When creating a buffer, pass through the maxParticle count
 				// if one is specified.
-				let attribute = attributes[attr];
-				let size = this.maxParticleCount !== null ?
+				const attribute = attributes[attr];
+				const size = this.maxParticleCount !== null ?
 					this.maxParticleCount :
 					this.particleCount;
 
 				if (attribute !== null && attribute.buffer.array !== null) {
 					// Make sure the buffer array is present and correct.
 					if (attribute.buffer.array.length !== size * attribute.size) {
-						let currentArraySize = attribute.buffer.array.length;
+						const currentArraySize = attribute.buffer.array.length;
 						const bufferSize = size * attribute.size;
 						if (bufferSize < currentArraySize) {
 							attribute.buffer.array = attribute.buffer.array.subarray(0, bufferSize);
 						} else {
-							let existingArray = attribute.buffer.array,
+							const existingArray = attribute.buffer.array,
 								newArray = new Float32Array(bufferSize);
 							newArray.set(existingArray);
 							attribute.buffer.array = newArray;
@@ -2453,8 +2454,9 @@ class ParticleGroup extends AbstractParticleGroup {
 
 				const startSize = start * attribute.size;
 				const endSize = end * attribute.size;
-				let data = [],
-					array = attribute.buffer.array;
+
+				let array = attribute.buffer.array;
+				const data = [];
 				for (let i = 0; i < array.length; ++i) {
 					if (i < startSize || i >= endSize) {
 						data.push(array[i]);
@@ -2662,7 +2664,7 @@ const MeshParticleShader = {
 	name: 'mesh_particle_shader',
 
 	uniforms: {
-		tex: null,
+		tex: null
 	},
 
 	vertexShader: `
@@ -2811,7 +2813,7 @@ class MeshParticle {
 		_position.add(_vec3_2.fromArray(this._originPosition)).add(halfAt2);
 
 		if (emitter.SHOULD_WIGGLE_PARTICLES) {
-			const fWiggle = positionInTime *  this._originParams[3] * Math.PI;
+			const fWiggle = positionInTime * this._originParams[3] * Math.PI;
 			const fWiggleSin = Math.sin(fWiggle);
 			const fWiggleCos = Math.cos(fWiggle);
 
@@ -2936,9 +2938,9 @@ function getColorOverLifetime(positionInTime, attr, out) {
 				ratio = deltaAge - i;
 				index = i * 3;
 				nextIndex = index + 3;
-				out.r =  ratio * (attr[nextIndex + 0] - attr[index + 0]) + attr[index + 0];
-				out.g =  ratio * (attr[nextIndex + 1] - attr[index + 1]) + attr[index + 1];
-				out.b =  ratio * (attr[nextIndex + 2] - attr[index + 2]) + attr[index + 2];
+				out.r = ratio * (attr[nextIndex + 0] - attr[index + 0]) + attr[index + 0];
+				out.g = ratio * (attr[nextIndex + 1] - attr[index + 1]) + attr[index + 1];
+				out.b = ratio * (attr[nextIndex + 2] - attr[index + 2]) + attr[index + 2];
 				break;
 			}
 		}
@@ -3093,14 +3095,14 @@ class MeshParticleGroup extends AbstractParticleGroup {
 		super(options);
 
 		if (options.maxParticleCount === undefined) {
-			console.warn("MeshParticleGroup: options.maxParticleCount is not provided, set to 1000 by default.");
+			console.warn('MeshParticleGroup: options.maxParticleCount is not provided, set to 1000 by default.');
 			options.maxParticleCount = 1000;
 		}
 
 		this.maxParticleCount = options.maxParticleCount;
 
 		if (!options.geometry || !(options.geometry instanceof t3d.Geometry)) {
-			console.warn("MeshParticleGroup: options.geometry is not provided, set a box geometry by default.");
+			console.warn('MeshParticleGroup: options.geometry is not provided, set a box geometry by default.');
 			options.geometry = new t3d.BoxGeometry(1, 1, 1);
 		}
 

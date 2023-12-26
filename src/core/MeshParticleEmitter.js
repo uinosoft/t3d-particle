@@ -1,5 +1,5 @@
-import { MeshParticle } from "./MeshParticle.js"
-import { AbstractParticleEmitter } from "./AbstractParticleEmitter.js";
+import { MeshParticle } from './MeshParticle.js';
+import { AbstractParticleEmitter } from './AbstractParticleEmitter.js';
 
 export class MeshParticleEmitter extends AbstractParticleEmitter {
 

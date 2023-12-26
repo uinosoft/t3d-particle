@@ -10,9 +10,7 @@
     "url": "https://github.com/uinosoft/t3d-particle"
   },
   "files": [
-    "build/t3d.particle.js",
-    "build/t3d.particle.min.js",
-    "build/t3d.particle.module.js",
+    "build",
     "LICENSE",
     "package.json",
     "README.md",
@@ -28,35 +26,24 @@
     "canvas",
     "html5"
   ],
-  "directories": {
-    "example": "examples"
-  },
-  "eslintConfig": {
-    "root": true,
-    "extends": [
-      "./tools/.eslintrc.cjs"
-    ],
-    "plugins": [
-      "html"
-    ]
-  },
   "author": "uino",
   "license": "BSD-3-Clause",
   "devDependencies": {
     "@babel/core": "^7.17.9",
     "@babel/preset-env": "^7.18.10",
-    "rollup": "^3.18.0",
     "@rollup/plugin-babel": "^6.0.3",
     "@rollup/plugin-terser": "^0.4.0",
     "eslint": "^8.24.0",
-    "eslint-plugin-html": "^7.1.0"
+    "eslint-plugin-html": "^7.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "rollup": "^4.9.1"
   },
   "peerDependencies": {
     "t3d": "^0.2.0"
   },
   "scripts": {
     "build": "rollup -c",
-    "dev": "rollup -w -c",
+    "dev": "rollup -c -w",
     "lint": "eslint src",
     "lint-fix": "eslint src --fix"
   }

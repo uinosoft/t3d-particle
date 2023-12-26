@@ -1,7 +1,7 @@
-import * as t3d from "t3d";
-import { ShaderChunks } from "./ShaderChunks.js"
+import * as t3d from 't3d';
+import { ShaderChunks } from './ShaderChunks.js';
 
-var Shaders = {
+const Shaders = {
 	vertex: [
 		ShaderChunks.defines,
 		ShaderChunks.uniforms,

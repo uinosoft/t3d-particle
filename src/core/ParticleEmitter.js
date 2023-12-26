@@ -1,4 +1,4 @@
-import { AbstractParticleEmitter } from "./AbstractParticleEmitter.js";
+import { AbstractParticleEmitter } from './AbstractParticleEmitter.js';
 
 export class ParticleEmitter extends AbstractParticleEmitter {
 

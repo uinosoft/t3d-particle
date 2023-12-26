@@ -13,7 +13,7 @@
         {
             "imports": {
                 "t3d": "./libs/t3d/build/t3d.module.js",
-                "t3d/examples/jsm/": "./libs/t3d/examples/jsm/",
+                "t3d/addons/": "./libs/t3d/examples/jsm/",
                 "t3d-particle": "../build/t3d.particle.module.js"
             }
         }
@@ -21,9 +21,9 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { Clock } from 't3d/examples/jsm/Clock.js';
-		import { OrbitControls } from 't3d/examples/jsm/controls/OrbitControls.js';
-		import { Texture2DLoader } from 't3d/examples/jsm/loaders/Texture2DLoader.js';
+		import { Clock } from 't3d/addons/Clock.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 
 		import {
 			ParticleProperties, ParticleGroup, ParticleEmitter
@@ -45,7 +45,7 @@
 			canvas.height = height;
 			document.body.appendChild(canvas);
 
-			const gl = canvas.getContext("webgl2", {
+			const gl = canvas.getContext('webgl2', {
 				antialias: true,
 				alpha: false,
 				stencil: true
@@ -167,7 +167,7 @@
 						spread: i === 1 ? new t3d.Vector3(3, 3, 3) : undefined
 					},
 					velocity: {
-						value: new t3d.Vector3(3, 0, 0),  // Only the x component takes effect for disc distribution
+						value: new t3d.Vector3(3, 0, 0), // Only the x component takes effect for disc distribution
 						distribution: ParticleProperties.distributions.DISC
 					},
 					color: {
@@ -243,7 +243,7 @@
 			backRenderTarget.resize(width, height);
 		}
 
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 </html>

@@ -1,5 +1,5 @@
-import * as t3d from "t3d";
-import { Utils } from "./Utils.js";
+import * as t3d from 't3d';
+import { Utils } from './Utils.js';
 
 /**
  * A map of options to configure an ParticleGroup instance.

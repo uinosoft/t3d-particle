@@ -1,4 +1,4 @@
-import * as t3d from "t3d";
+import * as t3d from 't3d';
 
 /**
  * A bunch of utility functions used throughout the library.
@@ -48,7 +48,7 @@ export const Utils = {
 	 * @param  {(boolean|string|number|object)} defaultValue A default value to fallback on if the type check fails.
 	 * @return {(boolean|string|number|object)}              The given value if type check passes, or the default value if it fails.
 	 */
-	ensureTypedArg: function (arg, type, defaultValue) {
+	ensureTypedArg: function(arg, type, defaultValue) {
 		if (typeof arg === type) {
 			return arg;
 		} else {
@@ -68,7 +68,7 @@ export const Utils = {
 	 * @param  {(boolean|string|number|object)} defaultValue A default fallback value.
 	 * @return {(boolean|string|number|object)}              The given value if type check passes, or the default value if it fails.
 	 */
-	ensureArrayTypedArg: function (arg, type, defaultValue) {
+	ensureArrayTypedArg: function(arg, type, defaultValue) {
 		// If the argument being checked is an array, loop through
 		// it and ensure all the values are of the correct type,
 		// falling back to the defaultValue if any aren't.
@@ -95,7 +95,7 @@ export const Utils = {
 	 * @param  {Object} defaultValue A default fallback value if instance check fails
 	 * @return {Object}              The given value if type check passes, or the default value if it fails.
 	 */
-	ensureInstanceOf: function (arg, instance, defaultValue) {
+	ensureInstanceOf: function(arg, instance, defaultValue) {
 		if (instance !== undefined && arg instanceof instance) {
 			return arg;
 		} else {
@@ -115,7 +115,7 @@ export const Utils = {
 	 * @param  {Object} defaultValue A default fallback value if instance check fails
 	 * @return {Object}              The given value if type check passes, or the default value if it fails.
 	 */
-	ensureArrayInstanceOf: function (arg, instance, defaultValue) {
+	ensureArrayInstanceOf: function(arg, instance, defaultValue) {
 		// If the argument being checked is an array, loop through
 		// it and ensure all the values are of the correct type,
 		// falling back to the defaultValue if any aren't.
@@ -146,7 +146,7 @@ export const Utils = {
 	 * @param  {Number} minLength The minimum length of the array to create.
 	 * @param  {Number} maxLength The maximum length of the array to create.
 	 */
-	ensureValueOverLifetimeCompliance: function (property, minLength, maxLength) {
+	ensureValueOverLifetimeCompliance: function(property, minLength, maxLength) {
 		minLength = minLength || 3;
 		maxLength = maxLength || 3;
 
@@ -159,7 +159,7 @@ export const Utils = {
 			property._spread = [property._spread];
 		}
 
-		let valueLength = this.clamp(property._value.length, minLength, maxLength),
+		const valueLength = this.clamp(property._value.length, minLength, maxLength),
 			spreadLength = this.clamp(property._spread.length, minLength, maxLength),
 			desiredLength = Math.max(valueLength, spreadLength);
 
@@ -184,14 +184,14 @@ export const Utils = {
 	 * @param  {Number} newLength The length the array should be interpolated to.
 	 * @return {Array}           The interpolated array.
 	 */
-	interpolateArray: function (srcArray, newLength) {
-		let sourceLength = srcArray.length,
+	interpolateArray: function(srcArray, newLength) {
+		const sourceLength = srcArray.length,
 			newArray = [typeof srcArray[0].clone === 'function' ? srcArray[0].clone() : srcArray[0]],
 			factor = (sourceLength - 1) / (newLength - 1);
 
 
 		for (let i = 1; i < newLength - 1; ++i) {
-			let f = i * factor,
+			const f = i * factor,
 				before = Math.floor(f),
 				after = Math.ceil(f),
 				delta = f - before;
@@ -215,7 +215,7 @@ export const Utils = {
 	 * @param  {Number} max   The maximum value.
 	 * @return {Number}       The clamped number.
 	 */
-	clamp: function (value, min, max) {
+	clamp: function(value, min, max) {
 		return Math.max(min, Math.min(value, max));
 	},
 
@@ -228,9 +228,10 @@ export const Utils = {
 	 * @param  {Boolean} randomise Whether the value should be randomised.
 	 * @return {Number}           The result of the operation.
 	 */
-	zeroToEpsilon: function (value, randomise) {
-		let epsilon = 0.00001,
-			result = value;
+	zeroToEpsilon: function(value, randomise) {
+		const epsilon = 0.00001;
+
+		let result = value;
 
 		result = randomise ? Math.random() * epsilon * 10 : epsilon;
 
@@ -261,9 +262,9 @@ export const Utils = {
 	 *                                               the start and end arguments aren't a supported type, or
 	 *                                               if their types do not match.
 	 */
-	lerpTypeAgnostic: function (start, end, delta) {
-		let types = this.types,
-			out;
+	lerpTypeAgnostic: function(start, end, delta) {
+		const types = this.types;
+		let out;
 
 		if (typeof start === types.NUMBER && typeof end === types.NUMBER) {
 			return start + ((end - start) * delta);
@@ -347,7 +348,7 @@ export const Utils = {
 	 * @param  {Number} delta The position to interpolate to.
 	 * @return {Number}       The result of the lerp operation.
 	 */
-	lerp: function (start, end, delta) {
+	lerp: function(start, end, delta) {
 		return start + ((end - start) * delta);
 	},
 
@@ -367,7 +368,7 @@ export const Utils = {
 	 * @param  {Number} multiple The multiple to round to.
 	 * @return {Number}          The result of the round operation.
 	 */
-	roundToNearestMultiple: function (n, multiple) {
+	roundToNearestMultiple: function(n, multiple) {
 		let remainder = 0;
 
 		if (multiple === 0) {
@@ -393,7 +394,7 @@ export const Utils = {
 	 * @param  {Array} array The array of values to check equality of.
 	 * @return {Boolean}       Whether the array's values are all equal or not.
 	 */
-	arrayValuesAreEqual: function (array) {
+	arrayValuesAreEqual: function(array) {
 		for (let i = 0; i < array.length - 1; ++i) {
 			if (array[i] !== array[i + 1]) {
 				return false;
@@ -410,11 +411,11 @@ export const Utils = {
 	 * @param  {Number} spread The size of the random variance to apply.
 	 * @return {Number}        A randomised number.
 	 */
-	randomFloat: function (base, spread) {
+	randomFloat: function(base, spread) {
 		return base + spread * (Math.random() - 0.5);
 	},
 
-	getRandomVector3: function (array, offset, base, spread, spreadClamp) {
+	getRandomVector3: function(array, offset, base, spread, spreadClamp) {
 		let x = base.x + (Math.random() * spread.x - (spread.x * 0.5)),
 			y = base.y + (Math.random() * spread.y - (spread.y * 0.5)),
 			z = base.z + (Math.random() * spread.z - (spread.z * 0.5));
@@ -433,10 +434,10 @@ export const Utils = {
 	},
 
 	getRandomVector3OnSphere: function(array, offset, base, radiusSpread, radiusSpreadClamp, radius, radiusScale) {
-		let depth = 2 * Math.random() - 1,
+		const depth = 2 * Math.random() - 1,
 			t = 6.2832 * Math.random(),
-			r = Math.sqrt(1 - depth * depth),
-			rand = Utils.randomFloat(radius, radiusSpread.x),
+			r = Math.sqrt(1 - depth * depth);
+		let rand = Utils.randomFloat(radius, radiusSpread.x),
 			x = 0,
 			y = 0,
 			z = 0;
@@ -468,8 +469,8 @@ export const Utils = {
 	},
 
 	getRandomVector3OnDisc: function(array, offset, base, radiusSpread, radiusSpreadClamp, radius, radiusScale) {
-		let t = 6.2832 * Math.random(),
-			rand = Math.abs(Utils.randomFloat(radius, radiusSpread.x)),
+		const t = 6.2832 * Math.random();
+		let rand = Math.abs(Utils.randomFloat(radius, radiusSpread.x)),
 			x = 0,
 			y = 0,
 			z = 0;
@@ -511,7 +512,7 @@ export const Utils = {
 	getRandomDirectionVector3OnSphere: (function() {
 		const v = new t3d.Vector3();
 
-		return function (array, offset, speed, speedSpread, posX, posY, posZ, emitterPosition) {
+		return function(array, offset, speed, speedSpread, posX, posY, posZ, emitterPosition) {
 			v.copy(emitterPosition);
 
 			v.x -= posX;
@@ -523,13 +524,13 @@ export const Utils = {
 			v.toArray(array, offset);
 
 			return array;
-		}
+		};
 	}()),
 
 	getRandomDirectionVector3OnDisc: (function() {
 		const v = new t3d.Vector3();
 
-		return function (array, offset, speed, speedSpread, posX, posY, posZ, emitterPosition) {
+		return function(array, offset, speed, speedSpread, posX, posY, posZ, emitterPosition) {
 			v.copy(emitterPosition);
 
 			v.x -= posX;
@@ -543,7 +544,7 @@ export const Utils = {
 			array[offset + 2] = 0;
 
 			return array;
-		}
+		};
 	}()),
 
 	getRotationAxis: (function() {
@@ -574,6 +575,6 @@ export const Utils = {
 
 			return out;
 		};
-	}()),
+	}())
 
 };

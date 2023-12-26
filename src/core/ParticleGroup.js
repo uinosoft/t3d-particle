@@ -1,9 +1,9 @@
-import * as t3d from "t3d";
-import { Utils } from "./Utils.js";
-import { Shaders } from "../shaders/Shaders.js";
-import { ParticleProperties } from "../ParticleProperties.js";
-import { ParticleEmitter } from "./ParticleEmitter.js";
-import { AbstractParticleGroup } from "./AbstractParticleGroup.js";
+import * as t3d from 't3d';
+import { Utils } from './Utils.js';
+import { Shaders } from '../shaders/Shaders.js';
+import { ParticleProperties } from '../ParticleProperties.js';
+import { ParticleEmitter } from './ParticleEmitter.js';
+import { AbstractParticleGroup } from './AbstractParticleGroup.js';
 
 const componentSizeMap = {
 	position: 3,
@@ -16,12 +16,12 @@ const componentSizeMap = {
 	angle: 4,
 	color: 4,
 	opacity: 4
-}
+};
 
 export class ParticleGroup extends AbstractParticleGroup {
 
 	constructor(options) {
-		let utils = Utils,
+		const utils = Utils,
 			types = utils.types;
 
 		// Ensure we have a map of options to play with
@@ -141,7 +141,7 @@ export class ParticleGroup extends AbstractParticleGroup {
 			return;
 		}
 
-		let attributes = this.attributes,
+		const attributes = this.attributes,
 			start = this.particleCount,
 			end = start + emitter.particleCount;
 
@@ -176,20 +176,20 @@ export class ParticleGroup extends AbstractParticleGroup {
 			if (attributes.hasOwnProperty(attr)) {
 				// When creating a buffer, pass through the maxParticle count
 				// if one is specified.
-				let attribute = attributes[attr];
-				let size = this.maxParticleCount !== null ?
+				const attribute = attributes[attr];
+				const size = this.maxParticleCount !== null ?
 					this.maxParticleCount :
 					this.particleCount;
 
 				if (attribute !== null && attribute.buffer.array !== null) {
 					// Make sure the buffer array is present and correct.
 					if (attribute.buffer.array.length !== size * attribute.size) {
-						let currentArraySize = attribute.buffer.array.length;
+						const currentArraySize = attribute.buffer.array.length;
 						const bufferSize = size * attribute.size;
 						if (bufferSize < currentArraySize) {
 							attribute.buffer.array = attribute.buffer.array.subarray(0, bufferSize);
 						} else {
-							let existingArray = attribute.buffer.array,
+							const existingArray = attribute.buffer.array,
 								newArray = new Float32Array(bufferSize);
 							newArray.set(existingArray);
 							attribute.buffer.array = newArray;
@@ -282,8 +282,9 @@ export class ParticleGroup extends AbstractParticleGroup {
 
 				const startSize = start * attribute.size;
 				const endSize = end * attribute.size;
-				let data = [],
-					array = attribute.buffer.array;
+
+				let array = attribute.buffer.array;
+				const data = [];
 				for (let i = 0; i < array.length; ++i) {
 					if (i < startSize || i >= endSize) {
 						data.push(array[i]);

@@ -3,7 +3,7 @@ export const MeshParticleShader = {
 	name: 'mesh_particle_shader',
 
 	uniforms: {
-		tex: null,
+		tex: null
 	},
 
 	vertexShader: `

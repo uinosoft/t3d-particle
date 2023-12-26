@@ -1,4 +1,4 @@
-var ShaderChunks = {
+const ShaderChunks = {
 	// Register color-packing define statements.
 	defines: [
 		'#define PACKED_COLOR_SIZE 256.0',
@@ -11,7 +11,7 @@ var ShaderChunks = {
 		'uniform float runTime;',
 		'uniform sampler2D tex;',
 		'uniform vec4 textureAnimation;',
-		'uniform float scale;',
+		'uniform float scale;'
 	].join('\n'),
 
 	// All attributes used by the vertex shader.
@@ -76,7 +76,7 @@ var ShaderChunks = {
 
 		'float or(float a, float b) {',
 		'    return min(a + b, 1.0);',
-		'}',
+		'}'
 	].join('\n'),
 
 
@@ -96,7 +96,7 @@ var ShaderChunks = {
 		'   c.b = b / PACKED_COLOR_DIVISOR;',
 
 		'   return c;',
-		'}',
+		'}'
 	].join('\n'),
 
 	unpackRotationAxis: [
@@ -115,7 +115,7 @@ var ShaderChunks = {
 		'   c -= vec3( 1.0 );',
 
 		'   return c;',
-		'}',
+		'}'
 	].join('\n'),
 
 	floatOverLifetime: [
@@ -142,7 +142,7 @@ var ShaderChunks = {
 		'    }',
 		'',
 		'    return value;',
-		'}',
+		'}'
 	].join('\n'),
 
 	colorOverLifetime: [
@@ -152,7 +152,7 @@ var ShaderChunks = {
 		'    value.y = getFloatOverLifetime( positionInTime, vec4( color1.y, color2.y, color3.y, color4.y ) );',
 		'    value.z = getFloatOverLifetime( positionInTime, vec4( color1.z, color2.z, color3.z, color4.z ) );',
 		'    return value;',
-		'}',
+		'}'
 	].join('\n'),
 
 	paramFetchingFunctions: [
@@ -170,7 +170,7 @@ var ShaderChunks = {
 
 		'float getWiggle() {',
 		'   return params.w;',
-		'}',
+		'}'
 	].join('\n'),
 
 	forceFetchingFunctions: [
@@ -184,7 +184,7 @@ var ShaderChunks = {
 
 		'vec3 getAcceleration( in float age ) {',
 		'   return acceleration.xyz * age;',
-		'}',
+		'}'
 	].join('\n'),
 
 
@@ -260,8 +260,8 @@ var ShaderChunks = {
 		'',
 
 		'',
-		'    vec4 rotatedTexture = texture2D( tex, vUv );',
+		'    vec4 rotatedTexture = texture2D( tex, vUv );'
 	].join('\n')
 };
 
-export { ShaderChunks }
+export { ShaderChunks };

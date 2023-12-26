@@ -68,6 +68,6 @@ export const ParticleProperties = {
      *
      * @type {Number}
      */
-	valueOverLifetimeLength: 4,
+	valueOverLifetimeLength: 4
 
 };

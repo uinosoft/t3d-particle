@@ -15,7 +15,7 @@
         {
             "imports": {
                 "t3d": "./libs/t3d/build/t3d.module.js",
-                "t3d/examples/jsm/": "./libs/t3d/examples/jsm/",
+                "t3d/addons/": "./libs/t3d/examples/jsm/",
                 "t3d-particle": "../build/t3d.particle.module.js"
             }
         }
@@ -23,8 +23,8 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { Clock } from 't3d/examples/jsm/Clock.js';
-		import { OrbitControls } from 't3d/examples/jsm/controls/OrbitControls.js';
+		import { Clock } from 't3d/addons/Clock.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 
 		import {
 			ParticleGroup, ParticleEmitter
@@ -46,7 +46,7 @@
 			canvas.height = height;
 			document.body.appendChild(canvas);
 
-			const gl = canvas.getContext("webgl2", {
+			const gl = canvas.getContext('webgl2', {
 				antialias: true,
 				alpha: false,
 				stencil: true
@@ -90,15 +90,15 @@
 			} else {
 				getRandomPointInCross(array, offset, value, spread);
 			}
-		}
+		};
 
 		// set custom distribution function for velecity (attribute.buffer.array, attribute.offset, velocity.value, velocity.spread, particlePosition.x, particlePosition.y, particlePosition.z, this.position.value)
 		function setVelocityDistribution(array, offset, value, spread, particlePosX, particlePosY, particlePosZ, positionValue) {
 			const armLength = 10;
 		
 			let x = value.x + (Math.random() * spread.x - (spread.x * 0.5)),
-				y = value.y + (Math.random() * spread.y - (spread.y * 0.5)),
-				z = value.z + (Math.random() * spread.z - (spread.z * 0.5));
+				y = value.y + (Math.random() * spread.y - (spread.y * 0.5));
+			const z = value.z + (Math.random() * spread.z - (spread.z * 0.5));
 			if (Math.abs(particlePosY) <= armLength / 2 && Math.abs(particlePosX) > Math.abs(particlePosY)) {
 				x *= particlePosX - positionValue.x;
 				y = 0;
@@ -184,7 +184,7 @@
 			backRenderTarget.resize(width, height);
 		}
 
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 </html>

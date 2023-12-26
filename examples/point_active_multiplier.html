@@ -21,7 +21,7 @@
         {
             "imports": {
                 "t3d": "./libs/t3d/build/t3d.module.js",
-                "t3d/examples/jsm/": "./libs/t3d/examples/jsm/",
+                "t3d/addons/": "./libs/t3d/examples/jsm/",
                 "t3d-particle": "../build/t3d.particle.module.js"
             }
         }
@@ -29,8 +29,8 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { Clock } from 't3d/examples/jsm/Clock.js';
-		import { Texture2DLoader } from 't3d/examples/jsm/loaders/Texture2DLoader.js';
+		import { Clock } from 't3d/addons/Clock.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 
 		import {
 			ParticleGroup, ParticleEmitter
@@ -52,7 +52,7 @@
 			canvas.height = height;
 			document.body.appendChild(canvas);
 
-			const gl = canvas.getContext("webgl2", {
+			const gl = canvas.getContext('webgl2', {
 				antialias: true,
 				alpha: false,
 				stencil: true
@@ -145,7 +145,7 @@
 			backRenderTarget.resize(width, height);
 		}
 
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 </html>

@@ -15,7 +15,7 @@
         {
             "imports": {
                 "t3d": "./libs/t3d/build/t3d.module.js",
-                "t3d/examples/jsm/": "./libs/t3d/examples/jsm/",
+                "t3d/addons/": "./libs/t3d/examples/jsm/",
                 "t3d-particle": "../build/t3d.particle.module.js"
             }
         }
@@ -23,15 +23,14 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { Clock } from 't3d/examples/jsm/Clock.js';
-		import { Texture2DLoader } from 't3d/examples/jsm/loaders/Texture2DLoader.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 
 		import {
 			ParticleGroup, ParticleEmitter
 		} from 't3d-particle';
 
 		// variables used in init()
-		let width, height, scene, camera, renderer, backRenderTarget, clock;
+		let width, height, scene, camera, renderer, backRenderTarget;
 
 		// Used in initParticles()
 		let emitter, particleGroup;
@@ -48,7 +47,7 @@
 			canvas.height = height;
 			document.body.appendChild(canvas);
 
-			const gl = canvas.getContext("webgl2", {
+			const gl = canvas.getContext('webgl2', {
 				antialias: true,
 				alpha: false,
 				stencil: true
@@ -63,8 +62,6 @@
 			renderer = new t3d.WebGLRenderer(gl);
 			renderer.setClearColor(0, 0, 0, 1);
 			backRenderTarget = new t3d.RenderTargetBack(canvas);
-
-			clock = new Clock();
 		}
 
 		// Create particle group and emitter
@@ -90,7 +87,7 @@
 				},
 				color: {
 					value: [new t3d.Color3(0.5, 0.5, 0.5), new t3d.Color3(1, 1, 1)],
-					spread: new t3d.Vector3(1, 1, 1),
+					spread: new t3d.Vector3(1, 1, 1)
 				},
 				size: {
 					value: [5, 0]
@@ -146,7 +143,7 @@
 			backRenderTarget.resize(width, height);
 		}
 
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 </html>
