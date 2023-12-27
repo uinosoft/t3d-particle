@@ -10,6 +10,8 @@
 	<!-- Import component library -->
 	<script src="//unpkg.com/element-plus"></script>
 
+	<script src="//unpkg.com/@element-plus/icons-vue"></script>
+
 	<style>
 		body {
 			margin: 0;
@@ -30,6 +32,9 @@
 		.el-aside {
 			padding: 5px;
 			border-right: 2px solid var(--el-border-color);
+		}
+		.gray {
+			color: rgb(202, 202, 202);
 		}
 	</style>
 </head>
@@ -57,8 +62,47 @@
 					message.value.colors.push(null);
 					console.log(message);
 				};
+
+				const treeData = ref({
+					selected: 1,
+					list: [
+						{
+							id: 1,
+							label: 'Level 1',
+							children: [
+								{
+									id: 2,
+									label: 'Level 2',
+									hh: true,
+									children: [
+										{
+											id: 3,
+											label: 'Level 3',
+											disabled: true
+										}
+									]
+								}
+							]
+						}
+					]
+				});
+
+				const switchTreeSelect = () => {
+					treeData.value.selected++;
+					if (treeData.value.selected > 3) {
+						treeData.value.selected = 1;
+					}
+
+					console.log(treeData.value.selected)
+				};
+
+				const treeChange = (e) => {
+					treeData.value.selected = e.id;
 		
-				return { message, removeColor, addColor };
+					console.log(treeData.value.selected)
+				};
+		
+				return { message, removeColor, addColor, treeData, switchTreeSelect, treeChange };
 			},
 			template: `
 			<el-container>
@@ -83,6 +127,16 @@
 						<el-button type="primary" @click="addColor">+</el-button>
 
 						<el-divider/>
+
+						<el-tree-v2 :data="treeData.list" :default-expanded-keys="[1, 2, 3]" :expand-on-click-node="false" :current-node-key="treeData.selected" @current-change="treeChange" :highlight-current="true" :height="208">
+							<template #default="{ node }">
+								<el-icon><Files /></el-icon>
+								<span :class="{'gray':node.disabled}">{{ node.label }}</span>
+							</template>
+						</el-tree-v2>
+						<el-button type="primary" @click="switchTreeSelect">Switch Select</el-button>
+
+						<el-divider/>
 					</el-aside>
 
 					<el-main>Main</el-main>
@@ -91,7 +145,13 @@
 			`
 		};
 
-		createApp(component).use(ElementPlus).mount('#app');
+		const app = createApp(component).use(ElementPlus);
+
+		for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+			app.component(key, component)
+		}
+
+		app.mount('#app');
     </script>
 </body>
 </html>
