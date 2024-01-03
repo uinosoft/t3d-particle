@@ -36,7 +36,8 @@
     "eslint": "^8.24.0",
     "eslint-plugin-html": "^7.1.0",
     "eslint-plugin-import": "^2.29.1",
-    "rollup": "^4.9.1"
+    "rollup": "^4.9.1",
+    "servez": "^2.1.2"
   },
   "peerDependencies": {
     "t3d": "^0.2.0"
@@ -45,6 +46,7 @@
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "lint": "eslint src",
-    "lint-fix": "eslint src --fix"
+    "lint-fix": "eslint src --fix",
+    "server": "servez -p 8083 --ssl"
   }
 }
