@@ -16,4 +16,4 @@ Core:
 - [ ] Fix particle count update bug
 - [ ] Fix rotation center update bug
 - [ ] Fix randomise return value
-- [ ] Fix lerp value type
+- [x] Fix lerp value type

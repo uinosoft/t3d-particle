@@ -174,35 +174,27 @@ export const Utils = {
 
 	/**
 	 * Performs linear interpolation (lerp) on an array.
-	 *
 	 * For example, lerping [1, 10], with a `newLength` of 10 will produce [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].
-	 *
-	 * Delegates to `Utils.lerpTypeAgnostic` to perform the actual
-	 * interpolation.
-	 *
+	 * Delegates to `Utils.lerpTypeAgnostic` to perform the actual interpolation.
 	 * @param  {Array} srcArray  The array to lerp.
 	 * @param  {Number} newLength The length the array should be interpolated to.
-	 * @return {Array}           The interpolated array.
+	 * @return {Array} The interpolated array.
 	 */
 	interpolateArray: function(srcArray, newLength) {
 		const sourceLength = srcArray.length,
 			newArray = [typeof srcArray[0].clone === 'function' ? srcArray[0].clone() : srcArray[0]],
 			factor = (sourceLength - 1) / (newLength - 1);
 
-
-		for (let i = 1; i < newLength - 1; ++i) {
+		for (let i = 1; i < newLength - 1; i++) {
 			const f = i * factor,
 				before = Math.floor(f),
 				after = Math.ceil(f),
 				delta = f - before;
-
 			newArray[i] = this.lerpTypeAgnostic(srcArray[before], srcArray[after], delta);
 		}
 
 		newArray.push(
-			typeof srcArray[sourceLength - 1].clone === 'function' ?
-				srcArray[sourceLength - 1].clone() :
-				srcArray[sourceLength - 1]
+			typeof srcArray[sourceLength - 1].clone === 'function' ? srcArray[sourceLength - 1].clone() : srcArray[sourceLength - 1]
 		);
 
 		return newArray;
@@ -253,32 +245,29 @@ export const Utils = {
 	},
 
 	/**
-	 * Linearly interpolates two values of letious types. The given values
-	 * must be of the same type for the interpolation to work.
-	 * @param  {(number|Object)} start The start value of the lerp.
-	 * @param  {(number|object)} end   The end value of the lerp.
+	 * Linearly interpolates two values of letious types.
+	 * The given values must be of the same type for the interpolation to work.
+	 * @param  {Number|Object} start The start value of the lerp.
+	 * @param  {Number|Object} end The end value of the lerp.
 	 * @param  {Number} delta The delta posiiton of the lerp operation. Ideally between 0 and 1 (inclusive).
-	 * @return {(number|object|undefined)}       The result of the operation. Result will be undefined if
-	 *                                               the start and end arguments aren't a supported type, or
-	 *                                               if their types do not match.
+	 * @return {Number|Object|Undefined} The result of the operation. Result will be undefined if the start and end arguments aren't a supported type, or if their types do not match.
 	 */
 	lerpTypeAgnostic: function(start, end, delta) {
 		const types = this.types;
+
 		let out;
 
 		if (typeof start === types.NUMBER && typeof end === types.NUMBER) {
-			return start + ((end - start) * delta);
+			return this.lerp(start, end, delta);
 		} else if (
 			(start instanceof t3d.Vector2 && end instanceof t3d.Vector2)
 			|| (typeof start.x == types.NUMBER && typeof start.y == types.NUMBER && (start.z == null && start.z == undefined)
 			&& typeof end.x == types.NUMBER && typeof end.y == types.NUMBER && (end.z == null && end.z == undefined))
 		) {
 			if (start instanceof t3d.Vector2) {
-				out = new t3d.Vector2().copy(start);
+				out = new t3d.Vector2();
 			} else {
 				out = {};
-				out.x = start.x;
-				out.y = start.y;
 			}
 			out.x = this.lerp(start.x, end.x, delta);
 			out.y = this.lerp(start.y, end.y, delta);
@@ -289,12 +278,9 @@ export const Utils = {
 			&& typeof end.x == types.NUMBER && typeof end.y == types.NUMBER && typeof end.z == types.NUMBER && (end.w == null && end.w == undefined))
 		) {
 			if (start instanceof t3d.Vector3) {
-				out = new t3d.Vector3().copy(start);
+				out = new t3d.Vector3();
 			} else {
 				out = {};
-				out.x = start.x;
-				out.y = start.y;
-				out.z = start.z;
 			}
 			out.x = this.lerp(start.x, end.x, delta);
 			out.y = this.lerp(start.y, end.y, delta);
@@ -305,14 +291,10 @@ export const Utils = {
 			|| (typeof start.x == types.NUMBER && typeof start.y == types.NUMBER && typeof start.z == types.NUMBER && typeof start.w == types.NUMBER
                 && typeof end.x == types.NUMBER && typeof end.y == types.NUMBER && typeof end.z == types.NUMBER && typeof end.w == types.NUMBER)
 		) {
-			if (start instanceof t3d.Vector3) {
-				out = new t3d.Vector4().copy(start);
+			if (start instanceof t3d.Vector4) {
+				out = new t3d.Vector4();
 			} else {
 				out = {};
-				out.x = start.x;
-				out.y = start.y;
-				out.z = start.z;
-				out.w = start.w;
 			}
 			out.x = this.lerp(start.x, end.x, delta);
 			out.y = this.lerp(start.y, end.y, delta);
@@ -324,13 +306,10 @@ export const Utils = {
 			|| (typeof start.r == types.NUMBER && typeof start.g == types.NUMBER && typeof start.b == types.NUMBER
                 && typeof end.r == types.NUMBER && typeof end.g == types.NUMBER && typeof end.b == types.NUMBER)
 		) {
-			if (start instanceof t3d.Vector3) {
-				out = new t3d.Color3().copy(start);
+			if (start instanceof t3d.Color3) {
+				out = new t3d.Color3();
 			} else {
 				out = {};
-				out.r = start.r;
-				out.g = start.g;
-				out.b = start.b;
 			}
 			out.r = this.lerp(start.r, end.r, delta);
 			out.g = this.lerp(start.g, end.g, delta);
