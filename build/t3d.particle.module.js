@@ -1824,7 +1824,7 @@ class ParticleEmitter extends AbstractParticleEmitter {
 		return this;
 	}
 
-	_assignValue(prop, index) {
+	_assignValue(prop, index, init = false) {
 		let typedArray, typedArray2,
 			positionX,
 			positionY,
@@ -1862,7 +1862,7 @@ class ParticleEmitter extends AbstractParticleEmitter {
 
 			case 'params':
 				typedArray = this.attributes.params.buffer.array;
-				this._assignParamsValue(typedArray, this.attributes.params.size * index, true);
+				this._assignParamsValue(typedArray, this.attributes.params.size * index, init);
 				break;
 
 			case 'rotation':
@@ -2022,10 +2022,6 @@ class ParticleEmitter extends AbstractParticleEmitter {
 			index = i * 4;
 
 			// Don't re-activate particles that aren't dead yet.
-			// if ( params[ index ] !== 0.0 && ( this.particleCount !== 1 || this.activeMultiplier !== 1 ) ) {
-			//     continue;
-			// }
-
 			if (params[index] != 0.0 && this.particleCount !== 1) {
 				continue;
 			}
@@ -2362,15 +2358,15 @@ class ParticleGroup extends AbstractParticleGroup {
 		// Loop through each particle this emitter wants to have, and create the attributes values,
 		// storing them in the buffer array that each attribute holds.
 		for (let i = start; i < end; ++i) {
-			emitter._assignValue('position', i);
-			emitter._assignValue('velocity', i);
-			emitter._assignValue('acceleration', i);
-			emitter._assignValue('size', i);
-			emitter._assignValue('opacity', i);
-			emitter._assignValue('angle', i);
-			emitter._assignValue('params', i);
-			emitter._assignValue('rotation', i);
-			emitter._assignValue('color', i);
+			emitter._assignValue('position', i, true);
+			emitter._assignValue('velocity', i, true);
+			emitter._assignValue('acceleration', i, true);
+			emitter._assignValue('size', i, true);
+			emitter._assignValue('opacity', i, true);
+			emitter._assignValue('angle', i, true);
+			emitter._assignValue('params', i, true);
+			emitter._assignValue('rotation', i, true);
+			emitter._assignValue('color', i, true);
 		}
 
 		// Update the geometry and make sure the attributes are referencing

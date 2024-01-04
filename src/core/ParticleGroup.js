@@ -207,15 +207,15 @@ export class ParticleGroup extends AbstractParticleGroup {
 		// Loop through each particle this emitter wants to have, and create the attributes values,
 		// storing them in the buffer array that each attribute holds.
 		for (let i = start; i < end; ++i) {
-			emitter._assignValue('position', i);
-			emitter._assignValue('velocity', i);
-			emitter._assignValue('acceleration', i);
-			emitter._assignValue('size', i);
-			emitter._assignValue('opacity', i);
-			emitter._assignValue('angle', i);
-			emitter._assignValue('params', i);
-			emitter._assignValue('rotation', i);
-			emitter._assignValue('color', i);
+			emitter._assignValue('position', i, true);
+			emitter._assignValue('velocity', i, true);
+			emitter._assignValue('acceleration', i, true);
+			emitter._assignValue('size', i, true);
+			emitter._assignValue('opacity', i, true);
+			emitter._assignValue('angle', i, true);
+			emitter._assignValue('params', i, true);
+			emitter._assignValue('rotation', i, true);
+			emitter._assignValue('color', i, true);
 		}
 
 		// Update the geometry and make sure the attributes are referencing

@@ -14,6 +14,8 @@ Core:
 - [ ] Add AbstractParticleGroup.material
 - [ ] Fix alpha test
 - [ ] Fix particle count update bug
+- [ ] Fix attribute update cache
+- [x] Fix params update bug
 - [x] Fix rotation center update bug
 - [x] Fix randomise return value
 - [x] Fix lerp value type

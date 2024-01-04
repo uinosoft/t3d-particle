@@ -124,7 +124,7 @@ export class ParticleEmitter extends AbstractParticleEmitter {
 		return this;
 	}
 
-	_assignValue(prop, index) {
+	_assignValue(prop, index, init = false) {
 		let typedArray, typedArray2,
 			positionX,
 			positionY,
@@ -162,7 +162,7 @@ export class ParticleEmitter extends AbstractParticleEmitter {
 
 			case 'params':
 				typedArray = this.attributes.params.buffer.array;
-				this._assignParamsValue(typedArray, this.attributes.params.size * index, true);
+				this._assignParamsValue(typedArray, this.attributes.params.size * index, init);
 				break;
 
 			case 'rotation':
@@ -322,10 +322,6 @@ export class ParticleEmitter extends AbstractParticleEmitter {
 			index = i * 4;
 
 			// Don't re-activate particles that aren't dead yet.
-			// if ( params[ index ] !== 0.0 && ( this.particleCount !== 1 || this.activeMultiplier !== 1 ) ) {
-			//     continue;
-			// }
-
 			if (params[index] != 0.0 && this.particleCount !== 1) {
 				continue;
 			}
