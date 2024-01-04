@@ -1415,6 +1415,9 @@
 			const ranges = this.bufferUpdateRanges[attr];
 			ranges.min = Math.min(i, ranges.min);
 			ranges.max = Math.max(i, ranges.max);
+			if (attr === 'rotation') {
+				this._updateAttributeUpdateRange('rotationCenter', i);
+			}
 		}
 		_resetBufferRanges() {
 			const ranges = this.bufferUpdateRanges,
