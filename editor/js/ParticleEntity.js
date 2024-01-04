@@ -297,12 +297,11 @@ function _convertSimpleAttributeData(source) {
 	return data;
 }
 
-function _convertArrayAttributeData(sourceArray) {
-	const value = [], spread = [], randomise = [];
-	sourceArray.forEach(source => {
-		value.push(Array.isArray(source.value) ? new Color3().fromArray(source.value) : source.value);
-		spread.push(Array.isArray(source.spread) ? new Vector3().fromArray(source.spread) : source.spread);
-		randomise.push(source.randomise);
+function _convertArrayAttributeData(source) {
+	const value = [], spread = [];
+	source.elements.forEach(element => {
+		value.push(Array.isArray(element.value) ? new Color3().fromArray(element.value) : element.value);
+		spread.push(Array.isArray(element.spread) ? new Vector3().fromArray(element.spread) : element.spread);
 	});
-	return { value, spread, randomise };
+	return { value, spread, randomise: source.randomise };
 }

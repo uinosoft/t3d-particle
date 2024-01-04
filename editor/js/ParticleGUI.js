@@ -411,23 +411,28 @@ function _simpleAttributeUI(options) {
 
 function _arrayAttributeUI(options) {
 	const { name, root, attributeData, attributeEntity, minValue, maxValue, data } = options;
+	const elementDataArray = attributeData.elements;
 
 	const folder = root.addFolder(lang(name)).close();
 
+	folder.add(attributeData, 'randomise').name(lang('randomise')).onChange(value => {
+		attributeEntity.randomise = value;
+	});
+
 	function setButtons() {
-		createButton.enable(attributeData.length < 4);
-		removeButton.enable(attributeData.length > 1);
+		createButton.enable(elementDataArray.length < 4);
+		removeButton.enable(elementDataArray.length > 1);
 	}
 
 	const methods = {
 		create: function() {
-			data.pushEmitterAttribute(attributeData, name);
+			data.pushEmitterAttribute(elementDataArray, name);
 			_updateAttributeEntity();
-			_createElementUI(attributeData[attributeData.length - 1], attributeData.length - 1);
+			_createElementUI(elementDataArray[elementDataArray.length - 1], elementDataArray.length - 1);
 			setButtons();
 		},
 		remove: function() {
-			data.popEmitterAttribute(attributeData);
+			data.popEmitterAttribute(elementDataArray);
 			_updateAttributeEntity();
 			_removeElementUI();
 			setButtons();
@@ -439,7 +444,7 @@ function _arrayAttributeUI(options) {
 
 	setButtons();
 
-	attributeData.forEach(_createElementUI);
+	elementDataArray.forEach(_createElementUI);
 
 	function _createElementUI(elementData, index) {
 		const elementFolder = folder.addFolder(lang(name) + '_' + index).close();
@@ -464,10 +469,6 @@ function _arrayAttributeUI(options) {
 				_updateAttributeEntityByType('spread');
 			});
 		}
-
-		elementFolder.add(elementData, 'randomise').name(lang('randomise')).onChange(() => {
-			_updateAttributeEntityByType('randomise');
-		});
 	}
 
 	function _removeElementUI() {
@@ -476,7 +477,7 @@ function _arrayAttributeUI(options) {
 
 	function _updateAttributeEntityByType(type) {
 		const array = [];
-		attributeData.forEach(elementData => {
+		elementDataArray.forEach(elementData => {
 			const element = elementData[type];
 			if (Array.isArray(element)) {
 				if (type === 'value') {
@@ -491,10 +492,8 @@ function _arrayAttributeUI(options) {
 		attributeEntity[type] = array;
 	}
 
-	const _types = ['value', 'spread', 'randomise'];
+	const _types = ['value', 'spread'];
 	function _updateAttributeEntity() {
-		_types.forEach(type => {
-			_updateAttributeEntityByType(type);
-		});
+		_types.forEach(_updateAttributeEntityByType);
 	}
 }

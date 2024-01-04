@@ -40,16 +40,16 @@ export class ParticleData {
 		groupData.emitters.pop();
 	}
 
-	pushEmitterAttribute(attributeArray, type) {
+	pushEmitterAttribute(elements, type) {
 		const attributeData = createAttributeData(type);
 
-		attributeArray.push(attributeData);
+		elements.push(attributeData);
 
 		return attributeData;
 	}
 
-	popEmitterAttribute(attributeArray) {
-		attributeArray.pop();
+	popEmitterAttribute(elements) {
+		elements.pop();
 	}
 
 	import(data) {
@@ -57,6 +57,17 @@ export class ParticleData {
 
 		if (oldData.version !== data.version) {
 			console.log('convert data version from ' + data.version + ' to ' + oldData.version);
+
+			if (data.version === '0.0.1') {
+				data.groups.forEach(group => {
+					group.emitters.forEach(emitter => {
+						['color', 'opacity', 'size', 'angle'].forEach(type => {
+							emitter[type] = { elements: emitter[type], randomise: false };
+						});
+					});
+				});
+			}
+
 			data.version = oldData.version;
 		}
 
@@ -79,7 +90,7 @@ export class ParticleData {
 
 function createRootData(group = false) {
 	const data = {
-		'version': '0.0.1',
+		'version': '0.0.2',
 		'groups': []
 	};
 
@@ -150,14 +161,14 @@ function createEmitterData() {
 		wiggle: { value: 0, spread: 0 },
 		rotation: { axis: [0, 0, 0], axisSpread: [0, 0, 0], angle: 0.0, angleSpread: 0.0, isStatic: false, center: [0, 0, 0], randomise: false },
 
-		color: [],
-		opacity: [],
-		size: [],
-		angle: []
+		color: { elements: [], randomise: false },
+		opacity: { elements: [], randomise: false },
+		size: { elements: [], randomise: false },
+		angle: { elements: [], randomise: false }
 	};
 
 	['color', 'opacity', 'size', 'angle'].forEach(type => {
-		data[type].push(createAttributeData(type));
+		data[type].elements.push(createAttributeData(type));
 	});
 
 	return data;
@@ -168,21 +179,18 @@ function createAttributeData(type) {
 		case 'color':
 			return {
 				value: [1, 1, 1],
-				spread: [0, 0, 0],
-				randomise: false
+				spread: [0, 0, 0]
 			};
 		case 'opacity':
 		case 'size':
 			return {
 				value: 1.0,
-				spread: 0.0,
-				randomise: false
+				spread: 0.0
 			};
 		case 'angle':
 			return {
 				value: 0.0,
-				spread: 0.0,
-				randomise: false
+				spread: 0.0
 			};
 		default:
 			console.error('Unknown attribute type: ' + type);
