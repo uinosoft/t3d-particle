@@ -49,7 +49,7 @@ import { Utils } from './Utils.js';
 
 export class AbstractParticleGroup {
 
-	constructor(options) {
+	constructor(options, shader) {
 		this.uuid = t3d.generateUUID();
 
 		const types = Utils.types;
@@ -64,6 +64,12 @@ export class AbstractParticleGroup {
 
 		this.colorize = Utils.ensureTypedArg(options.colorize, types.BOOLEAN, true);
 
+		// Set material
+		this.material = new t3d.ShaderMaterial(shader);
+		this.uniforms = this.material.uniforms;
+		this.defines = this.material.defines;
+		this._setMaterial(options);
+
 		// Where emitter's go to curl up in a warm blanket and live
 		// out their days.
 		this._emitters = [];
@@ -77,10 +83,13 @@ export class AbstractParticleGroup {
 
 	dispose() {}
 
-	_setMaterial(material, options) {
+	_setMaterial(options) {
 		const types = Utils.types;
 
-		material.uniforms.tex = Utils.ensureInstanceOf(options.texture.value, t3d.Texture2D, defaultTexture);
+		const material = this.material;
+		const uniforms = this.uniforms;
+
+		uniforms.tex = Utils.ensureInstanceOf(options.texture.value, t3d.Texture2D, defaultTexture);
 
 		material.blending = Utils.ensureTypedArg(options.blending, types.STRING, t3d.BLEND_TYPE.ADD);
 		material.transparent = Utils.ensureTypedArg(options.transparent, types.BOOLEAN, true);

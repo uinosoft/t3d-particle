@@ -1,6 +1,6 @@
 import * as t3d from 't3d';
 import { Utils } from './Utils.js';
-import { Shaders } from '../shaders/Shaders.js';
+import { ParticleShader } from '../shaders/ParticleShader.js';
 import { ParticleProperties } from '../ParticleProperties.js';
 import { ParticleEmitter } from './ParticleEmitter.js';
 import { AbstractParticleGroup } from './AbstractParticleGroup.js';
@@ -27,15 +27,16 @@ export class ParticleGroup extends AbstractParticleGroup {
 		// Ensure we have a map of options to play with
 		options = Utils.ensureTypedArg(options, types.OBJECT, {});
 
-		super(options);
+		super(options, ParticleShader);
+
+		// Set max particle count
 
 		this.maxParticleCount = utils.ensureTypedArg(options.maxParticleCount, types.NUMBER, null);
 		if (this.maxParticleCount === null) {
 			console.warn('ParticleGroup: No maxParticleCount specified. Adding emitters after rendering will probably cause errors.');
 		}
 
-		// Set properties used in the uniforms map, starting with the
-		// texture stuff.
+		// Set properties used in the uniforms map
 
 		this.textureFrames = Utils.ensureInstanceOf(options.texture.frames, t3d.Vector2, new t3d.Vector2(1, 1));
 		this.textureFrames.max(new t3d.Vector2(1, 1));
@@ -43,49 +44,23 @@ export class ParticleGroup extends AbstractParticleGroup {
 		this.textureFrameCount = Utils.ensureTypedArg(options.texture.frameCount, types.NUMBER, this.textureFrames.x * this.textureFrames.y);
 		this.textureLoop = Utils.ensureTypedArg(options.texture.loop, types.NUMBER, 1);
 
-		// Create the ShaderMaterial instance that'll help render the
-		// particles.
-
-		this.material = new t3d.ShaderMaterial({
-			defines: {
-				HAS_PERSPECTIVE: this.hasPerspective,
-				COLORIZE: this.colorize,
-				VALUE_OVER_LIFETIME_LENGTH: ParticleProperties.valueOverLifetimeLength,
-
-				SHOULD_ROTATE_TEXTURE: false,
-				SHOULD_ROTATE_PARTICLES: false,
-				SHOULD_WIGGLE_PARTICLES: false,
-
-				SHOULD_CALCULATE_SPRITE: this.textureFrames.x > 1 || this.textureFrames.y > 1
-			},
-			uniforms: {
-				tex: null,
-				textureAnimation: [
-					this.textureFrames.x,
-					this.textureFrames.y,
-					this.textureFrameCount,
-					Math.max(Math.abs(this.textureLoop), 1.0)
-				],
-				scale: utils.ensureTypedArg(options.scale, types.NUMBER, 300),
-				deltaTime: 0,
-				runTime: 0
-			},
-			vertexShader: Shaders.vertex,
-			fragmentShader: Shaders.fragment
-		});
-		this._setMaterial(this.material, options);
+		this.defines.HAS_PERSPECTIVE = this.hasPerspective;
+		this.defines.COLORIZE = this.colorize;
+		this.defines.VALUE_OVER_LIFETIME_LENGTH = ParticleProperties.valueOverLifetimeLength;
+		this.defines.SHOULD_CALCULATE_SPRITE = this.textureFrames.x > 1 || this.textureFrames.y > 1;
+		this.uniforms.textureAnimation = [
+			this.textureFrames.x,
+			this.textureFrames.y,
+			this.textureFrameCount,
+			Math.max(Math.abs(this.textureLoop), 1.0)
+		];
+		this.uniforms.scale = utils.ensureTypedArg(options.scale, types.NUMBER, 300);
 		this.material.drawMode = t3d.DRAW_MODE.POINTS;
 
-		this.uniforms = this.material.uniforms;
-		this.defines = this.material.defines;
-
-		// Create the BufferGeometry and Points instances, ensuring
-		// the geometry and material are given to the latter.
+		// Create geometry
 
 		this.geometry = new t3d.Geometry();
 		this.geometry.addGroup(0, this.particleCount, 0);
-		this.mesh = new t3d.Mesh(this.geometry, [this.material]);
-		this.mesh.frustumCulled = false;
 
 		// Map of all attributes to be applied to the particles.
 		this.attributes = {
@@ -110,6 +85,13 @@ export class ParticleGroup extends AbstractParticleGroup {
 		// Used when an emitter is removed.
 		this._attributesNeedRefresh = false;
 		this._attributesNeedDynamicReset = false;
+
+		// Create mesh
+
+		this.mesh = new t3d.Mesh(this.geometry, [this.material]);
+		this.mesh.frustumCulled = false;
+
+		//
 
 		this.particleCount = 0;
 	}

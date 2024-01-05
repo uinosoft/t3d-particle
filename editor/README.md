@@ -11,7 +11,7 @@ Editor:
 Core:
 
 - [ ] Support texture changing
-- [ ] Add AbstractParticleGroup.material
+- [x] Add AbstractParticleGroup.material
 - [ ] Fix alpha test
 - [ ] Fix particle count update bug
 - [ ] Fix attribute update cache

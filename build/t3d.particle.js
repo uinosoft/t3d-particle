@@ -565,99 +565,428 @@
 
 	const ShaderChunks = {
 		// Register color-packing define statements.
-		defines: ['#define PACKED_COLOR_SIZE 256.0', '#define PACKED_COLOR_DIVISOR 255.0'].join('\n'),
+		defines: `
+		#define PACKED_COLOR_SIZE 256.0
+		#define PACKED_COLOR_DIVISOR 255.0
+	`,
 		// All uniforms used by vertex / fragment shaders
-		uniforms: ['uniform float deltaTime;', 'uniform float runTime;', 'uniform sampler2D tex;', 'uniform vec4 textureAnimation;', 'uniform float scale;'].join('\n'),
+		uniforms: `
+		uniform float deltaTime;
+		uniform float runTime;
+		uniform sampler2D tex;
+		uniform vec4 textureAnimation;
+		uniform float scale;
+	`,
 		// All attributes used by the vertex shader.
-		//
 		// Note that some attributes are squashed into other ones:
-		//
 		// * Drag is acceleration.w
-		attributes: ['attribute vec4 acceleration;', 'attribute vec3 velocity;', 'attribute vec4 rotation;', 'attribute vec3 rotationCenter;', 'attribute vec4 params;', 'attribute vec4 size;', 'attribute vec4 angle;', 'attribute vec4 color;', 'attribute vec4 opacity;'].join('\n'),
+		attributes: `
+		attribute vec4 acceleration;
+		attribute vec3 velocity;
+		attribute vec4 rotation;
+		attribute vec3 rotationCenter;
+		attribute vec4 params;
+		attribute vec4 size;
+		attribute vec4 angle;
+		attribute vec4 color;
+		attribute vec4 opacity;
+	`,
 		//
-		varyings: ['varying vec4 vColor;', '#ifdef SHOULD_ROTATE_TEXTURE', '		varying float vAngle;', '#endif', '#ifdef SHOULD_CALCULATE_SPRITE', '		varying vec4 vSpriteSheet;', '#endif'].join('\n'),
-		// Branch-avoiding comparison fns
+		varyings: `
+		varying vec4 vColor;
+
+		#ifdef SHOULD_ROTATE_TEXTURE
+			varying float vAngle;
+		#endif
+
+		#ifdef SHOULD_CALCULATE_SPRITE
+			varying vec4 vSpriteSheet;
+		#endif
+	`,
+		// Branch-avoiding comparison fns & logical operators
 		// - http://theorangeduck.com/page/avoiding-shader-conditionals
-		branchAvoidanceFunctions: ['float when_gt(float x, float y) {', '		return max(sign(x - y), 0.0);', '}', 'float when_lt(float x, float y) {', '		return min( max(1.0 - sign(x - y), 0.0), 1.0 );', '}', 'float when_eq( float x, float y ) {', '		return 1.0 - abs( sign( x - y ) );', '}', 'float when_ge(float x, float y) {', '	return 1.0 - when_lt(x, y);', '}', 'float when_le(float x, float y) {', '	return 1.0 - when_gt(x, y);', '}',
-		// Branch-avoiding logical operators
-		// (to be used with above comparison fns)
-		'float and(float a, float b) {', '		return a * b;', '}', 'float or(float a, float b) {', '		return min(a + b, 1.0);', '}'].join('\n'),
+		branchAvoidanceFunctions: `
+		float when_gt(float x, float y) {
+			return max(sign(x - y), 0.0);
+		}
+
+		float when_lt(float x, float y) {
+			return min( max(1.0 - sign(x - y), 0.0), 1.0 );
+		}
+
+		float when_eq(float x, float y) {
+			return 1.0 - abs(sign(x - y));
+		}
+
+		float when_ge(float x, float y) {
+			return 1.0 - when_lt(x, y);
+		}
+
+		float when_le(float x, float y) {
+			return 1.0 - when_gt(x, y);
+		}
+
+		float and(float a, float b) {
+			return a * b;
+		}
+
+		float or(float a, float b) {
+			return min(a + b, 1.0);
+		}
+	`,
 		// From:
 		// - http://stackoverflow.com/a/12553149
 		// - https://stackoverflow.com/questions/22895237/hexadecimal-to-rgb-values-in-webgl-shader
-		unpackColor: ['vec3 unpackColor( in float hex ) {', '	 vec3 c = vec3( 0.0 );', '	 float r = mod( (hex / PACKED_COLOR_SIZE / PACKED_COLOR_SIZE), PACKED_COLOR_SIZE );', '	 float g = mod( (hex / PACKED_COLOR_SIZE), PACKED_COLOR_SIZE );', '	 float b = mod( hex, PACKED_COLOR_SIZE );', '	 c.r = r / PACKED_COLOR_DIVISOR;', '	 c.g = g / PACKED_COLOR_DIVISOR;', '	 c.b = b / PACKED_COLOR_DIVISOR;', '	 return c;', '}'].join('\n'),
-		unpackRotationAxis: ['vec3 unpackRotationAxis( in float hex ) {', '	 vec3 c = vec3( 0.0 );', '	 float r = mod( (hex / PACKED_COLOR_SIZE / PACKED_COLOR_SIZE), PACKED_COLOR_SIZE );', '	 float g = mod( (hex / PACKED_COLOR_SIZE), PACKED_COLOR_SIZE );', '	 float b = mod( hex, PACKED_COLOR_SIZE );', '	 c.r = r / PACKED_COLOR_DIVISOR;', '	 c.g = g / PACKED_COLOR_DIVISOR;', '	 c.b = b / PACKED_COLOR_DIVISOR;', '	 c *= vec3( 2.0 );', '	 c -= vec3( 1.0 );', '	 return c;', '}'].join('\n'),
-		floatOverLifetime: ['float getFloatOverLifetime( in float positionInTime, in vec4 attr ) {', '		highp float value = 0.0;', '		float deltaAge = positionInTime * float( VALUE_OVER_LIFETIME_LENGTH - 1 );', '		float fIndex = 0.0;', '		float shouldApplyValue = 0.0;',
-		// This might look a little odd, but it's faster in the testing I've done than using branches.
-		// Uses basic maths to avoid branching.
-		//
-		// Take a look at the branch-avoidance functions defined above,
-		// and be sure to check out The Orange Duck site where I got this
-		// from (link above).
+		unpackColor: `
+		vec3 unpackColor(in float hex) {
+			vec3 c = vec3(0.0);
+			float r = mod((hex / PACKED_COLOR_SIZE / PACKED_COLOR_SIZE), PACKED_COLOR_SIZE);
+			float g = mod((hex / PACKED_COLOR_SIZE), PACKED_COLOR_SIZE);
+			float b = mod(hex, PACKED_COLOR_SIZE);
 
-		// Fix for static emitters (age is always zero).
-		'		value += attr[ 0 ] * when_eq( deltaAge, 0.0 );', '', '		for( int i = 0; i < VALUE_OVER_LIFETIME_LENGTH - 1; ++i ) {', '			 fIndex = float( i );', '			 shouldApplyValue = and( when_gt( deltaAge, fIndex ), when_le( deltaAge, fIndex + 1.0 ) );', '			 value += shouldApplyValue * mix( attr[ i ], attr[ i + 1 ], deltaAge - fIndex );', '		}', '', '		return value;', '}'].join('\n'),
-		colorOverLifetime: ['vec3 getColorOverLifetime( in float positionInTime, in vec3 color1, in vec3 color2, in vec3 color3, in vec3 color4 ) {', '		vec3 value = vec3( 0.0 );', '		value.x = getFloatOverLifetime( positionInTime, vec4( color1.x, color2.x, color3.x, color4.x ) );', '		value.y = getFloatOverLifetime( positionInTime, vec4( color1.y, color2.y, color3.y, color4.y ) );', '		value.z = getFloatOverLifetime( positionInTime, vec4( color1.z, color2.z, color3.z, color4.z ) );', '		return value;', '}'].join('\n'),
-		paramFetchingFunctions: ['float getAlive() {', '	 return params.x;', '}', 'float getAge() {', '	 return params.y;', '}', 'float getMaxAge() {', '	 return params.z;', '}', 'float getWiggle() {', '	 return params.w;', '}'].join('\n'),
-		forceFetchingFunctions: ['vec4 getPosition( in float age ) {', '	 return u_View * u_Model * vec4( a_Position, 1.0 );', '}', 'vec3 getVelocity( in float age ) {', '	 return velocity * age;', '}', 'vec3 getAcceleration( in float age ) {', '	 return acceleration.xyz * age;', '}'].join('\n'),
-		rotationFunctions: [
+			c.r = r / PACKED_COLOR_DIVISOR;
+			c.g = g / PACKED_COLOR_DIVISOR;
+			c.b = b / PACKED_COLOR_DIVISOR;
+
+			return c;
+		}
+	`,
+		unpackRotationAxis: `
+		vec3 unpackRotationAxis(in float hex) {
+			 vec3 c = vec3(0.0);
+
+			 float r = mod((hex / PACKED_COLOR_SIZE / PACKED_COLOR_SIZE), PACKED_COLOR_SIZE);
+			 float g = mod((hex / PACKED_COLOR_SIZE), PACKED_COLOR_SIZE);
+			 float b = mod(hex, PACKED_COLOR_SIZE);
+
+			 c.r = r / PACKED_COLOR_DIVISOR;
+			 c.g = g / PACKED_COLOR_DIVISOR;
+			 c.b = b / PACKED_COLOR_DIVISOR;
+
+			 c *= vec3(2.0);
+			 c -= vec3(1.0);
+
+			 return c;
+		}
+	`,
+		floatOverLifetime: `
+		float getFloatOverLifetime(in float positionInTime, in vec4 attr) {
+			float value = 0.0;
+			float deltaAge = positionInTime * float(VALUE_OVER_LIFETIME_LENGTH - 1);
+			float fIndex = 0.0;
+			float shouldApplyValue = 0.0;
+
+			// Fix for static emitters (age is always zero).
+			value += attr[0] * when_eq(deltaAge, 0.0);
+
+			for(int i = 0; i < VALUE_OVER_LIFETIME_LENGTH - 1; ++i) {
+				fIndex = float(i);
+				shouldApplyValue = and(when_gt(deltaAge, fIndex), when_le(deltaAge, fIndex + 1.0));
+				value += shouldApplyValue * mix(attr[i], attr[i + 1], deltaAge - fIndex);
+			}
+
+			return value;
+		}
+	`,
+		colorOverLifetime: `
+		vec3 getColorOverLifetime(in float positionInTime, in vec3 color1, in vec3 color2, in vec3 color3, in vec3 color4) {
+			vec3 value = vec3(0.0);
+			value.x = getFloatOverLifetime(positionInTime, vec4(color1.x, color2.x, color3.x, color4.x));
+			value.y = getFloatOverLifetime(positionInTime, vec4(color1.y, color2.y, color3.y, color4.y));
+			value.z = getFloatOverLifetime(positionInTime, vec4(color1.z, color2.z, color3.z, color4.z));
+			return value;
+		}
+	`,
+		paramFetchingFunctions: `
+		float getAlive() {
+			return params.x;
+		}
+
+		float getAge() {
+			return params.y;
+		}
+
+		float getMaxAge() {
+			return params.z;
+		}
+
+		float getWiggle() {
+			return params.w;
+		}
+	`,
+		forceFetchingFunctions: `
+		vec4 getPosition(in float age) {
+			return u_View * u_Model * vec4(a_Position, 1.0);
+		}
+
+		vec3 getVelocity(in float age) {
+			return velocity * age;
+		}
+
+		vec3 getAcceleration(in float age) {
+			return acceleration.xyz * age;
+		}
+	`,
 		// Huge thanks to:
 		// - http://www.neilmendoza.com/glsl-rotation-about-an-arbitrary-axis/
-		'#ifdef SHOULD_ROTATE_PARTICLES', '	 mat4 getRotationMatrix( in vec3 axis, in float angle) {', '			 axis = normalize(axis);', '			 float s = sin(angle);', '			 float c = cos(angle);', '			 float oc = 1.0 - c;', '', '			 return mat4(oc * axis.x * axis.x + c,					 oc * axis.x * axis.y - axis.z * s,	oc * axis.z * axis.x + axis.y * s,	0.0,', '									 oc * axis.x * axis.y + axis.z * s,	oc * axis.y * axis.y + c,					 oc * axis.y * axis.z - axis.x * s,	0.0,', '									 oc * axis.z * axis.x - axis.y * s,	oc * axis.y * axis.z + axis.x * s,	oc * axis.z * axis.z + c,					 0.0,', '									 0.0,																0.0,																0.0,																1.0);', '	 }', '', '	 vec3 getRotation( in vec3 pos, in float positionInTime ) {', '			if( rotation.y == 0.0 ) {', '					 return pos;', '			}', '', '			vec3 axis = unpackRotationAxis( rotation.x );', '			vec3 center = rotationCenter;', '			vec3 translated;', '			mat4 rotationMatrix;', '			float angle = 0.0;', '			angle += when_eq( rotation.z, 0.0 ) * rotation.y;', '			angle += when_gt( rotation.z, 0.0 ) * mix( 0.0, rotation.y, positionInTime );', '			translated = rotationCenter - pos;', '			rotationMatrix = getRotationMatrix( axis, angle );', '			return center - vec3( rotationMatrix * vec4( translated, 0.0 ) );', '	 }', '#endif'].join('\n'),
-		// Fragment chunks
-		rotateTexture: ['		vec2 vUv = vec2( gl_PointCoord.x, 1.0 - gl_PointCoord.y );', '',
+		rotationFunctions: `
+		#ifdef SHOULD_ROTATE_PARTICLES
+			mat4 getRotationMatrix(in vec3 axis, in float angle) {
+				axis = normalize(axis);
+				float s = sin(angle);
+				float c = cos(angle);
+				float oc = 1.0 - c;
+
+				return mat4(
+					oc * axis.x * axis.x + c, oc * axis.x * axis.y - axis.z * s, oc * axis.z * axis.x + axis.y * s, 0.0,
+					oc * axis.x * axis.y + axis.z * s, oc * axis.y * axis.y + c, oc * axis.y * axis.z - axis.x * s, 0.0,
+					oc * axis.z * axis.x - axis.y * s, oc * axis.y * axis.z + axis.x * s, oc * axis.z * axis.z + c, 0.0,
+					0.0, 0.0, 0.0, 1.0
+				);
+			}
+
+			vec3 getRotation(in vec3 pos, in float positionInTime) {
+				if(rotation.y == 0.0) {
+					return pos;
+				}
+
+				vec3 axis = unpackRotationAxis(rotation.x);
+				vec3 center = rotationCenter;
+				vec3 translated;
+				mat4 rotationMatrix;
+
+				float angle = 0.0;
+				angle += when_eq(rotation.z, 0.0) * rotation.y;
+				angle += when_gt(rotation.z, 0.0) * mix(0.0, rotation.y, positionInTime);
+				translated = rotationCenter - pos;
+				rotationMatrix = getRotationMatrix(axis, angle);
+				return center - vec3(rotationMatrix * vec4(translated, 0.0));
+			}
+		#endif
+	`,
+		rotateTexture: `
+		vec2 vUv = vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y);
+
 		// Spritesheets overwrite angle calculations.
-		'		#ifdef SHOULD_CALCULATE_SPRITE', '				float framesX = vSpriteSheet.x;', '				float framesY = vSpriteSheet.y;', '				float columnNorm = vSpriteSheet.z;', '				float rowNorm = vSpriteSheet.w;', '				vUv.x = gl_PointCoord.x * framesX + columnNorm;', '				vUv.y = 1.0 - (gl_PointCoord.y * framesY + rowNorm);', '		#endif', '		#ifdef SHOULD_ROTATE_TEXTURE', '			#ifdef SHOULD_CALCULATE_SPRITE', '					 float x = vUv.x - framesX * 0.5 - columnNorm;', '					 float y = vUv.y - ( 1.0 - rowNorm ) + framesY * 0.5;', '					 float c = cos( -vAngle );', '					 float s = sin( -vAngle );', '					 vUv = vec2( c * x + s * y + framesX * 0.5 + columnNorm, c * y - s * x + ( 1.0 - rowNorm ) - framesY * 0.5 );', '		#else', '					 float x = vUv.x - 0.5;', '					 float y = vUv.y - 0.5;', '					 float c = cos( -vAngle );', '					 float s = sin( -vAngle );', '					 vUv = vec2( c * x + s * y + 0.5, c * y - s * x + 0.5 );', '		#endif', '		#endif', '', '', '		vec4 rotatedTexture = texture2D( tex, vUv );'].join('\n')
+		#ifdef SHOULD_CALCULATE_SPRITE
+			float framesX = vSpriteSheet.x;
+			float framesY = vSpriteSheet.y;
+			float columnNorm = vSpriteSheet.z;
+			float rowNorm = vSpriteSheet.w;
+
+			vUv.x = gl_PointCoord.x * framesX + columnNorm;
+			vUv.y = 1.0 - (gl_PointCoord.y * framesY + rowNorm);
+		#endif
+
+		#ifdef SHOULD_ROTATE_TEXTURE
+			#ifdef SHOULD_CALCULATE_SPRITE
+				float x = vUv.x - framesX * 0.5 - columnNorm;
+				float y = vUv.y - (1.0 - rowNorm) + framesY * 0.5;
+				float c = cos(-vAngle);
+				float s = sin(-vAngle);
+
+				vUv = vec2(c * x + s * y + framesX * 0.5 + columnNorm, c * y - s * x + (1.0 - rowNorm) - framesY * 0.5);
+			#else
+				float x = vUv.x - 0.5;
+				float y = vUv.y - 0.5;
+				float c = cos(-vAngle);
+				float s = sin(-vAngle);
+
+				vUv = vec2(c * x + s * y + 0.5, c * y - s * x + 0.5);
+			#endif
+		#endif
+
+		vec4 rotatedTexture = texture2D(tex, vUv);
+	`
 	};
 
-	const Shaders = {
-		vertex: [ShaderChunks.defines, ShaderChunks.uniforms, ShaderChunks.attributes, ShaderChunks.varyings, t3d__namespace.ShaderChunk.common_vert, t3d__namespace.ShaderChunk.logdepthbuf_pars_vert, ShaderChunks.branchAvoidanceFunctions, ShaderChunks.unpackColor, ShaderChunks.unpackRotationAxis, ShaderChunks.floatOverLifetime, ShaderChunks.colorOverLifetime, ShaderChunks.paramFetchingFunctions, ShaderChunks.forceFetchingFunctions, ShaderChunks.rotationFunctions, 'void main() {',
-		//
-		// Setup...
-		//
-		'		highp float age = getAge();', '		highp float alive = getAlive();', '		highp float maxAge = getMaxAge();', '		highp float positionInTime = (age / maxAge);', '		highp float isAlive = when_gt( alive, 0.0 );', '		#ifdef SHOULD_WIGGLE_PARTICLES', '				float wiggleAmount = positionInTime * getWiggle();', '				float wiggleSin = isAlive * sin( wiggleAmount );', '				float wiggleCos = isAlive * cos( wiggleAmount );', '		#endif',
-		//
-		// Forces
-		//
+	const ParticleShader = {
+		name: 'particle_shader',
+		defines: {
+			HAS_PERSPECTIVE: true,
+			COLORIZE: true,
+			VALUE_OVER_LIFETIME_LENGTH: 4,
+			SHOULD_ROTATE_TEXTURE: false,
+			SHOULD_ROTATE_PARTICLES: false,
+			SHOULD_WIGGLE_PARTICLES: false,
+			SHOULD_CALCULATE_SPRITE: false
+		},
+		uniforms: {
+			tex: null,
+			textureAnimation: [1, 1, 1, 1],
+			scale: 300,
+			deltaTime: 0,
+			runTime: 0
+		},
+		vertexShader: `
+		${ShaderChunks.defines}
+		${ShaderChunks.uniforms}
+		${ShaderChunks.attributes}
+		${ShaderChunks.varyings}
 
-		// Get forces & position
-		'		vec3 vel = getVelocity( age );', '		vec3 accel = getAcceleration( age );', '		vec3 force = vec3( 0.0 );', '		vec3 pos = vec3( a_Position );',
-		// Calculate the required drag to apply to the forces.
-		'		float drag = 1.0 - (positionInTime * 0.5) * acceleration.w;',
-		// Integrate forces...
-		'		force += vel;', '		force *= drag;', '		force += accel * age;', '		pos += force;',
-		// Wiggly wiggly wiggle!
-		'		#ifdef SHOULD_WIGGLE_PARTICLES', '				pos.x += wiggleSin;', '				pos.y += wiggleCos;', '				pos.z += wiggleSin;', '		#endif',
-		// Rotate the emitter around it's central point
-		'		#ifdef SHOULD_ROTATE_PARTICLES', '				pos = getRotation( pos, positionInTime );', '		#endif',
-		// Convert pos to a world-space value
-		'		vec4 mvPosition = u_View * u_Model * vec4( pos, 1.0 );',
-		// Determine point size.
-		'		highp float pointSize = getFloatOverLifetime( positionInTime, size ) * isAlive;',
-		// Determine perspective
-		'		#ifdef HAS_PERSPECTIVE', '				float perspective = scale / length( mvPosition.xyz );', '		#else', '				float perspective = 1.0;', '		#endif',
-		// Apply perpective to pointSize value
-		'		float pointSizePerspective = pointSize * perspective;',
-		//
-		// Appearance
-		//
+		${t3d.ShaderChunk.common_vert}
+		${t3d.ShaderChunk.logdepthbuf_pars_vert}
 
-		// Determine color and opacity for this particle
-		'		#ifdef COLORIZE', '			 vec3 c = isAlive * getColorOverLifetime(', '					 positionInTime,', '					 unpackColor( color.x ),', '					 unpackColor( color.y ),', '					 unpackColor( color.z ),', '					 unpackColor( color.w )', '			 );', '		#else', '			 vec3 c = vec3(1.0);', '		#endif', '		float o = isAlive * getFloatOverLifetime( positionInTime, opacity );',
-		// Assign color to vColor varying.
-		'		vColor = vec4( c, o );',
-		// Determine angle
-		'		#ifdef SHOULD_ROTATE_TEXTURE', '				vAngle = isAlive * getFloatOverLifetime( positionInTime, angle );', '		#endif',
-		// If this particle is using a sprite-sheet as a texture, we'll have to figure out
-		// what frame of the texture the particle is using at it's current position in time.
-		'		#ifdef SHOULD_CALCULATE_SPRITE', '				float framesX = textureAnimation.x;', '				float framesY = textureAnimation.y;', '				float loopCount = textureAnimation.w;', '				float totalFrames = textureAnimation.z;', '				float frameNumber = mod( (positionInTime * loopCount) * totalFrames, totalFrames );', '				float column = floor(mod( frameNumber, framesX ));', '				float row = floor( (frameNumber - column) / framesX );', '				float columnNorm = column / framesX;', '				float rowNorm = row / framesY;', '				vSpriteSheet.x = 1.0 / framesX;', '				vSpriteSheet.y = 1.0 / framesY;', '				vSpriteSheet.z = columnNorm;', '				vSpriteSheet.w = rowNorm;', '		#endif',
-		//
-		// Write values
-		//
+		${ShaderChunks.branchAvoidanceFunctions}
+		${ShaderChunks.unpackColor}
+		${ShaderChunks.unpackRotationAxis}
+		${ShaderChunks.floatOverLifetime}
+		${ShaderChunks.colorOverLifetime}
+		${ShaderChunks.paramFetchingFunctions}
+		${ShaderChunks.forceFetchingFunctions}
+		${ShaderChunks.rotationFunctions}
 
-		// Set PointSize according to size at current point in time.
-		'		gl_PointSize = pointSizePerspective;', '		gl_Position = u_Projection * mvPosition;', t3d__namespace.ShaderChunk.logdepthbuf_vert, '}'].join('\n'),
-		fragment: [ShaderChunks.uniforms, t3d__namespace.ShaderChunk.common_frag, t3d__namespace.ShaderChunk.fog_pars_frag, t3d__namespace.ShaderChunk.logdepthbuf_pars_frag, ShaderChunks.varyings, ShaderChunks.branchAvoidanceFunctions, 'void main() {', '		vec3 outgoingLight = vColor.xyz;', '		', '		#ifdef ALPHATEST', '			 if ( vColor.w < float(ALPHATEST) ) discard;', '		#endif', ShaderChunks.rotateTexture, t3d__namespace.ShaderChunk.logdepthbuf_frag, '		outgoingLight = vColor.xyz * rotatedTexture.xyz;', '		gl_FragColor = vec4( outgoingLight.xyz, rotatedTexture.w * vColor.w );', t3d__namespace.ShaderChunk.fog_frag, '}'].join('\n')
+		void main() {
+			//
+			// Setup...
+			//
+
+			float age = getAge();
+			float alive = getAlive();
+			float maxAge = getMaxAge();
+			float positionInTime = (age / maxAge);
+			float isAlive = when_gt(alive, 0.0);
+
+			#ifdef SHOULD_WIGGLE_PARTICLES
+				float wiggleAmount = positionInTime * getWiggle();
+				float wiggleSin = isAlive * sin(wiggleAmount);
+				float wiggleCos = isAlive * cos(wiggleAmount);
+			#endif
+
+			//
+			// Forces
+			//
+
+			// Get forces & position
+			vec3 vel = getVelocity(age);
+			vec3 accel = getAcceleration(age);
+			vec3 force = vec3(0.0);
+			vec3 pos = vec3(a_Position);
+
+			// Calculate the required drag to apply to the forces.
+			float drag = 1.0 - (positionInTime * 0.5) * acceleration.w;
+
+			// Integrate forces...
+			force += vel;
+			force *= drag;
+			force += accel * age;
+			pos += force;
+
+			// Wiggly wiggly wiggle!
+			#ifdef SHOULD_WIGGLE_PARTICLES
+				pos.x += wiggleSin;
+				pos.y += wiggleCos;
+				pos.z += wiggleSin;
+			#endif
+
+			// Rotate the emitter around it's central point
+			#ifdef SHOULD_ROTATE_PARTICLES
+				pos = getRotation(pos, positionInTime);
+			#endif
+
+			// Convert pos to a world-space value
+			vec4 mvPosition = u_View * u_Model * vec4(pos, 1.0);
+
+			// Determine point size.
+			float pointSize = getFloatOverLifetime(positionInTime, size) * isAlive;
+
+			// Determine perspective
+			#ifdef HAS_PERSPECTIVE
+				float perspective = scale / length(mvPosition.xyz);
+			#else
+				float perspective = 1.0;
+			#endif
+
+			// Apply perpective to pointSize value
+			float pointSizePerspective = pointSize * perspective;
+
+			//
+			// Appearance
+			//
+
+			// Determine color and opacity for this particle
+			#ifdef COLORIZE
+				vec3 c = isAlive * getColorOverLifetime(
+					positionInTime,
+					unpackColor(color.x),
+					unpackColor(color.y),
+					unpackColor(color.z),
+					unpackColor(color.w)
+				);
+			#else
+				vec3 c = vec3(1.0);
+			#endif
+
+			float o = isAlive * getFloatOverLifetime(positionInTime, opacity);
+
+			// Assign color to vColor varying.
+			vColor = vec4(c, o);
+
+			// Determine angle
+			#ifdef SHOULD_ROTATE_TEXTURE
+				vAngle = isAlive * getFloatOverLifetime(positionInTime, angle);
+			#endif
+
+			// If this particle is using a sprite-sheet as a texture, we'll have to figure out
+			// what frame of the texture the particle is using at it's current position in time.
+			#ifdef SHOULD_CALCULATE_SPRITE
+				float framesX = textureAnimation.x;
+				float framesY = textureAnimation.y;
+				float loopCount = textureAnimation.w;
+				float totalFrames = textureAnimation.z;
+				float frameNumber = mod((positionInTime * loopCount) * totalFrames, totalFrames);
+
+				float column = floor(mod(frameNumber, framesX));
+				float row = floor((frameNumber - column) / framesX);
+
+				float columnNorm = column / framesX;
+				float rowNorm = row / framesY;
+
+				vSpriteSheet.x = 1.0 / framesX;
+				vSpriteSheet.y = 1.0 / framesY;
+				vSpriteSheet.z = columnNorm;
+				vSpriteSheet.w = rowNorm;
+			#endif
+
+			//
+			// Write values
+			//
+
+			// Set PointSize according to size at current point in time.
+			gl_PointSize = pointSizePerspective;
+			gl_Position = u_Projection * mvPosition;
+
+			${t3d.ShaderChunk.logdepthbuf_vert}
+		}
+	`,
+		fragmentShader: `
+		${ShaderChunks.uniforms}
+
+		${t3d.ShaderChunk.common_frag}
+		${t3d.ShaderChunk.fog_pars_frag}
+		${t3d.ShaderChunk.logdepthbuf_pars_frag}
+
+		${ShaderChunks.varyings}
+
+		${ShaderChunks.branchAvoidanceFunctions}
+
+		void main() {
+			vec3 outgoingLight = vColor.xyz;
+
+			#ifdef ALPHATEST
+				if (vColor.w < float(ALPHATEST)) discard;
+			#endif
+
+			${ShaderChunks.rotateTexture}
+
+			${t3d.ShaderChunk.logdepthbuf_frag}
+
+			outgoingLight = vColor.xyz * rotatedTexture.xyz;
+			gl_FragColor = vec4(outgoingLight.xyz, rotatedTexture.w * vColor.w);
+
+			${t3d.ShaderChunk.fog_frag}
+		}
+	`
 	};
 
 	/**
@@ -1563,7 +1892,7 @@
 	 */
 
 	class AbstractParticleGroup {
-		constructor(options) {
+		constructor(options, shader) {
 			this.uuid = t3d__namespace.generateUUID();
 			const types = Utils.types;
 			options.texture = Utils.ensureTypedArg(options.texture, types.OBJECT, {});
@@ -1574,6 +1903,12 @@
 			this.hasPerspective = Utils.ensureTypedArg(options.hasPerspective, types.BOOLEAN, true);
 			this.colorize = Utils.ensureTypedArg(options.colorize, types.BOOLEAN, true);
 
+			// Set material
+			this.material = new t3d__namespace.ShaderMaterial(shader);
+			this.uniforms = this.material.uniforms;
+			this.defines = this.material.defines;
+			this._setMaterial(options);
+
 			// Where emitter's go to curl up in a warm blanket and live
 			// out their days.
 			this._emitters = [];
@@ -1582,9 +1917,11 @@
 		removeEmitter(emitter) {}
 		tick(dt) {}
 		dispose() {}
-		_setMaterial(material, options) {
+		_setMaterial(options) {
 			const types = Utils.types;
-			material.uniforms.tex = Utils.ensureInstanceOf(options.texture.value, t3d__namespace.Texture2D, defaultTexture);
+			const material = this.material;
+			const uniforms = this.uniforms;
+			uniforms.tex = Utils.ensureInstanceOf(options.texture.value, t3d__namespace.Texture2D, defaultTexture);
 			material.blending = Utils.ensureTypedArg(options.blending, types.STRING, t3d__namespace.BLEND_TYPE.ADD);
 			material.transparent = Utils.ensureTypedArg(options.transparent, types.BOOLEAN, true);
 			material.alphaTest = Utils.ensureTypedArg(options.alphaTest, types.NUMBER, 0.0);
@@ -1624,55 +1961,33 @@
 
 			// Ensure we have a map of options to play with
 			options = Utils.ensureTypedArg(options, types.OBJECT, {});
-			super(options);
+			super(options, ParticleShader);
+
+			// Set max particle count
+
 			this.maxParticleCount = utils.ensureTypedArg(options.maxParticleCount, types.NUMBER, null);
 			if (this.maxParticleCount === null) {
 				console.warn('ParticleGroup: No maxParticleCount specified. Adding emitters after rendering will probably cause errors.');
 			}
 
-			// Set properties used in the uniforms map, starting with the
-			// texture stuff.
+			// Set properties used in the uniforms map
 
 			this.textureFrames = Utils.ensureInstanceOf(options.texture.frames, t3d__namespace.Vector2, new t3d__namespace.Vector2(1, 1));
 			this.textureFrames.max(new t3d__namespace.Vector2(1, 1));
 			this.textureFrameCount = Utils.ensureTypedArg(options.texture.frameCount, types.NUMBER, this.textureFrames.x * this.textureFrames.y);
 			this.textureLoop = Utils.ensureTypedArg(options.texture.loop, types.NUMBER, 1);
-
-			// Create the ShaderMaterial instance that'll help render the
-			// particles.
-
-			this.material = new t3d__namespace.ShaderMaterial({
-				defines: {
-					HAS_PERSPECTIVE: this.hasPerspective,
-					COLORIZE: this.colorize,
-					VALUE_OVER_LIFETIME_LENGTH: ParticleProperties.valueOverLifetimeLength,
-					SHOULD_ROTATE_TEXTURE: false,
-					SHOULD_ROTATE_PARTICLES: false,
-					SHOULD_WIGGLE_PARTICLES: false,
-					SHOULD_CALCULATE_SPRITE: this.textureFrames.x > 1 || this.textureFrames.y > 1
-				},
-				uniforms: {
-					tex: null,
-					textureAnimation: [this.textureFrames.x, this.textureFrames.y, this.textureFrameCount, Math.max(Math.abs(this.textureLoop), 1.0)],
-					scale: utils.ensureTypedArg(options.scale, types.NUMBER, 300),
-					deltaTime: 0,
-					runTime: 0
-				},
-				vertexShader: Shaders.vertex,
-				fragmentShader: Shaders.fragment
-			});
-			this._setMaterial(this.material, options);
+			this.defines.HAS_PERSPECTIVE = this.hasPerspective;
+			this.defines.COLORIZE = this.colorize;
+			this.defines.VALUE_OVER_LIFETIME_LENGTH = ParticleProperties.valueOverLifetimeLength;
+			this.defines.SHOULD_CALCULATE_SPRITE = this.textureFrames.x > 1 || this.textureFrames.y > 1;
+			this.uniforms.textureAnimation = [this.textureFrames.x, this.textureFrames.y, this.textureFrameCount, Math.max(Math.abs(this.textureLoop), 1.0)];
+			this.uniforms.scale = utils.ensureTypedArg(options.scale, types.NUMBER, 300);
 			this.material.drawMode = t3d__namespace.DRAW_MODE.POINTS;
-			this.uniforms = this.material.uniforms;
-			this.defines = this.material.defines;
 
-			// Create the BufferGeometry and Points instances, ensuring
-			// the geometry and material are given to the latter.
+			// Create geometry
 
 			this.geometry = new t3d__namespace.Geometry();
 			this.geometry.addGroup(0, this.particleCount, 0);
-			this.mesh = new t3d__namespace.Mesh(this.geometry, [this.material]);
-			this.mesh.frustumCulled = false;
 
 			// Map of all attributes to be applied to the particles.
 			this.attributes = {
@@ -1696,6 +2011,14 @@
 			// Used when an emitter is removed.
 			this._attributesNeedRefresh = false;
 			this._attributesNeedDynamicReset = false;
+
+			// Create mesh
+
+			this.mesh = new t3d__namespace.Mesh(this.geometry, [this.material]);
+			this.mesh.frustumCulled = false;
+
+			//
+
 			this.particleCount = 0;
 		}
 
@@ -2402,23 +2725,33 @@
 
 			// Ensure we have a map of options to play with
 			options = Utils.ensureTypedArg(options, types.OBJECT, {});
-			super(options);
+			super(options, MeshParticleShader);
+
+			// Set max particle count
+
 			if (options.maxParticleCount === undefined) {
 				console.warn('MeshParticleGroup: options.maxParticleCount is not provided, set to 1000 by default.');
 				options.maxParticleCount = 1000;
 			}
 			this.maxParticleCount = options.maxParticleCount;
+
+			// Create geometry
+
 			if (!options.geometry || !(options.geometry instanceof t3d__namespace.Geometry)) {
 				console.warn('MeshParticleGroup: options.geometry is not provided, set a box geometry by default.');
 				options.geometry = new t3d__namespace.BoxGeometry(1, 1, 1);
 			}
 			const geometry = generateInstancedGeometry(options.geometry, this.maxParticleCount);
-			const material = new t3d__namespace.ShaderMaterial(MeshParticleShader);
-			this._setMaterial(material, options);
-			this.mesh = new t3d__namespace.Mesh(geometry, material);
-			this.mesh.frustumCulled = false;
 			this.$instanceBuffer = geometry.attributes.mcol0.buffer;
 			this._geometry = geometry;
+
+			// Create mesh
+
+			this.mesh = new t3d__namespace.Mesh(geometry, this.material);
+			this.mesh.frustumCulled = false;
+
+			//
+
 			this._particleCount = 0;
 			this._aliveParticleCount = 0;
 		}

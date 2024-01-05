@@ -12,31 +12,33 @@ export class MeshParticleGroup extends AbstractParticleGroup {
 		// Ensure we have a map of options to play with
 		options = Utils.ensureTypedArg(options, types.OBJECT, {});
 
-		super(options);
+		super(options, MeshParticleShader);
+
+		// Set max particle count
 
 		if (options.maxParticleCount === undefined) {
 			console.warn('MeshParticleGroup: options.maxParticleCount is not provided, set to 1000 by default.');
 			options.maxParticleCount = 1000;
 		}
-
 		this.maxParticleCount = options.maxParticleCount;
+
+		// Create geometry
 
 		if (!options.geometry || !(options.geometry instanceof t3d.Geometry)) {
 			console.warn('MeshParticleGroup: options.geometry is not provided, set a box geometry by default.');
 			options.geometry = new t3d.BoxGeometry(1, 1, 1);
 		}
-
 		const geometry = generateInstancedGeometry(options.geometry, this.maxParticleCount);
+		this.$instanceBuffer = geometry.attributes.mcol0.buffer;
+		this._geometry = geometry;
 
-		const material = new t3d.ShaderMaterial(MeshParticleShader);
-		this._setMaterial(material, options);
+		// Create mesh
 
-		this.mesh = new t3d.Mesh(geometry, material);
+		this.mesh = new t3d.Mesh(geometry, this.material);
 		this.mesh.frustumCulled = false;
 
-		this.$instanceBuffer = geometry.attributes.mcol0.buffer;
+		//
 
-		this._geometry = geometry;
 		this._particleCount = 0;
 		this._aliveParticleCount = 0;
 	}

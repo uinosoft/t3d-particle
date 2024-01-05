@@ -86,14 +86,12 @@ export class ParticleGUI {
 		// part1: create main group ui
 
 		let isMeshParticle = !!groupEntity.isMeshParticleGroup;
-		let groupMaterial = isMeshParticle ? groupEntity.mesh.material : groupEntity.material;
 
 		const rebuildGroup = () => {
 			groupEntity._emitters.forEach(emitterEntity => this._removeEmitterUI(emitterEntity));
 
 			groupEntity = entity.rebuildParticleGroup(groupEntity, groupData);
 			isMeshParticle = !!groupEntity.isMeshParticleGroup;
-			groupMaterial = isMeshParticle ? groupEntity.mesh.material : groupEntity.material;
 			this._groupUIs.set(groupEntity, groupFolder);
 
 			groupData.emitters.forEach((emitterData, i) => {
@@ -111,8 +109,8 @@ export class ParticleGUI {
 
 		const perspectiveControl = groupFolder.add(groupData, 'perspective').name(lang('perspective')).onChange(value => {
 			if (!isMeshParticle) {
-				groupMaterial.defines['HAS_PERSPECTIVE'] = value;
-				groupMaterial.needsUpdate = true;
+				groupEntity.material.defines['HAS_PERSPECTIVE'] = value;
+				groupEntity.material.needsUpdate = true;
 			}
 		});
 		perspectiveControl.disable(isMeshParticle);
@@ -121,7 +119,7 @@ export class ParticleGUI {
 		const textureNames = textureCache.getBuiltInTextureNames();
 		groupFolder.add({ value: textureNames[0] }, 'value', textureNames).name(lang('texture')).onChange(value => {
 			const textureInfo = textureCache.getBuiltInTexture(value);
-			groupMaterial.uniforms.tex = textureInfo.value;
+			groupEntity.material.uniforms.tex = textureInfo.value;
 
 			groupData.textureUri = textureInfo.uri;
 		});
@@ -130,17 +128,17 @@ export class ParticleGUI {
 			if (isMeshParticle) return;
 
 			groupEntity.textureFrames.fromArray(groupData.textureFrame);
-			groupMaterial.defines['SHOULD_CALCULATE_SPRITE'] = groupData.textureFrame[0] > 1 || groupData.textureFrame[1] > 1;
-			groupMaterial.uniforms.textureAnimation[0] = groupData.textureFrame[0];
-			groupMaterial.uniforms.textureAnimation[1] = groupData.textureFrame[1];
+			groupEntity.material.defines['SHOULD_CALCULATE_SPRITE'] = groupData.textureFrame[0] > 1 || groupData.textureFrame[1] > 1;
+			groupEntity.material.uniforms.textureAnimation[0] = groupData.textureFrame[0];
+			groupEntity.material.uniforms.textureAnimation[1] = groupData.textureFrame[1];
 
 			groupEntity.textureFrameCount = groupData.textureFrame[0] * groupData.textureFrame[1];
-			groupMaterial.uniforms.textureAnimation[2] = groupData.textureFrame[0] * groupData.textureFrame[1];
+			groupEntity.material.uniforms.textureAnimation[2] = groupData.textureFrame[0] * groupData.textureFrame[1];
 
 			groupEntity.textureLoop = groupData.textureFrameLoop;
-			groupMaterial.uniforms.textureAnimation[3] = groupEntity.textureLoop;
+			groupEntity.material.uniforms.textureAnimation[3] = groupEntity.textureLoop;
 
-			groupMaterial.needsUpdate = true;
+			groupEntity.material.needsUpdate = true;
 		}).close();
 		textureFramesFolder.add(groupData.textureFrame, '0', 1, 10, 1).name(lang('frameH'));
 		textureFramesFolder.add(groupData.textureFrame, '1', 1, 10, 1).name(lang('frameV'));
@@ -148,8 +146,8 @@ export class ParticleGUI {
 
 		groupFolder.add(groupData, 'colorize').name(lang('colorize')).onChange(value => {
 			if (!isMeshParticle) {
-				groupMaterial.defines['COLORIZE'] = value;
-				groupMaterial.needsUpdate = true;
+				groupEntity.material.defines['COLORIZE'] = value;
+				groupEntity.material.needsUpdate = true;
 			} else {
 				groupEntity._emitters.forEach(emitter => {
 					emitter.SHOULD_COLORIZE_PARTICLES = value;
@@ -158,33 +156,33 @@ export class ParticleGUI {
 		});
 
 		groupFolder.add(groupData, 'transparent').name(lang('transparent')).onChange(value => {
-			groupMaterial.transparent = value;
+			groupEntity.material.transparent = value;
 		});
 
 		groupFolder.add(groupData, 'blending', ['none', 'normal', 'add', 'sub', 'mul']).name(lang('blending')).onChange(value => {
-			groupMaterial.blending = value;
+			groupEntity.material.blending = value;
 		});
 
 		groupFolder.add(groupData, 'alphaTest', 0, 1, 0.1).name(lang('alphaTest')).onChange(value => {
-			groupMaterial.alphaTest = value;
-			groupMaterial.needsUpdate = true;
+			groupEntity.material.alphaTest = value;
+			groupEntity.material.needsUpdate = true;
 		});
 
 		groupFolder.add(groupData, 'depthWrite').name(lang('depthWrite')).onChange(value => {
-			groupMaterial.depthWrite = value;
+			groupEntity.material.depthWrite = value;
 		});
 
 		groupFolder.add(groupData, 'depthTest').name(lang('depthTest')).onChange(value => {
-			groupMaterial.depthTest = value;
+			groupEntity.material.depthTest = value;
 		});
 
 		groupFolder.add(groupData, 'side', ['front', 'back', 'double']).name(lang('side')).onChange(value => {
-			groupMaterial.side = value;
+			groupEntity.material.side = value;
 		});
 
 		groupFolder.add(groupData, 'fog').name(lang('fog')).onChange(value => {
-			groupMaterial.fog = value;
-			groupMaterial.needsUpdate = true;
+			groupEntity.material.fog = value;
+			groupEntity.material.needsUpdate = true;
 		});
 
 		// part2: create emitter buttons
