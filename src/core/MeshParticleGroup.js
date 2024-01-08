@@ -83,7 +83,7 @@ export class MeshParticleGroup extends AbstractParticleGroup {
 
 		this._particleCount -= emitter.particleCount;
 
-		emitter.group = null;
+		emitter._onRemove();
 
 		this._emitters.splice(emitterIndex, 1);
 

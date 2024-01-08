@@ -2587,6 +2587,9 @@
 			super(options);
 			this._activeParticles = new Array();
 			this._particlePool = new Array();
+
+			// accumulate spawn decimal
+			this._spawnDecimal = 0.0;
 		}
 		tick(dt, camera) {
 			if (this.isStatic) {
@@ -2608,7 +2611,9 @@
 
 			if (!outDuration) {
 				const activationCount = this._activeParticles.length;
-				const ppsDt = this.particlesPerSecond * this.activeMultiplier * dt;
+				const _ppsDt = this.particlesPerSecond * this.activeMultiplier * dt + this._spawnDecimal;
+				const ppsDt = Math.floor(_ppsDt);
+				this._spawnDecimal = _ppsDt - ppsDt;
 				const spawnCount = Math.min(activationCount + ppsDt, this.particleCount) - activationCount;
 				for (let i = 0; i < spawnCount; i++) {
 					const particle = this._particlePool.length <= 0 ? new MeshParticle() : this._particlePool.shift();
@@ -2644,6 +2649,11 @@
 			if (this.alive) {
 				this.age += dt;
 			}
+		}
+		_onRemove() {
+			this.particlesPerSecond = 0;
+			this._spawnDecimal = 0.0;
+			this._group = null;
 		}
 		reset(force) {
 			this.alive = false;
@@ -2767,7 +2777,7 @@
 				return;
 			}
 			this._particleCount -= emitter.particleCount;
-			emitter.group = null;
+			emitter._onRemove();
 			this._emitters.splice(emitterIndex, 1);
 			return this;
 		}
