@@ -177,16 +177,16 @@ export const ParticleShader = {
 		void main() {
 			vec3 outgoingLight = vColor.xyz;
 
-			#ifdef ALPHATEST
-				if (vColor.w < float(ALPHATEST)) discard;
-			#endif
-
 			${ShaderChunks.rotateTexture}
 
 			${ShaderChunk.logdepthbuf_frag}
 
 			outgoingLight = vColor.xyz * rotatedTexture.xyz;
 			gl_FragColor = vec4(outgoingLight.xyz, rotatedTexture.w * vColor.w);
+
+			#ifdef ALPHATEST
+				if (gl_FragColor.a < float(ALPHATEST)) discard;
+			#endif
 
 			${ShaderChunk.fog_frag}
 		}

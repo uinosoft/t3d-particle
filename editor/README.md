@@ -11,10 +11,11 @@ Editor:
 Core:
 
 - [ ] Support texture changing
+- [ ] Static data import bug
 - [x] Add AbstractParticleGroup.material
-- [ ] Fix alpha test
-- [ ] Fix particle count update bug
+- [x] Fix alpha test
 - [ ] Fix attribute update cache
+- [x] Fix mesh particle spawn bug
 - [x] Fix params update bug
 - [x] Fix rotation center update bug
 - [x] Fix randomise return value
