@@ -714,19 +714,6 @@
 			return params.w;
 		}
 	`,
-		forceFetchingFunctions: `
-		vec4 getPosition(in float age) {
-			return u_View * u_Model * vec4(a_Position, 1.0);
-		}
-
-		vec3 getVelocity(in float age) {
-			return velocity * age;
-		}
-
-		vec3 getAcceleration(in float age) {
-			return acceleration.xyz * age;
-		}
-	`,
 		// Huge thanks to:
 		// - http://www.neilmendoza.com/glsl-rotation-about-an-arbitrary-axis/
 		rotationFunctions: `
@@ -833,7 +820,6 @@
 		${ShaderChunks.floatOverLifetime}
 		${ShaderChunks.colorOverLifetime}
 		${ShaderChunks.paramFetchingFunctions}
-		${ShaderChunks.forceFetchingFunctions}
 		${ShaderChunks.rotationFunctions}
 
 		void main() {
@@ -857,20 +843,17 @@
 			// Forces
 			//
 
-			// Get forces & position
-			vec3 vel = getVelocity(age);
-			vec3 accel = getAcceleration(age);
-			vec3 force = vec3(0.0);
-			vec3 pos = vec3(a_Position);
+			// Get forces
+			vec3 vel = velocity;
+			vec3 acc= acceleration.xyz;
 
 			// Calculate the required drag to apply to the forces.
 			float drag = 1.0 - (positionInTime * 0.5) * acceleration.w;
+			vel *= drag;
 
-			// Integrate forces...
-			force += vel;
-			force *= drag;
-			force += accel * age;
-			pos += force;
+			vec3 pos = vec3(a_Position);
+			pos += vel * age;
+			pos += acc * age * age * 0.5;
 
 			// Wiggly wiggly wiggle!
 			#ifdef SHOULD_WIGGLE_PARTICLES
@@ -2476,14 +2459,13 @@
 
 			// position
 
-			const vA = _vec3_1.fromArray(this._originAcceleration);
+			const velocity = _vec3_2.fromArray(this._originVelocity);
 			if (emitter.SHOULD_DRAG_PARTICLES) {
 				const fDrag = 1.0 - positionInTime * 0.5 * this._originAcceleration[3];
-				vA.multiplyScalar(fDrag);
+				velocity.multiplyScalar(fDrag);
 			}
-			_position.fromArray(this._originVelocity).multiplyScalar(age);
-			const halfAt2 = vA.multiplyScalar(age * age * 0.5);
-			_position.add(_vec3_2.fromArray(this._originPosition)).add(halfAt2);
+			const acceleration = _vec3_1.fromArray(this._originAcceleration);
+			_position.fromArray(this._originPosition).add(velocity.multiplyScalar(age)).add(acceleration.multiplyScalar(age * age * 0.5));
 			if (emitter.SHOULD_WIGGLE_PARTICLES) {
 				const fWiggle = positionInTime * this._originParams[3] * Math.PI;
 				const fWiggleSin = Math.sin(fWiggle);

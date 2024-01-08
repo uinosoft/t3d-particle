@@ -159,20 +159,6 @@ export const ShaderChunks = {
 		}
 	`,
 
-	forceFetchingFunctions: `
-		vec4 getPosition(in float age) {
-			return u_View * u_Model * vec4(a_Position, 1.0);
-		}
-
-		vec3 getVelocity(in float age) {
-			return velocity * age;
-		}
-
-		vec3 getAcceleration(in float age) {
-			return acceleration.xyz * age;
-		}
-	`,
-
 	// Huge thanks to:
 	// - http://www.neilmendoza.com/glsl-rotation-about-an-arbitrary-axis/
 	rotationFunctions: `

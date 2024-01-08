@@ -135,7 +135,7 @@ const particleEmitter = new MeshParticleEmitter({/*...Emitter...*/});
 | <b>distribution</b>(<i>Number or Function</i>) | A specific distribution to use when calculating a particle's acceleration. Overrides the `type` option. | Default is `type` option. |
 | <b>randomise</b>(<i>Boolean</i>) | When a particle is re-spawned, whether it's acceleration should be re-randomised or not. Can incur a performance hit. | Default is false |  
 
-<b>drag</b>(<i>Object</i>):&emsp;An object describing this particle drag. Drag is applied to both velocity and acceleration values.  
+<b>drag</b>(<i>Object</i>):&emsp;An object describing this particle drag. Drag is applied only to velocity values.  
 |  |  |  |
 | --- | --- | :--: |
 | <b>value</b>(<i>Number</i>) | A number between 0 and 1 describing the amount of drag to apply to all particles. | Default is 0 |

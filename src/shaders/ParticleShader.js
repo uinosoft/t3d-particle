@@ -40,7 +40,6 @@ export const ParticleShader = {
 		${ShaderChunks.floatOverLifetime}
 		${ShaderChunks.colorOverLifetime}
 		${ShaderChunks.paramFetchingFunctions}
-		${ShaderChunks.forceFetchingFunctions}
 		${ShaderChunks.rotationFunctions}
 
 		void main() {
@@ -64,20 +63,17 @@ export const ParticleShader = {
 			// Forces
 			//
 
-			// Get forces & position
-			vec3 vel = getVelocity(age);
-			vec3 accel = getAcceleration(age);
-			vec3 force = vec3(0.0);
-			vec3 pos = vec3(a_Position);
+			// Get forces
+			vec3 vel = velocity;
+			vec3 acc= acceleration.xyz;
 
 			// Calculate the required drag to apply to the forces.
 			float drag = 1.0 - (positionInTime * 0.5) * acceleration.w;
+			vel *= drag;
 
-			// Integrate forces...
-			force += vel;
-			force *= drag;
-			force += accel * age;
-			pos += force;
+			vec3 pos = vec3(a_Position);
+			pos += vel * age;
+			pos += acc * age * age * 0.5;
 
 			// Wiggly wiggly wiggle!
 			#ifdef SHOULD_WIGGLE_PARTICLES

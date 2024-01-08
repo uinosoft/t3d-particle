@@ -81,16 +81,19 @@ export class MeshParticle {
 
 		// position
 
-		const vA = _vec3_1.fromArray(this._originAcceleration);
+		const velocity = _vec3_2.fromArray(this._originVelocity);
 
 		if (emitter.SHOULD_DRAG_PARTICLES) {
 			const fDrag = 1.0 - (positionInTime * 0.5) * this._originAcceleration[3];
-			vA.multiplyScalar(fDrag);
+			velocity.multiplyScalar(fDrag);
 		}
 
-		_position.fromArray(this._originVelocity).multiplyScalar(age);
-		const halfAt2 = vA.multiplyScalar(age * age * 0.5);
-		_position.add(_vec3_2.fromArray(this._originPosition)).add(halfAt2);
+		const acceleration = _vec3_1.fromArray(this._originAcceleration);
+
+		_position
+			.fromArray(this._originPosition)
+			.add(velocity.multiplyScalar(age))
+			.add(acceleration.multiplyScalar(age * age * 0.5));
 
 		if (emitter.SHOULD_WIGGLE_PARTICLES) {
 			const fWiggle = positionInTime * this._originParams[3] * Math.PI;
