@@ -1890,7 +1890,16 @@
 			this.material = new t3d__namespace.ShaderMaterial(shader);
 			this.uniforms = this.material.uniforms;
 			this.defines = this.material.defines;
-			this._setMaterial(options);
+			this.setTextureValue(options.texture.value);
+
+			// Set some common material properties based on the options
+			// Users can also set these directly on the material manually
+			this.material.blending = Utils.ensureTypedArg(options.blending, types.STRING, t3d__namespace.BLEND_TYPE.ADD);
+			this.material.transparent = Utils.ensureTypedArg(options.transparent, types.BOOLEAN, true);
+			this.material.alphaTest = Utils.ensureTypedArg(options.alphaTest, types.NUMBER, 0.0);
+			this.material.depthWrite = Utils.ensureTypedArg(options.depthWrite, types.BOOLEAN, false);
+			this.material.depthTest = Utils.ensureTypedArg(options.depthTest, types.BOOLEAN, true);
+			this.material.fog = Utils.ensureTypedArg(options.fog, types.BOOLEAN, true);
 
 			// Where emitter's go to curl up in a warm blanket and live
 			// out their days.
@@ -1900,17 +1909,13 @@
 		removeEmitter(emitter) {}
 		tick(dt) {}
 		dispose() {}
-		_setMaterial(options) {
-			const types = Utils.types;
-			const material = this.material;
-			const uniforms = this.uniforms;
-			uniforms.tex = Utils.ensureInstanceOf(options.texture.value, t3d__namespace.Texture2D, defaultTexture);
-			material.blending = Utils.ensureTypedArg(options.blending, types.STRING, t3d__namespace.BLEND_TYPE.ADD);
-			material.transparent = Utils.ensureTypedArg(options.transparent, types.BOOLEAN, true);
-			material.alphaTest = Utils.ensureTypedArg(options.alphaTest, types.NUMBER, 0.0);
-			material.depthWrite = Utils.ensureTypedArg(options.depthWrite, types.BOOLEAN, false);
-			material.depthTest = Utils.ensureTypedArg(options.depthTest, types.BOOLEAN, true);
-			material.fog = Utils.ensureTypedArg(options.fog, types.BOOLEAN, true);
+
+		/**
+		 * Sets the texture that should be used by this group.
+		 * @param {Texture2D|null} value The texture to use, if set to null, a default 2x2 white texture will be used.
+		 */
+		setTextureValue(value) {
+			this.uniforms.tex = Utils.ensureInstanceOf(value, t3d__namespace.Texture2D, defaultTexture);
 		}
 	}
 	const defaultTexture = new t3d__namespace.Texture2D();

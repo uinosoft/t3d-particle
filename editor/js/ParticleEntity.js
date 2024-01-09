@@ -1,4 +1,4 @@
-import { Object3D, PlaneGeometry, BoxGeometry, SphereGeometry, Matrix4, Color3, Vector3, Vector2, Texture2D, TEXTURE_FILTER } from 't3d';
+import { Object3D, PlaneGeometry, BoxGeometry, SphereGeometry, Matrix4, Color3, Vector3, Vector2 } from 't3d';
 import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
 import { ParticleGroup, MeshParticleGroup, ParticleEmitter, MeshParticleEmitter } from 't3d-particle';
@@ -168,26 +168,11 @@ const _planeRotationMatrix = new Matrix4().set(
 	0, 0, 0, 1
 );
 
-const emptyTexture = new Texture2D();
-emptyTexture.image = {
-	data: new Uint8Array([
-		255, 255, 255, 255,
-		255, 255, 255, 255,
-		255, 255, 255, 255,
-		255, 255, 255, 255
-	]),
-	width: 2,
-	height: 2
-};
-emptyTexture.magFilter = TEXTURE_FILTER.NEAREST;
-emptyTexture.minFilter = TEXTURE_FILTER.NEAREST;
-emptyTexture.generateMipmaps = false;
-
 class TextureCache {
 
 	constructor() {
 		this._builtInTextures = {
-			'empty': { uri: null, value: emptyTexture },
+			'empty': { uri: null, value: null },
 			'smoke1': { uri: '../examples/resources/img/smokeparticle.png', value: null },
 			'point': { uri: 'https://static.3dmomoda.com/textures/181009160bscjqf1tmbysoz2uvtuvilz.jpg', value: null },
 			'fire': { uri: 'https://static.3dmomoda.com/textures/18100916vuhgsdtljucvrysf9wftwufb.jpg', value: null },
@@ -209,6 +194,20 @@ class TextureCache {
 		}
 	}
 
+	getBuiltInTextureNames() {
+		return Object.keys(this._builtInTextures);
+	}
+
+	getNameByUri(uri) {
+		for (const name in this._builtInTextures) {
+			if (this._builtInTextures[name].uri === uri) {
+				return name;
+			}
+		}
+
+		return 'empty';
+	}
+
 	getBuiltInTexture(name) {
 		const info = this._builtInTextures[name];
 
@@ -217,10 +216,6 @@ class TextureCache {
 		}
 
 		return info;
-	}
-
-	getBuiltInTextureNames() {
-		return Object.keys(this._builtInTextures);
 	}
 
 }
@@ -241,7 +236,7 @@ function _convertGroupData(source, geometries, textures) {
 	}
 
 	data.texture = {
-		value: textures.get(source.textureUri),
+		value: textures.getBuiltInTexture(textures.getNameByUri(source.textureUri)).value,
 		frames: new Vector2().fromArray(source.textureFrame),
 		loop: source.textureFrameLoop
 	};

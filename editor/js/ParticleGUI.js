@@ -117,10 +117,9 @@ export class ParticleGUI {
 
 		const textureCache = entity._textureCache;
 		const textureNames = textureCache.getBuiltInTextureNames();
-		groupFolder.add({ value: textureNames[0] }, 'value', textureNames).name(lang('texture')).onChange(value => {
+		groupFolder.add({ value: textureCache.getNameByUri(groupData.textureUri) }, 'value', textureNames).name(lang('texture')).onChange(value => {
 			const textureInfo = textureCache.getBuiltInTexture(value);
-			groupEntity.material.uniforms.tex = textureInfo.value;
-
+			groupEntity.setTextureValue(textureInfo.value);
 			groupData.textureUri = textureInfo.uri;
 		});
 

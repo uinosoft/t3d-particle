@@ -10,7 +10,7 @@ Editor:
 
 Core:
 
-- [ ] Support texture changing
+- [x] Support texture changing
 - [ ] Static data import bug
 - [x] Add AbstractParticleGroup.material
 - [x] Fix alpha test
