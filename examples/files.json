@@ -18,6 +18,9 @@
 	"mesh": [
 		"mesh_basic"
 	],
+	"loader": [
+		"loader_basic"
+	],
 	"benchmark": [
 		"benchmark_point",
 		"benchmark_mesh"

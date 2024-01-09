@@ -4,14 +4,13 @@
 
 Editor:
 
-- [ ] Add a example to parse the particle file
+- [x] Add a example to parse the particle file
 - [ ] Add a way to add textures to the particle editor
 - [ ] Add some built-in particle sample
 
 Core:
 
 - [x] Support texture changing
-- [ ] Static data import bug
 - [x] Add AbstractParticleGroup.material
 - [x] Fix alpha test
 - [ ] Fix attribute update cache

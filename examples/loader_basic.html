@@ -1,0 +1,127 @@
+<html>
+<head>
+    <title>mesh particle loader</title>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="./main.css">
+</head>
+<body>
+    <p class="numParticles"></p>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "./libs/t3d/build/t3d.module.js",
+                "t3d/addons/": "./libs/t3d/examples/jsm/",
+                "t3d-particle": "../build/t3d.particle.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from 't3d/addons/Clock.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+
+		import {
+			ParticleLoader
+		} from 't3d-particle';
+		
+		import Stats from './libs/stats.module.js';
+
+		// variables used in init()
+		let width, height, scene, camera, renderer, backRenderTarget, clock, controller, stats;
+
+		let particleGroups;
+
+		// Setup the scene
+		function init() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			document.body.appendChild(canvas);
+
+			const gl = canvas.getContext('webgl2', {
+				antialias: true,
+				alpha: false,
+				stencil: true
+			});
+
+			scene = new t3d.Scene();
+			camera = new t3d.Camera();
+			camera.position.set(50, 0.1, 50);
+			camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 10000);
+			scene.add(camera);
+
+			renderer = new t3d.WebGLRenderer(gl);
+			renderer.setClearColor(0, 0, 0, 1);
+			backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+			stats = new Stats();
+			clock = new Clock();
+
+			controller = new OrbitControls(camera, canvas);
+
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.top = '0';
+			document.body.appendChild(stats.domElement);
+		}
+
+		function loadParticles() {
+			const loader = new ParticleLoader();
+			loader.setTextureLoader(new Texture2DLoader());
+			loader.load('./resources/particles/particle1.json', result => {
+				console.log(result);
+		
+				scene.add(result.root);
+				particleGroups = result.groups;
+			});
+		}
+
+		function animate() {
+			requestAnimationFrame(animate);
+
+			controller.update();
+
+			if (particleGroups) {
+				particleGroups.forEach(group => {
+					group.tick(clock.getDelta(), camera);
+				});
+			}
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, false);
+			renderer.renderScene(scene, camera);
+
+			stats.update();
+		}
+
+		init();
+		loadParticles();
+
+		setTimeout(animate, 0);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 10000);
+
+			backRenderTarget.resize(width, height);
+		}
+
+		window.addEventListener('resize', onWindowResize, false);
+    </script>
+</body>
+</html>
