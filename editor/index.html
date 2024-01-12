@@ -48,7 +48,8 @@
         const scene = new t3d.Scene();
         // scene.fog = new t3d.Fog(0x000000, 1, 100);
 
-        scene.add(new Grid());
+        const grid = new Grid();
+        scene.add(grid);
 
         const camera = new t3d.Camera();
         camera.setPerspective(75 / 180 * Math.PI, width / height, 0.1, 10000);
@@ -68,6 +69,7 @@
         	requestAnimationFrame(animate);
 
         	controller.update();
+        	grid.update(0.016, camera);
 
         	particleEntity.update(camera);
 
