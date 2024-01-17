@@ -18,7 +18,10 @@
                 "t3d": "../examples/libs/t3d/build/t3d.module.js",
                 "t3d/addons/": "../examples/libs/t3d/examples/jsm/",
                 "t3d-particle": "../build/t3d.particle.module.js",
-                "lil-gui": "../examples/libs/lil-gui.esm.min.js"
+                "lil-gui": "../examples/libs/lil-gui.esm.min.js",
+                "@playcanvas/pcui": "../node_modules/@playcanvas/pcui/dist/module/src/index.mjs",
+                "@playcanvas/observer": "../node_modules/@playcanvas/observer/dist/index.mjs",
+                "@playcanvas/pcui/styles": "../node_modules/@playcanvas/pcui/styles/dist/index.mjs"
             }
         }
     </script>
@@ -30,7 +33,7 @@
 
         import { ParticleData } from './js/ParticleData.js';
         import { ParticleEntity } from './js/ParticleEntity.js';
-        import { ParticleGUI } from './js/ParticleGUI.js';
+        import { ParticleGUI } from './js/_ParticleGUI.js';
 
         import { Grid } from './js/Grid.js';
 
@@ -40,6 +43,7 @@
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
+        canvas.classList.add('main-canvas');
         document.body.appendChild(canvas);
 
         const forwardRenderer = new ForwardRenderer(canvas);
