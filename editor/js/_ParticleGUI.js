@@ -2,7 +2,7 @@ import { Color3, Vector3 } from 't3d';
 import { GUI } from 'lil-gui';
 import { importFileJSON, exportFileJSON } from './Utils.js';
 import { lang } from './lang.js';
-import { LabelGroup, TextInput, Button, Panel, VectorInput, BooleanInput, ColorPicker, GradientPicker, NumericInput, SelectInput, SliderInput, ArrayInput } from '@playcanvas/pcui';
+import { LabelGroup, TextInput, Button, Panel, VectorInput, BooleanInput, ColorPicker, GradientPicker, NumericInput, SelectInput, SliderInput, ArrayInput, TreeView, TreeViewItem, Menu } from '@playcanvas/pcui';
 import '@playcanvas/pcui/styles';
 
 export class ParticleGUI {
@@ -11,47 +11,229 @@ export class ParticleGUI {
 		this.data = data;
 		this.entity = entity;
 
+		this.root = new GUI({ title: 'Particle Editor' });
+
+		this._groupUIs = new WeakMap(); // groupEntity -> groupUI
+		this._emitterUIs = new WeakMap(); // emitterEntity -> emitterUI
+
+		this._createRootUI();
+
+		// ///////////////////// PCUI Tests
+
 		const panel = new Panel({
 			headerText: 'Particle Editor',
 			collapsible: true,
 			width: 300,
-			scrollable: true,
 			collapseHorizontally: true,
-			class: 'root-panel'
+			class: 'root-panel',
+			flex: true
 		});
 		document.body.appendChild(panel.dom);
 
-		panel.append(
+		panel.dom.addEventListener('contextmenu', event => {
+			event.preventDefault();
+		});
+
+		// HIERARCHY
+
+		const hierarchyPanel = new Panel({
+			headerText: 'HIERARCHY',
+			collapsible: false,
+			height: 150,
+			flexGrow: 0,
+			flexShrink: 0,
+			resizable: 'bottom',
+			resizeMin: 100,
+			resizeMax: 300
+		});
+		panel.append(hierarchyPanel);
+
+		const treeView = new TreeView({
+			allowDrag: false,
+			allowReordering: true,
+			scrollable: true,
+			height: '100%',
+			onContextMenu: (event, item) => {
+				event.preventDefault();
+
+				switch (item.__type) {
+					case 0:
+						menu1.hidden = false;
+						menu1.position(event.clientX, event.clientY);
+						break;
+					case 1:
+						menu2.hidden = false;
+						menu2.position(event.clientX, event.clientY);
+						break;
+					case 2:
+						menu3.hidden = false;
+						menu3.position(event.clientX, event.clientY);
+						break;
+				}
+			}
+		});
+		hierarchyPanel.append(treeView);
+		const item0 = new TreeViewItem({ icon: 'E118', text: 'Root' });
+		const item1 = new TreeViewItem({ icon: 'E187', text: 'Particle Group' });
+		const item2 = new TreeViewItem({ icon: 'E187', text: 'Particle Group' });
+		const item3 = new TreeViewItem({ icon: 'E199', text: 'Particle Emitter' });
+		const item4 = new TreeViewItem({ icon: 'E199', text: 'Particle Emitter' });
+
+		item0.__type = 0;
+		item1.__type = 1;
+		item2.__type = 1;
+		item3.__type = 2;
+		item4.__type = 2;
+
+		item0.append(item1);
+		item0.append(item2);
+		item1.append(item3);
+		item2.append(item4);
+		treeView.append(item0);
+
+
+		treeView.on('select', item => {
+			switch (item.__type) {
+				case 0:
+					settingsPanel.hidden = false;
+					groupPanel.hidden = true;
+					emitterPanel.hidden = true;
+					break;
+				case 1:
+					settingsPanel.hidden = true;
+					groupPanel.hidden = false;
+					emitterPanel.hidden = true;
+					break;
+				case 2:
+					settingsPanel.hidden = true;
+					groupPanel.hidden = true;
+					emitterPanel.hidden = false;
+					break;
+			}
+		});
+
+		// Root menu
+		const menu1 = new Menu({
+			hidden: true,
+			items: [
+				{
+					text: 'add particle group',
+					onSelect: (e, item) => {
+						console.log(e, item);
+					}
+				}
+			]
+		});
+
+		// Group menu
+		const menu2 = new Menu({
+			hidden: true,
+			items: [
+				{
+					text: 'add particle emitter',
+					onSelect: (e, item) => {
+						console.log(e, item);
+					}
+				},
+				{
+					text: 'delete',
+					onSelect: e => {
+						console.log(e);
+					}
+				}
+			]
+		});
+
+		// Emitter menu
+		const menu3 = new Menu({
+			hidden: true,
+			items: [
+				{
+					text: 'delete',
+					onSelect: e => {
+						console.log(e);
+					}
+				}
+			]
+		});
+
+		hierarchyPanel.append(menu1);
+		hierarchyPanel.append(menu2);
+		hierarchyPanel.append(menu3);
+
+		// INSPECTORS
+
+		// Settings Inspector
+
+		const settingsPanel = new Panel({
+			headerText: 'SETTINGS',
+			collapsible: false,
+			scrollable: true
+		});
+		panel.append(settingsPanel);
+
+		settingsPanel.append(
+			new LabelGroup({
+				text: 'Button',
+				field: new Button({ text: 'import' })
+			})
+		);
+
+		settingsPanel.append(
+			new LabelGroup({
+				text: 'Button',
+				field: new Button({ text: 'export' })
+			})
+		);
+
+		// ParticleGroup Inspector
+
+		const groupPanel = new Panel({
+			headerText: 'PARTICLE GROUP',
+			collapsible: false,
+			scrollable: true,
+			hidden: true
+		});
+		panel.append(groupPanel);
+
+		groupPanel.append(
 			new LabelGroup({
 				text: 'TextInput',
 				field: new TextInput({ placeholder: 'Enter text' })
 			})
 		);
 
-		panel.append(
+		groupPanel.append(
 			new LabelGroup({
 				text: 'Button',
 				field: new Button({ text: 'Click Me' })
 			})
 		);
 
-		panel.append(
+		// ParticleEmitter Inspector
+
+		const emitterPanel = new Panel({
+			headerText: 'PARTICLE EMITTER',
+			collapsible: false,
+			scrollable: true,
+			hidden: true
+		});
+		panel.append(emitterPanel);
+
+		emitterPanel.append(
 			new LabelGroup({
 				text: 'VectorInput',
 				field: new VectorInput({ placeholder: ['X', 'Y', 'Z'], value: [1, 2, 3] })
 			})
 		);
 
-		panel.append(
+		emitterPanel.append(
 			new LabelGroup({
 				enabled: false,
 				text: 'BooleanInput',
 				field: new BooleanInput({ value: true })
 			})
 		);
-
-		const panel2 = new Panel({ headerText: 'Particle Group', collapsible: true });
-		panel.append(panel2);
 
 		const array = [
 			[1, 2, 3],
@@ -60,30 +242,26 @@ export class ParticleGUI {
 		const elementArgs = {
 			placeholder: ['X', 'Y', 'Z']
 		};
-		panel2.append(
+		emitterPanel.append(
 			new LabelGroup({
 				text: 'ArrayInput',
 				field: new ArrayInput({ type: 'vec3', value: array, elementArgs })
 			})
 		);
 
-		panel2.append(
+		emitterPanel.append(
 			new LabelGroup({
 				text: 'Button',
 				field: new Button({ icon: 'E124', text: 'delete' })
 			})
 		);
 
-		const panel3 = new Panel({ headerText: 'Particle Emitter', collapsible: true });
-		panel.append(panel3);
-
-		panel3.append(
+		emitterPanel.append(
 			new LabelGroup({
 				text: 'ColorPicker',
 				field: new ColorPicker({ value: [1, 1, 0] })
 			})
 		);
-
 
 		const keys = [
 			[
@@ -99,42 +277,35 @@ export class ParticleGUI {
 				1, 1
 			]
 		];
-		panel3.append(
+		emitterPanel.append(
 			new LabelGroup({
 				text: 'GradientPicker',
 				field: new GradientPicker({ value: { betweenCurves: false, keys, type: 4 } })
 			})
 		);
 
-		panel3.append(
+		emitterPanel.append(
 			new LabelGroup({
 				text: 'NumberInput',
 				field: new NumericInput({ value: 0, min: 0, max: 1, step: 0.1 })
 			})
 		);
 
-		panel3.append(
+		emitterPanel.append(
 			new LabelGroup({
 				text: 'SelectInput',
 				field: new SelectInput({ value: 1, options: [{ v: 1, t: 'A' }, { v: 2, t: 'B' }] })
 			})
 		);
 
-		panel3.append(
+		emitterPanel.append(
 			new LabelGroup({
 				text: 'SliderInput',
 				field: new SliderInput({ value: 0, min: 0, max: 1, step: 0.1 })
 			})
 		);
 
-
-
-		this.root = new GUI({ title: 'Particle Editor' });
-
-		this._groupUIs = new WeakMap(); // groupEntity -> groupUI
-		this._emitterUIs = new WeakMap(); // emitterEntity -> emitterUI
-
-		this._createRootUI();
+		// //////////////////////////////////
 	}
 
 	_createRootUI() {
