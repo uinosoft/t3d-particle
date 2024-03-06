@@ -1,0 +1,188 @@
+{
+    "version": "0.0.2",
+    "groups": [
+        {
+            "mode": 0,
+            "perspective": true,
+            "meshUri": "BuildIn/Box",
+            "textureUri": "../examples/resources/img/fog01.png",
+            "textureFrame": [
+                1,
+                1
+            ],
+            "textureFrameLoop": 1,
+            "colorize": true,
+            "transparent": true,
+            "blending": "normal",
+            "alphaTest": 0,
+            "depthWrite": false,
+            "depthTest": true,
+            "side": "front",
+            "fog": true,
+            "emitters": [
+                {
+                    "particleCount": 2000,
+                    "isStatic": false,
+                    "direction": 1,
+                    "activeMultiplier": 1,
+                    "meshAlignment": 0,
+                    "maxAge": {
+                        "value": 2,
+                        "spread": 0
+                    },
+                    "position": {
+                        "value": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "spread": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "distribution": 1,
+                        "randomise": false,
+                        "spreadClamp": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "radius": 2,
+                        "radiusScale": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "velocity": {
+                        "value": [
+                            -20,
+                            0,
+                            0
+                        ],
+                        "spread": [
+                            5,
+                            0,
+                            0
+                        ],
+                        "distribution": 1,
+                        "randomise": false
+                    },
+                    "acceleration": {
+                        "value": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "spread": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "distribution": 1,
+                        "randomise": false
+                    },
+                    "drag": {
+                        "value": 0,
+                        "spread": 0,
+                        "randomise": false
+                    },
+                    "wiggle": {
+                        "value": 0,
+                        "spread": 0
+                    },
+                    "rotation": {
+                        "axis": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "axisSpread": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "angle": 0,
+                        "angleSpread": 0,
+                        "isStatic": false,
+                        "center": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "randomise": false
+                    },
+                    "color": {
+                        "elements": [
+                            {
+                                "value": [
+                                    0.12156862745098039,
+                                    0.7019607843137254,
+                                    0.28627450980392155
+                                ],
+                                "spread": [
+                                    0,
+                                    0,
+                                    0
+                                ]
+                            },
+                            {
+                                "value": [
+                                    0.9803921568627451,
+                                    0.9686274509803922,
+                                    0.796078431372549
+                                ],
+                                "spread": [
+                                    0,
+                                    0,
+                                    0
+                                ]
+                            }
+                        ],
+                        "randomise": false
+                    },
+                    "opacity": {
+                        "elements": [
+                            {
+                                "value": 1,
+                                "spread": 0
+                            },
+                            {
+                                "value": 0,
+                                "spread": 0
+                            }
+                        ],
+                        "randomise": false
+                    },
+                    "size": {
+                        "elements": [
+                            {
+                                "value": 4,
+                                "spread": 2
+                            },
+                            {
+                                "value": 10,
+                                "spread": 5
+                            }
+                        ],
+                        "randomise": false
+                    },
+                    "angle": {
+                        "elements": [
+                            {
+                                "value": 0,
+                                "spread": 0
+                            },
+                            {
+                                "value": 3.3284,
+                                "spread": 0
+                            }
+                        ],
+                        "randomise": false
+                    }
+                }
+            ]
+        }
+    ]
+}

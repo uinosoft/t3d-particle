@@ -2662,7 +2662,7 @@
 		_onRemove() {
 			this.particlesPerSecond = 0;
 			this._spawnDecimal = 0.0;
-			this._group = null;
+			this.group = null;
 		}
 		reset(force) {
 			this.alive = false;

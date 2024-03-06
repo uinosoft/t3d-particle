@@ -8,7 +8,8 @@
 		"point_distribution_custom",
 		"point_explosion",
 		"point_fog",
-		"point_mouse_follow",
+		"point_follow_mouse",
+		"point_follow_transform",
 		"point_multiple_emitters",
 		"point_orbit",
 		"point_pool",
@@ -19,7 +20,8 @@
 		"mesh_basic"
 	],
 	"loader": [
-		"loader_basic"
+		"loader_basic",
+		"loader_samples"
 	],
 	"benchmark": [
 		"benchmark_point",

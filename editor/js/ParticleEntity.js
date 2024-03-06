@@ -128,7 +128,16 @@ class TextureCache {
 			'smoke2': { uri: 'https://static.3dmomoda.com/textures/18100916fmqvpceomi9sxmao1pvicn2n.png', value: null },
 			'star': { uri: 'http://static.3dmomoda.com/textures/18092617nyspq5moaka1i2fhvs1hh66s.png', value: null },
 			'cloud': { uri: '../examples/resources/img/cloud.png', value: null },
-			'flame': { uri: '../examples/resources/img/sprite-flame2.jpg', value: null }
+			'flame': { uri: '../examples/resources/img/sprite-flame2.jpg', value: null },
+			'fire01': { uri: '../examples/resources/img/fire01.png', value: null },
+			'fire02': { uri: '../examples/resources/img/fire02.png', value: null },
+			'point01': { uri: '../examples/resources/img/point01.png', value: null },
+			'point02': { uri: '../examples/resources/img/point02.png', value: null },
+			'fog01': { uri: '../examples/resources/img/fog01.png', value: null },
+			'fog02': { uri: '../examples/resources/img/fog02.png', value: null },
+			'water01': { uri: '../examples/resources/img/water01.png', value: null },
+			'water02': { uri: '../examples/resources/img/water02.png', value: null },
+			'bullet': { uri: '../examples/resources/img/bullet.png', value: null }
 		};
 
 		this._textureLoader = new Texture2DLoader();

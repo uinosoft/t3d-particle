@@ -1,0 +1,391 @@
+{
+    "version": "0.0.2",
+    "groups": [
+        {
+            "mode": 0,
+            "perspective": true,
+            "meshUri": "BuildIn/Box",
+            "textureUri": "../examples/resources/img/fog02.png",
+            "textureFrame": [
+                1,
+                1
+            ],
+            "textureFrameLoop": 1,
+            "colorize": true,
+            "transparent": true,
+            "blending": "normal",
+            "alphaTest": 0,
+            "depthWrite": false,
+            "depthTest": true,
+            "side": "front",
+            "fog": true,
+            "emitters": [
+                {
+                    "particleCount": 150,
+                    "isStatic": false,
+                    "direction": 1,
+                    "activeMultiplier": 1,
+                    "meshAlignment": 0,
+                    "maxAge": {
+                        "value": 20,
+                        "spread": 0
+                    },
+                    "position": {
+                        "value": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "spread": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "distribution": 1,
+                        "randomise": false,
+                        "spreadClamp": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "radius": 2,
+                        "radiusScale": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "velocity": {
+                        "value": [
+                            0,
+                            4,
+                            0
+                        ],
+                        "spread": [
+                            1,
+                            2,
+                            1
+                        ],
+                        "distribution": 1,
+                        "randomise": true
+                    },
+                    "acceleration": {
+                        "value": [
+                            0,
+                            -0.1,
+                            0
+                        ],
+                        "spread": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "distribution": 1,
+                        "randomise": true
+                    },
+                    "drag": {
+                        "value": 0,
+                        "spread": 0,
+                        "randomise": false
+                    },
+                    "wiggle": {
+                        "value": 0,
+                        "spread": 0
+                    },
+                    "rotation": {
+                        "axis": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "axisSpread": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "angle": 0,
+                        "angleSpread": 0,
+                        "isStatic": false,
+                        "center": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "randomise": false
+                    },
+                    "color": {
+                        "elements": [
+                            {
+                                "value": [
+                                    0.3843137254901961,
+                                    0.3843137254901961,
+                                    0.3843137254901961
+                                ],
+                                "spread": [
+                                    0,
+                                    0,
+                                    0
+                                ]
+                            },
+                            {
+                                "value": [
+                                    0.4117647058823529,
+                                    0.4117647058823529,
+                                    0.4117647058823529
+                                ],
+                                "spread": [
+                                    0,
+                                    0,
+                                    0
+                                ]
+                            },
+                            {
+                                "value": [
+                                    0,
+                                    0,
+                                    0
+                                ],
+                                "spread": [
+                                    0,
+                                    0,
+                                    0
+                                ]
+                            }
+                        ],
+                        "randomise": false
+                    },
+                    "opacity": {
+                        "elements": [
+                            {
+                                "value": 0.3,
+                                "spread": 0
+                            },
+                            {
+                                "value": 0,
+                                "spread": 0
+                            }
+                        ],
+                        "randomise": false
+                    },
+                    "size": {
+                        "elements": [
+                            {
+                                "value": 0.5,
+                                "spread": 0
+                            },
+                            {
+                                "value": 40,
+                                "spread": 0
+                            }
+                        ],
+                        "randomise": false
+                    },
+                    "angle": {
+                        "elements": [
+                            {
+                                "value": 0,
+                                "spread": 0
+                            },
+                            {
+                                "value": 3.91872,
+                                "spread": 0
+                            }
+                        ],
+                        "randomise": false
+                    }
+                }
+            ]
+        },
+        {
+            "mode": 0,
+            "perspective": true,
+            "meshUri": "BuildIn/Box",
+            "textureUri": "../examples/resources/img/fog01.png",
+            "textureFrame": [
+                1,
+                1
+            ],
+            "textureFrameLoop": 1,
+            "colorize": true,
+            "transparent": true,
+            "blending": "normal",
+            "alphaTest": 0,
+            "depthWrite": false,
+            "depthTest": true,
+            "side": "front",
+            "fog": true,
+            "emitters": [
+                {
+                    "particleCount": 300,
+                    "isStatic": false,
+                    "direction": 1,
+                    "activeMultiplier": 1,
+                    "meshAlignment": 0,
+                    "maxAge": {
+                        "value": 10,
+                        "spread": 2
+                    },
+                    "position": {
+                        "value": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "spread": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "distribution": 1,
+                        "randomise": false,
+                        "spreadClamp": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "radius": 2,
+                        "radiusScale": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "velocity": {
+                        "value": [
+                            0,
+                            3,
+                            0
+                        ],
+                        "spread": [
+                            1.2,
+                            1.5,
+                            1.2
+                        ],
+                        "distribution": 1,
+                        "randomise": false
+                    },
+                    "acceleration": {
+                        "value": [
+                            0,
+                            -0.1,
+                            0
+                        ],
+                        "spread": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "distribution": 1,
+                        "randomise": false
+                    },
+                    "drag": {
+                        "value": 0,
+                        "spread": 0,
+                        "randomise": false
+                    },
+                    "wiggle": {
+                        "value": 0,
+                        "spread": 0
+                    },
+                    "rotation": {
+                        "axis": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "axisSpread": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "angle": 0,
+                        "angleSpread": 0,
+                        "isStatic": false,
+                        "center": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "randomise": false
+                    },
+                    "color": {
+                        "elements": [
+                            {
+                                "value": [
+                                    0.9019607843137255,
+                                    0.9019607843137255,
+                                    0.9019607843137255
+                                ],
+                                "spread": [
+                                    0,
+                                    0,
+                                    0
+                                ]
+                            },
+                            {
+                                "value": [
+                                    0.788235294117647,
+                                    0.788235294117647,
+                                    0.788235294117647
+                                ],
+                                "spread": [
+                                    0,
+                                    0,
+                                    0
+                                ]
+                            },
+                            {
+                                "value": [
+                                    0.45098039215686275,
+                                    0.45098039215686275,
+                                    0.45098039215686275
+                                ],
+                                "spread": [
+                                    0,
+                                    0,
+                                    0
+                                ]
+                            }
+                        ],
+                        "randomise": false
+                    },
+                    "opacity": {
+                        "elements": [
+                            {
+                                "value": 1,
+                                "spread": 0
+                            },
+                            {
+                                "value": 0,
+                                "spread": 0
+                            }
+                        ],
+                        "randomise": false
+                    },
+                    "size": {
+                        "elements": [
+                            {
+                                "value": 4,
+                                "spread": 0
+                            },
+                            {
+                                "value": 20,
+                                "spread": 0
+                            }
+                        ],
+                        "randomise": false
+                    },
+                    "angle": {
+                        "elements": [
+                            {
+                                "value": 0,
+                                "spread": 0
+                            }
+                        ],
+                        "randomise": false
+                    }
+                }
+            ]
+        }
+    ]
+}
