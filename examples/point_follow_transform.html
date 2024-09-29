@@ -21,7 +21,7 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { Clock } from 't3d/addons/Clock.js';
+		import { Timer } from 't3d/addons/misc/Timer.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 
@@ -30,7 +30,7 @@
 		import Stats from './libs/stats.module.js';
 
 		// variables used in init()
-		let width, height, scene, camera, renderer, backRenderTarget, clock, controller, stats;
+		let width, height, scene, camera, renderer, backRenderTarget, timer, controller, stats;
 
 		let particleGroups, box;
 
@@ -68,7 +68,7 @@
 			scene.add(box);
 
 			stats = new Stats();
-			clock = new Clock();
+			timer = new Timer();
 
 			controller = new OrbitControls(camera, canvas);
 
@@ -86,17 +86,19 @@
 			});
 		}
 
-		function animate() {
+		function animate(timestamp) {
 			requestAnimationFrame(animate);
 
 			controller.update();
 
-			const timer = Date.now() * 0.00025;
-			box.position.x = Math.sin(timer * 5) * 40;
-			box.position.y = Math.cos(timer * 5) * 40;
-			box.position.z = Math.cos(timer * 5) * 40;
+			timer.update(timestamp);
 
-			const deltaTime = clock.getDelta();
+			const angle = timer.getElapsed() * 1.25;
+			box.position.x = Math.sin(angle) * 40;
+			box.position.y = Math.cos(angle) * 40;
+			box.position.z = Math.cos(angle) * 40;
+
+			const deltaTime = timer.getDelta();
 
 			if (particleGroups) {
 				particleGroups.forEach(group => {
@@ -122,7 +124,7 @@
 		init();
 		loadParticles();
 
-		setTimeout(animate, 0);
+		requestAnimationFrame(animate);
 
 		function onWindowResize() {
 			width = window.innerWidth || 2;
