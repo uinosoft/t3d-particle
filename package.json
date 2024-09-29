@@ -1,6 +1,6 @@
 {
   "name": "t3d-particle",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Particle System for t3d.js",
   "type": "module",
   "main": "./build/t3d.particle.js",
