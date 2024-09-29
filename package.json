@@ -34,7 +34,7 @@
     "@rollup/plugin-babel": "^6.0.3",
     "@rollup/plugin-terser": "^0.4.0",
     "eslint": "^8.24.0",
-    "eslint-plugin-html": "^7.1.0",
+    "eslint-plugin-html": "^8.1.2",
     "eslint-plugin-import": "^2.29.1",
     "rollup": "^4.9.1",
     "servez": "^2.1.2"
