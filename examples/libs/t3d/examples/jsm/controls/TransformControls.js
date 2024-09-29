@@ -1,6 +1,8 @@
 import {
 	Object3D, Vector2, Vector3, Euler, Plane, Matrix4, Quaternion,
-	Mesh, BasicMaterial, CylinderGeometry, PlaneGeometry, BoxGeometry, SphereGeometry, Geometry, Attribute, Buffer, DRAW_SIDE, DRAW_MODE
+	Mesh, BasicMaterial, ShaderLib,
+	CylinderGeometry, PlaneGeometry, BoxGeometry, SphereGeometry, Geometry, Attribute, Buffer,
+	MATERIAL_TYPE, DRAW_SIDE, DRAW_MODE
 } from 't3d';
 import { TorusBuilder } from '../geometries/builders/TorusBuilder.js';
 import { VirtualGroup } from '../math/VirtualGroup.js';
@@ -150,7 +152,7 @@ class TransformControls extends Object3D {
 	}
 
 	_onPointDown(e) {
-		if (!this.visible) return;
+		if (!this.visible || e.button !== 0) return;
 
 		const selectedObject = this._selectGizmoMesh(e.clientX, e.clientY);
 		if (selectedObject) {
@@ -277,6 +279,15 @@ const _quat_1 = new Quaternion();
 const _euler_1 = new Euler();
 const _euler_2 = new Euler();
 
+const redColor = [1.0, 0.25, 0.25];
+const greenColor = [0.5, 0.8, 0.2];
+const blueColor = [0.3, 0.5, 1.0];
+const whiteColor = [1.0, 1.0, 1.0];
+const grayColor = [0.75, 0.75, 0.75];
+const yellowColor = [1.0, 1.0, 0.0];
+
+const gizmoRenderOrder = 100;
+
 // for snap
 const _position = new Vector3();
 const _scale = new Vector3();
@@ -302,6 +313,8 @@ const axisPlane = {
 	'xz': new Plane(new Vector3(0, 1, 0), 0)
 };
 
+const matchSign = (a, b) => Math.sign(b) * Math.abs(a);
+
 // Separate class for each control
 
 class BaseControl extends Object3D {
@@ -317,6 +330,8 @@ class BaseControl extends Object3D {
 		this._startGroupMatrix = new Matrix4();
 		this._startGroupMatrixInverse = new Matrix4();
 		this._startLocalMatrix = new Matrix4();
+
+		this._moving = false;
 
 		this.size = 1;
 
@@ -336,11 +351,15 @@ class BaseControl extends Object3D {
 		if (group.objects.length > 0) {
 			this._startLocalMatrix.copy(group.objects[0].matrix);
 		}
+
+		this._moving = true;
 	}
 
 	onMove(ray) {}
 
-	onMoveEnd() {}
+	onMoveEnd() {
+		this._moving = false;
+	}
 
 	update(isModify) {}
 
@@ -353,6 +372,7 @@ class TranslateControl extends BaseControl {
 
 		this._translateControlMap = new Map();
 		this._helperMap = new Map();
+		this._gizmoPlanes = [];
 
 		this._selectedAxis = null;
 
@@ -367,71 +387,77 @@ class TranslateControl extends BaseControl {
 	}
 
 	_createAxis() {
-		const lineX = new GizmoMesh('line', 'x', [1.0, 0.25, 0.25], new Vector3(0.75, 0, 0), new Euler(0, 0, -Math.PI / 2), 1.5);
-		const arrowX = new GizmoMesh('arrow', 'x', [1.0, 0.25, 0.25], new Vector3(1.5, 0, 0), new Euler(0, 0, -Math.PI / 2));
+		const lineX = new GizmoMesh('line', 'x', redColor, new Vector3(0.75, 0, 0), new Euler(0, 0, -Math.PI / 2), 1.5);
+		const arrowX = new GizmoMesh('arrow', 'x', redColor, new Vector3(1.5, 0, 0), new Euler(0, 0, -Math.PI / 2));
 		this._translateControlMap.set('x', [lineX, arrowX]);
 		this.add(lineX);
 		this.add(arrowX);
 
-		const pickX = new GizmoMesh('pickAxis', 'x', [1.0, 1.0, 1.0], new Vector3(0.75, 0, 0), new Euler(0, 0, -Math.PI / 2));
+		const pickX = new GizmoMesh('pickAxis', 'x', whiteColor, new Vector3(0.75, 0, 0), new Euler(0, 0, -Math.PI / 2));
 		pickX.visible = false;
 		this.add(pickX);
 
-		const lineY = new GizmoMesh('line', 'y', [0.5, 0.8, 0.2], new Vector3(0, 0.75, 0), new Euler(0, 0, 0), 1.5);
-		const arrowY = new GizmoMesh('arrow', 'y', [0.5, 0.8, 0.2], new Vector3(0, 1.5, 0), new Euler(0, 0, 0));
+		const lineY = new GizmoMesh('line', 'y', greenColor, new Vector3(0, 0.75, 0), new Euler(0, 0, 0), 1.5);
+		const arrowY = new GizmoMesh('arrow', 'y', greenColor, new Vector3(0, 1.5, 0), new Euler(0, 0, 0));
 		this._translateControlMap.set('y', [lineY, arrowY]);
 		this.add(lineY);
 		this.add(arrowY);
 
-		const pickY = new GizmoMesh('pickAxis', 'y', [1.0, 1.0, 1.0], new Vector3(0, 0.75, 0), new Euler(0, 0, 0));
+		const pickY = new GizmoMesh('pickAxis', 'y', whiteColor, new Vector3(0, 0.75, 0), new Euler(0, 0, 0));
 		pickY.visible = false;
 		this.add(pickY);
 
-		const lineZ = new GizmoMesh('line', 'z', [0.3, 0.5, 1.0], new Vector3(0, 0, 0.75), new Euler(Math.PI / 2, 0, 0), 1.5);
-		const arrowZ = new GizmoMesh('arrow', 'z', [0.3, 0.5, 1.0], new Vector3(0, 0, 1.5), new Euler(Math.PI / 2, 0, 0));
+		const lineZ = new GizmoMesh('line', 'z', blueColor, new Vector3(0, 0, 0.75), new Euler(Math.PI / 2, 0, 0), 1.5);
+		const arrowZ = new GizmoMesh('arrow', 'z', blueColor, new Vector3(0, 0, 1.5), new Euler(Math.PI / 2, 0, 0));
 		this._translateControlMap.set('z', [lineZ, arrowZ]);
 		this.add(lineZ);
 		this.add(arrowZ);
 
-		const pickZ = new GizmoMesh('pickAxis', 'z', [1.0, 1.0, 1.0], new Vector3(0, 0, 0.75), new Euler(Math.PI / 2, 0, 0));
+		const pickZ = new GizmoMesh('pickAxis', 'z', whiteColor, new Vector3(0, 0, 0.75), new Euler(Math.PI / 2, 0, 0));
 		pickZ.visible = false;
 		this.add(pickZ);
 
-		const planeXY = new GizmoMesh('plane', 'xy', [0.3, 0.5, 1.0], new Vector3(0.15, 0.15, 0), new Euler(Math.PI / 2, 0, 0), 0.3);
+		const planeXY = new GizmoMesh('plane', 'xy', blueColor, new Vector3(0.18, 0.18, 0), new Euler(Math.PI / 2, 0, 0), 0.3);
 		this._translateControlMap.set('xy', [planeXY]);
+		this._gizmoPlanes.push(planeXY);
 		this.add(planeXY);
 
-		const pickXY = new GizmoMesh('plane', 'xy', [1.0, 1.0, 1.0], new Vector3(0.25, 0.25, 0), new Euler(Math.PI / 2, 0, 0), 0.5);
+		const pickXY = new GizmoMesh('plane', 'xy', whiteColor, new Vector3(0.25, 0.25, 0), new Euler(Math.PI / 2, 0, 0), 0.5);
 		pickXY.visible = false;
+		this._gizmoPlanes.push(pickXY);
 		this.add(pickXY);
 
-		const planeYZ = new GizmoMesh('plane', 'yz', [1.0, 0.25, 0.25], new Vector3(0, 0.15, 0.15), new Euler(0, 0, Math.PI / 2), 0.3);
+		const planeYZ = new GizmoMesh('plane', 'yz', redColor, new Vector3(0, 0.18, 0.18), new Euler(0, 0, Math.PI / 2), 0.3);
 		this._translateControlMap.set('yz', [planeYZ]);
+		this._gizmoPlanes.push(planeYZ);
 		this.add(planeYZ);
 
-		const pickYZ = new GizmoMesh('plane', 'yz', [1.0, 1.0, 1.0], new Vector3(0, 0.25, 0.25), new Euler(0, 0, Math.PI / 2), 0.5);
+		const pickYZ = new GizmoMesh('plane', 'yz', whiteColor, new Vector3(0, 0.25, 0.25), new Euler(0, 0, Math.PI / 2), 0.5);
 		pickYZ.visible = false;
+		this._gizmoPlanes.push(pickYZ);
 		this.add(pickYZ);
 
-		const planeXZ = new GizmoMesh('plane', 'xz', [0.5, 0.8, 0.2], new Vector3(0.15, 0, 0.15), null, 0.3);
+		const planeXZ = new GizmoMesh('plane', 'xz', greenColor, new Vector3(0.18, 0, 0.18), null, 0.3);
 		this._translateControlMap.set('xz', [planeXZ]);
+		this._gizmoPlanes.push(planeXZ);
 		this.add(planeXZ);
 
-		const pickXZ = new GizmoMesh('plane', 'xz', [1.0, 1.0, 1.0], new Vector3(0.25, 0, 0.25), null, 0.5);
+		const pickXZ = new GizmoMesh('plane', 'xz', whiteColor, new Vector3(0.25, 0, 0.25), null, 0.5);
 		pickXZ.visible = false;
+		this._gizmoPlanes.push(pickXZ);
 		this.add(pickXZ);
 
-		const helperX = new GizmoMesh('axishelper', 'x', [1, 1, 0], new Vector3(-1e3, 0, 0), null);
+		const helperX = new GizmoMesh('axishelper', 'x', yellowColor, new Vector3(-1e3, 0, 0), null);
 		helperX.visible = false;
 		this._helperMap.set('x', helperX);
 		this.add(helperX);
 
-		const helperY = new GizmoMesh('axishelper', 'y', [1, 1, 0], new Vector3(0, -1e3, 0), new Euler(0, 0, Math.PI / 2));
+		const helperY = new GizmoMesh('axishelper', 'y', yellowColor, new Vector3(0, -1e3, 0), new Euler(0, 0, Math.PI / 2));
 		helperY.visible = false;
 		this._helperMap.set('y', helperY);
 		this.add(helperY);
 
-		const helperZ = new GizmoMesh('axishelper', 'z', [1, 1, 0], new Vector3(0, 0, -1e3), new Euler(0, -Math.PI / 2, 0));
+		const helperZ = new GizmoMesh('axishelper', 'z', yellowColor, new Vector3(0, 0, -1e3), new Euler(0, -Math.PI / 2, 0));
 		helperZ.visible = false;
 		this._helperMap.set('z', helperZ);
 		this.add(helperZ);
@@ -513,6 +539,8 @@ class TranslateControl extends BaseControl {
 		this._helperMap.forEach(value => {
 			value.visible = false;
 		});
+
+		super.onMoveEnd();
 	}
 
 	_getHitPlane() {
@@ -547,6 +575,7 @@ class TranslateControl extends BaseControl {
 
 	update() {
 		this._resizeControl();
+		this._adaptPlanes();
 	}
 
 	_resizeControl() {
@@ -571,6 +600,27 @@ class TranslateControl extends BaseControl {
 		this.matrix.decompose(this.position, this.quaternion, this.scale);
 
 		this.scale.multiplyScalar(factor);
+	}
+
+	_adaptPlanes() {
+		if (this._moving) return;
+
+		_mat4_1.getInverse(this.worldMatrix).multiply(this._camera.worldMatrix);
+		const cameraVector = _vec3_1.setFromMatrixPosition(_mat4_1);
+
+		for (let i = 0, l = this._gizmoPlanes.length; i < l; i++) {
+			const plane = this._gizmoPlanes[i];
+			if (plane.name === 'xz') {
+				plane.position.x = matchSign(plane.position.x, cameraVector.x);
+				plane.position.z = matchSign(plane.position.z, cameraVector.z);
+			} else if (plane.name === 'xy') {
+				plane.position.x = matchSign(plane.position.x, cameraVector.x);
+				plane.position.y = matchSign(plane.position.y, cameraVector.y);
+			} else if (plane.name === 'yz') {
+				plane.position.y = matchSign(plane.position.y, cameraVector.y);
+				plane.position.z = matchSign(plane.position.z, cameraVector.z);
+			}
+		}
 	}
 
 	_applySnap(target) {
@@ -629,37 +679,37 @@ class ScaleControl extends BaseControl {
 	}
 
 	_createAxis() {
-		const lineX = new GizmoMesh('line', 'x', [1.0, 0.25, 0.25], new Vector3(0.75, 0, 0), new Euler(0, 0, -Math.PI / 2), 1.3);
-		const cubeX = new GizmoMesh('box', 'x', [1.0, 0.25, 0.25], new Vector3(1.3, 0, 0), new Euler(0, 0, 0), 0.2);
+		const lineX = new GizmoMesh('line', 'x', redColor, new Vector3(0.75, 0, 0), new Euler(0, 0, -Math.PI / 2), 1.3);
+		const cubeX = new GizmoMesh('box', 'x', redColor, new Vector3(1.3, 0, 0), new Euler(0, 0, 0), 0.2);
 		this._scaleControlMap.set('x', [lineX, cubeX]);
 		this.add(lineX);
 		this.add(cubeX);
 
-		const pickX = new GizmoMesh('pickAxis', 'x', [1.0, 1.0, 1.0], new Vector3(0.75, 0, 0), new Euler(0, 0, -Math.PI / 2));
+		const pickX = new GizmoMesh('pickAxis', 'x', whiteColor, new Vector3(0.75, 0, 0), new Euler(0, 0, -Math.PI / 2));
 		pickX.visible = false;
 		this.add(pickX);
 
-		const lineY = new GizmoMesh('line', 'y', [0.5, 0.8, 0.2], new Vector3(0, 0.75, 0), new Euler(0, 0, 0), 1.3);
-		const cubeY = new GizmoMesh('box', 'y', [0.5, 0.8, 0.2], new Vector3(0, 1.3, 0), new Euler(0, 0, 0), 0.2);
+		const lineY = new GizmoMesh('line', 'y', greenColor, new Vector3(0, 0.75, 0), new Euler(0, 0, 0), 1.3);
+		const cubeY = new GizmoMesh('box', 'y', greenColor, new Vector3(0, 1.3, 0), new Euler(0, 0, 0), 0.2);
 		this._scaleControlMap.set('y', [lineY, cubeY]);
 		this.add(lineY);
 		this.add(cubeY);
 
-		const pickY = new GizmoMesh('pickAxis', 'y', [1.0, 1.0, 1.0], new Vector3(0, 0.75, 0), new Euler(0, 0, 0));
+		const pickY = new GizmoMesh('pickAxis', 'y', whiteColor, new Vector3(0, 0.75, 0), new Euler(0, 0, 0));
 		pickY.visible = false;
 		this.add(pickY);
 
-		const lineZ = new GizmoMesh('line', 'z', [0.3, 0.5, 1.0], new Vector3(0, 0, 0.75), new Euler(Math.PI / 2, 0, 0), 1.3);
-		const cubeZ = new GizmoMesh('box', 'z', [0.3, 0.5, 1.0], new Vector3(0, 0, 1.3), new Euler(0, 0, 0), 0.2);
+		const lineZ = new GizmoMesh('line', 'z', blueColor, new Vector3(0, 0, 0.75), new Euler(Math.PI / 2, 0, 0), 1.3);
+		const cubeZ = new GizmoMesh('box', 'z', blueColor, new Vector3(0, 0, 1.3), new Euler(0, 0, 0), 0.2);
 		this._scaleControlMap.set('z', [lineZ, cubeZ]);
 		this.add(lineZ);
 		this.add(cubeZ);
 
-		const pickZ = new GizmoMesh('pickAxis', 'z', [1.0, 1.0, 1.0], new Vector3(0, 0, 0.75), new Euler(Math.PI / 2, 0, 0));
+		const pickZ = new GizmoMesh('pickAxis', 'z', whiteColor, new Vector3(0, 0, 0.75), new Euler(Math.PI / 2, 0, 0));
 		pickZ.visible = false;
 		this.add(pickZ);
 
-		const cubeXYZ = new GizmoMesh('box', 'xyz', [0.75, 0.75, 0.75], new Vector3(0, 0, 0), new Euler(0, 0, 0), 0.32);
+		const cubeXYZ = new GizmoMesh('box', 'xyz', grayColor, new Vector3(0, 0, 0), new Euler(0, 0, 0), 0.32);
 		this._scaleControlMap.set('xyz', [cubeXYZ]);
 		this.add(cubeXYZ);
 	}
@@ -738,6 +788,8 @@ class ScaleControl extends BaseControl {
 				axis.visible = true;
 			});
 		});
+
+		super.onMoveEnd();
 	}
 
 	update(isModify) {
@@ -860,48 +912,48 @@ class RotateControl extends BaseControl {
 	}
 
 	_createAxis() {
-		const axisE = new GizmoMesh('torus', 'e', [0.7, 0.7, 0.7], new Vector3(0, 0, 0), new Euler(0, 0, 0), this.rotateCircleRadiusE, Math.PI * 2);
+		const axisE = new GizmoMesh('torus', 'e', grayColor, new Vector3(0, 0, 0), new Euler(0, 0, 0), this.rotateCircleRadiusE, Math.PI * 2);
 		this._rotateControlMap.set('e', axisE);
 		this.add(axisE);
-		const pickE = new GizmoMesh('torus', 'e', [1.0, 1.0, 1.0], new Vector3(0, 0, 0), new Euler(0, 0, 0), this.rotateCircleRadiusE, Math.PI * 2, 0.2);
+		const pickE = new GizmoMesh('torus', 'e', whiteColor, new Vector3(0, 0, 0), new Euler(0, 0, 0), this.rotateCircleRadiusE, Math.PI * 2, 0.2);
 		pickE.visible = false;
 		this._pickHelper.set('e', pickE);
 		this.add(pickE);
-		const axisZ = new GizmoMesh('torus', 'z', [0.3, 0.5, 1.0], new Vector3(0, 0, 0), new Euler(0, 0, -Math.PI / 2), this.rotateCircleRadius);
+		const axisZ = new GizmoMesh('torus', 'z', blueColor, new Vector3(0, 0, 0), new Euler(0, 0, -Math.PI / 2), this.rotateCircleRadius);
 		this._rotateControlMap.set('z', axisZ);
 		this.add(axisZ);
-		const pickZ = new GizmoMesh('torus', 'z', [1.0, 1.0, 1.0], new Vector3(0, 0, 0), new Euler(0, 0, -Math.PI / 2), this.rotateCircleRadius, Math.PI, 0.2);
+		const pickZ = new GizmoMesh('torus', 'z', whiteColor, new Vector3(0, 0, 0), new Euler(0, 0, -Math.PI / 2), this.rotateCircleRadius, Math.PI, 0.2);
 		pickZ.visible = false;
 		this._pickHelper.set('z', pickZ);
 		this.add(pickZ);
 		this._axisZQuaternionStart = axisZ.quaternion.clone();
-		const axisY = new GizmoMesh('torus', 'y', [0.5, 0.8, 0.2], new Vector3(0, 0, 0), new Euler(Math.PI / 2, 0, 0), this.rotateCircleRadius);
+		const axisY = new GizmoMesh('torus', 'y', greenColor, new Vector3(0, 0, 0), new Euler(Math.PI / 2, 0, 0), this.rotateCircleRadius);
 		this._rotateControlMap.set('y', axisY);
 		this.add(axisY);
-		const pickY = new GizmoMesh('torus', 'y', [1.0, 1.0, 1.0], new Vector3(0, 0, 0), new Euler(Math.PI / 2, 0, 0), this.rotateCircleRadius, Math.PI, 0.2);
+		const pickY = new GizmoMesh('torus', 'y', whiteColor, new Vector3(0, 0, 0), new Euler(Math.PI / 2, 0, 0), this.rotateCircleRadius, Math.PI, 0.2);
 		pickY.visible = false;
 		this._pickHelper.set('y', pickY);
 		this.add(pickY);
 		this._axisYQuaternionStart = axisY.quaternion.clone();
-		const axisX = new GizmoMesh('torus', 'x', [1.0, 0.25, 0.25], new Vector3(0, 0, 0), new Euler(0, Math.PI / 2, Math.PI / 2), this.rotateCircleRadius);
+		const axisX = new GizmoMesh('torus', 'x', redColor, new Vector3(0, 0, 0), new Euler(0, Math.PI / 2, Math.PI / 2), this.rotateCircleRadius);
 		this._rotateControlMap.set('x', axisX);
 		this.add(axisX);
-		const pickX = new GizmoMesh('torus', 'x', [1.0, 1.0, 1.0], new Vector3(0, 0, 0), new Euler(0, Math.PI / 2, Math.PI / 2), this.rotateCircleRadius, Math.PI, 0.2);
+		const pickX = new GizmoMesh('torus', 'x', whiteColor, new Vector3(0, 0, 0), new Euler(0, Math.PI / 2, Math.PI / 2), this.rotateCircleRadius, Math.PI, 0.2);
 		pickX.visible = false;
 		this._pickHelper.set('x', pickX);
 		this.add(pickX);
 		this._axisXQuaternionStart = axisX.quaternion.clone();
-		const center = new GizmoMesh('sphere', 'xyz', [1.0, 1.0, 1.0], new Vector3(0, 0, 0), new Euler(0, 0, 0), this.rotateCircleRadius);
+		const center = new GizmoMesh('sphere', 'xyz', whiteColor, new Vector3(0, 0, 0), new Euler(0, 0, 0), this.rotateCircleRadius);
 		this._rotateControlMap.set('xyz', center);
 		this.add(center);
 
-		this._lineHelperS = new GizmoMesh('linehelper', 'helperS', [1.0, 0.95, 0.0]);
+		this._lineHelperS = new GizmoMesh('linehelper', 'helperS', yellowColor);
 		this._lineHelperS.visible = false;
 		this.add(this._lineHelperS);
-		this._lineHelperE = new GizmoMesh('linehelper', 'helperE', [1.0, 0.95, 0.0]);
+		this._lineHelperE = new GizmoMesh('linehelper', 'helperE', yellowColor);
 		this._lineHelperE.visible = false;
 		this.add(this._lineHelperE);
-		this._rotateHelper = new GizmoMesh('rotatehelper', 'rotatehelper', [1.0, 0.95, 0.0]);
+		this._rotateHelper = new GizmoMesh('rotatehelper', 'rotatehelper', yellowColor);
 		this._rotateHelper.visible = false;
 		this.add(this._rotateHelper);
 	}
@@ -1024,6 +1076,8 @@ class RotateControl extends BaseControl {
 		});
 
 		this._needsUpdate = true;
+
+		super.onMoveEnd();
 	}
 
 	_calRayIntersection(ray, out) {
@@ -1051,7 +1105,8 @@ class RotateControl extends BaseControl {
 		const dot = p1.dot(p2);
 		_vec3_1.crossVectors(p1, p2);
 		const direction = _vec3_1.dot(rotateAxis);
-		const currentRad = Math.sign(direction) * Math.acos(dot / (radius * radius));
+		const currentCos = Math.min(1, Math.max(-1, dot / (radius * radius))); // clamp value to the range [-1, 1] to prevent NaN
+		const currentRad = Math.sign(direction) * Math.acos(currentCos);
 		const incrementRad = currentRad - this._previousRad;
 		if (this._previousRad * currentRad < 0) {
 			Math.abs(currentRad) < Math.PI / 2
@@ -1183,7 +1238,7 @@ class RotateControl extends BaseControl {
 class GizmoMesh extends Mesh {
 
 	constructor(type, name, color, position, rotation, size, arc, tube) {
-		const material = new BasicMaterial();
+		const material = new GizmoMaterial();
 		let geometry;
 
 		switch (type) {
@@ -1225,9 +1280,6 @@ class GizmoMesh extends Mesh {
 
 		super(geometry, material);
 
-		material.transparent = true;
-		material.depthTest = false;
-		material.side = DRAW_SIDE.DOUBLE;
 		material.diffuse.fromArray(color);
 		material._color = material.diffuse.clone();
 		material._opacity = material.opacity;
@@ -1235,7 +1287,7 @@ class GizmoMesh extends Mesh {
 		this.name = name;
 		this.receiveShadows = false;
 		this.castShadows = false;
-		this.renderOrder = 100;
+		this.renderOrder = gizmoRenderOrder;
 
 		if (type === 'axishelper') {
 			this.frustumCulled = false;
@@ -1259,7 +1311,28 @@ class GizmoMesh extends Mesh {
 	}
 
 	yellow() {
-		this.material.diffuse.fromArray([1.0, 0.95, 0.0]);
+		this.material.diffuse.fromArray(yellowColor);
+	}
+
+}
+
+const gizmoFragmentShader = ShaderLib.basic_frag.replace('#include <encodings_frag>', '');
+
+class GizmoMaterial extends BasicMaterial {
+
+	constructor() {
+		super();
+
+		this.type = MATERIAL_TYPE.SHADER;
+
+		this.shaderName = 'gizmo';
+
+		this.vertexShader = ShaderLib.basic_vert;
+		this.fragmentShader = gizmoFragmentShader;
+
+		this.transparent = true;
+		this.depthTest = false;
+		this.side = DRAW_SIDE.DOUBLE;
 	}
 
 }

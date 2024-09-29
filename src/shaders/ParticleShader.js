@@ -167,6 +167,7 @@ export const ParticleShader = {
 		${ShaderChunks.uniforms}
 
 		${ShaderChunk.common_frag}
+		${ShaderChunk.alphaTest_pars_frag}
 		${ShaderChunk.fog_pars_frag}
 		${ShaderChunk.logdepthbuf_pars_frag}
 
@@ -185,7 +186,7 @@ export const ParticleShader = {
 			gl_FragColor = vec4(outgoingLight.xyz, rotatedTexture.w * vColor.w);
 
 			#ifdef ALPHATEST
-				if (gl_FragColor.a < float(ALPHATEST)) discard;
+				if (gl_FragColor.a < u_AlphaTest) discard;
 			#endif
 
 			${ShaderChunk.fog_frag}

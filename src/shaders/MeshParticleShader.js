@@ -44,6 +44,7 @@ export const MeshParticleShader = {
 		uniform sampler2D tex;
 
 		#include <common_frag>
+		#include <alphaTest_pars_frag>
 		#include <fog_pars_frag>
 		#include <logdepthbuf_pars_frag>
 
@@ -56,7 +57,7 @@ export const MeshParticleShader = {
 			gl_FragColor = varyColor * texture2D(tex, vUv);
 
 			#ifdef ALPHATEST
-				if (gl_FragColor.a < float(ALPHATEST)) discard;
+				if (gl_FragColor.a < u_AlphaTest) discard;
 			#endif
 
 			#include <fog_frag>

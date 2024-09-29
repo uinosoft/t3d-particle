@@ -946,6 +946,7 @@
 		${ShaderChunks.uniforms}
 
 		${t3d.ShaderChunk.common_frag}
+		${t3d.ShaderChunk.alphaTest_pars_frag}
 		${t3d.ShaderChunk.fog_pars_frag}
 		${t3d.ShaderChunk.logdepthbuf_pars_frag}
 
@@ -964,7 +965,7 @@
 			gl_FragColor = vec4(outgoingLight.xyz, rotatedTexture.w * vColor.w);
 
 			#ifdef ALPHATEST
-				if (gl_FragColor.a < float(ALPHATEST)) discard;
+				if (gl_FragColor.a < u_AlphaTest) discard;
 			#endif
 
 			${t3d.ShaderChunk.fog_frag}
@@ -2387,6 +2388,7 @@
 		uniform sampler2D tex;
 
 		#include <common_frag>
+		#include <alphaTest_pars_frag>
 		#include <fog_pars_frag>
 		#include <logdepthbuf_pars_frag>
 
@@ -2399,7 +2401,7 @@
 			gl_FragColor = varyColor * texture2D(tex, vUv);
 
 			#ifdef ALPHATEST
-				if (gl_FragColor.a < float(ALPHATEST)) discard;
+				if (gl_FragColor.a < u_AlphaTest) discard;
 			#endif
 
 			#include <fog_frag>

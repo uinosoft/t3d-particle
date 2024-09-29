@@ -40,7 +40,7 @@
     "servez": "^2.1.2"
   },
   "peerDependencies": {
-    "t3d": "^0.2.0"
+    "t3d": "^0.3.0"
   },
   "scripts": {
     "build": "rollup -c",
