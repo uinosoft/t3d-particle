@@ -1,6 +1,7 @@
 body {
     margin: 0px;
     padding: 0px;
+    overflow: hidden;
 }
 
 canvas {
@@ -10,10 +11,4 @@ canvas {
 	-webkit-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
-}
-
-.lil-gui {
-    --number-color: #ff8002;
-	--string-color: lightgreen;
-	z-index: 2 !important; /* TODO Solve this in HTML */
 }

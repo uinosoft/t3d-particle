@@ -7,7 +7,8 @@ This is a particle system based on [t3d.js](https://github.com/uinosoft/t3d.js).
 Inspired by [ShaderParticleEngine](https://github.com/squarefeet/ShaderParticleEngine).
 Added support for mesh particles.
 
-[Examples](https://uinosoft.github.io/t3d-particle/examples/)
+[Examples](https://uinosoft.github.io/t3d-particle/examples/) &mdash;
+[Editor](https://uinosoft.github.io/t3d-particle/editor/)
 
 ### Usage
 

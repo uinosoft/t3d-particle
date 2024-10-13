@@ -7,6 +7,9 @@ Editor:
 - [x] Add a example to parse the particle file
 - [ ] Add a way to add textures to the particle editor
 - [ ] Add some built-in particle sample
+- [ ] Save current particle to storage
+- [ ] Add language selection
+- [ ] Page title bar and log info
 
 Core:
 

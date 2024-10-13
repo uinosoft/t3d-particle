@@ -1,5 +1,5 @@
 import { Color3, Vector3 } from 't3d';
-import { GUI } from 'lil-gui';
+import { Pane } from 'tweakpane';
 import { importFileJSON, exportFileJSON } from './Utils.js';
 import { lang } from './lang.js';
 
@@ -9,7 +9,7 @@ export class ParticleGUI {
 		this.data = data;
 		this.entity = entity;
 
-		this.root = new GUI({ title: 'Particle Editor' });
+		this.root = new Pane();
 
 		this._groupUIs = new WeakMap(); // groupEntity -> groupUI
 		this._emitterUIs = new WeakMap(); // emitterEntity -> emitterUI
@@ -25,9 +25,9 @@ export class ParticleGUI {
 		const groupButtons = {};
 
 		function setRootButtons() {
-			const notEmpty = data.getGroupLength() > 0;
-			groupButtons.removeGroup.enable(notEmpty);
-			groupButtons.exportData.enable(notEmpty);
+			const isEmpty = data.getGroupLength() <= 0;
+			groupButtons.removeGroup.disabled = isEmpty;
+			groupButtons.exportData.disabled = isEmpty;
 		}
 
 		const methods = {
@@ -71,7 +71,7 @@ export class ParticleGUI {
 		const buttonNames = ['createGroup', 'removeGroup', 'importData', 'exportData'];
 		for (let i = 0; i < buttonNames.length; i++) {
 			const name = buttonNames[i];
-			groupButtons[name] = root.add(methods, name).name(lang(name));
+			groupButtons[name] = root.addButton({ title: lang(name) }).on('click', methods[name]);
 		}
 
 		setRootButtons();
@@ -80,7 +80,7 @@ export class ParticleGUI {
 	_createGroupUI(groupEntity, groupData) {
 		const { data, entity, root } = this;
 
-		const groupFolder = root.addFolder(lang('group'));
+		const groupFolder = root.addFolder({ title: lang('group') });
 		this._groupUIs.set(groupEntity, groupFolder);
 
 		// part1: create main group ui
@@ -102,28 +102,38 @@ export class ParticleGUI {
 			meshControl.enable(isMeshParticle);
 			perspectiveControl.disable(isMeshParticle);
 		};
-		groupFolder.add(groupData, 'mode', { 'Billboard': 0, 'Mesh': 1 }).onChange(rebuildGroup);
+		groupFolder.addBinding(groupData, 'mode', { options: { 'Billboard': 0, 'Mesh': 1 } }).on('change', rebuildGroup);
 
-		const meshControl = groupFolder.add(groupData, 'meshUri', ['BuildIn/Box', 'BuildIn/Plane', 'BuildIn/Sphere']).name(lang('mesh')).onChange(rebuildGroup);
-		meshControl.enable(isMeshParticle);
+		const meshControl = groupFolder.addBinding(groupData, 'meshUri', {
+			label: lang('mesh'),
+			options: { 'Box': 'BuildIn/Box', 'Plane': 'BuildIn/Plane', 'Sphere': 'BuildIn/Sphere' },
+			disabled: !isMeshParticle
+		}).on('change', rebuildGroup);
 
-		const perspectiveControl = groupFolder.add(groupData, 'perspective').name(lang('perspective')).onChange(value => {
+		const perspectiveControl = groupFolder.addBinding(groupData, 'perspective', {
+			label: lang('perspective'),
+			disabled: isMeshParticle
+		}).on('change', ({ value }) => {
 			if (!isMeshParticle) {
 				groupEntity.material.defines['HAS_PERSPECTIVE'] = value;
 				groupEntity.material.needsUpdate = true;
 			}
 		});
-		perspectiveControl.disable(isMeshParticle);
 
 		const textureCache = entity._textureCache;
 		const textureNames = textureCache.getBuiltInTextureNames();
-		groupFolder.add({ value: textureCache.getNameByUri(groupData.textureUri) }, 'value', textureNames).name(lang('texture')).onChange(value => {
+		const textureOptions = {};
+		textureNames.forEach(name => { textureOptions[name] = name });
+		groupFolder.addBinding({ value: textureCache.getNameByUri(groupData.textureUri) }, 'value', {
+			label: lang('texture'),
+			options: textureOptions
+		}).on('change', ({ value }) => {
 			const textureInfo = textureCache.getBuiltInTexture(value);
 			groupEntity.setTextureValue(textureInfo.value);
 			groupData.textureUri = textureInfo.uri;
 		});
 
-		const textureFramesFolder = groupFolder.addFolder(lang('textureFrames')).onChange(() => {
+		const textureFramesFolder = groupFolder.addFolder({ title: lang('textureFrames'), expanded: false }).on('change', () => {
 			if (isMeshParticle) return;
 
 			groupEntity.textureFrames.fromArray(groupData.textureFrame);
@@ -138,12 +148,12 @@ export class ParticleGUI {
 			groupEntity.material.uniforms.textureAnimation[3] = groupEntity.textureLoop;
 
 			groupEntity.material.needsUpdate = true;
-		}).close();
-		textureFramesFolder.add(groupData.textureFrame, '0', 1, 10, 1).name(lang('frameH'));
-		textureFramesFolder.add(groupData.textureFrame, '1', 1, 10, 1).name(lang('frameV'));
-		textureFramesFolder.add(groupData, 'textureFrameLoop', 1, 5, 0.1).name(lang('textureLoop'));
+		});
+		textureFramesFolder.addBinding(groupData.textureFrame, '0', { min: 1, step: 1, label: lang('frameH') });
+		textureFramesFolder.addBinding(groupData.textureFrame, '1', { min: 1, step: 1, label: lang('frameV') });
+		textureFramesFolder.addBinding(groupData, 'textureFrameLoop', { min: 1, step: 0.1, label: lang('textureLoop') });
 
-		groupFolder.add(groupData, 'colorize').name(lang('colorize')).onChange(value => {
+		groupFolder.addBinding(groupData, 'colorize', { label: lang('colorize') }).on('change', ({ value }) => {
 			if (!isMeshParticle) {
 				groupEntity.material.defines['COLORIZE'] = value;
 				groupEntity.material.needsUpdate = true;
@@ -154,32 +164,38 @@ export class ParticleGUI {
 			}
 		});
 
-		groupFolder.add(groupData, 'transparent').name(lang('transparent')).onChange(value => {
+		groupFolder.addBinding(groupData, 'transparent', { label: lang('transparent') }).on('change', ({ value }) => {
 			groupEntity.material.transparent = value;
 		});
 
-		groupFolder.add(groupData, 'blending', ['none', 'normal', 'add', 'sub', 'mul']).name(lang('blending')).onChange(value => {
+		groupFolder.addBinding(groupData, 'blending', {
+			label: lang('blending'),
+			options: { 'None': 'none', 'Normal': 'normal', 'Add': 'add', 'Sub': 'sub', 'Mul': 'mul' }
+		}).on('change', ({ value }) => {
 			groupEntity.material.blending = value;
 		});
 
-		groupFolder.add(groupData, 'alphaTest', 0, 1, 0.1).name(lang('alphaTest')).onChange(value => {
+		groupFolder.addBinding(groupData, 'alphaTest', { min: 0, max: 1, step: 0.1, label: lang('alphaTest') }).on('change', ({ value }) => {
 			groupEntity.material.alphaTest = value;
 			groupEntity.material.needsUpdate = true;
 		});
 
-		groupFolder.add(groupData, 'depthWrite').name(lang('depthWrite')).onChange(value => {
+		groupFolder.addBinding(groupData, 'depthWrite', { label: lang('depthWrite') }).on('change', ({ value }) => {
 			groupEntity.material.depthWrite = value;
 		});
 
-		groupFolder.add(groupData, 'depthTest').name(lang('depthTest')).onChange(value => {
+		groupFolder.addBinding(groupData, 'depthTest', { label: lang('depthTest') }).on('change', ({ value }) => {
 			groupEntity.material.depthTest = value;
 		});
 
-		groupFolder.add(groupData, 'side', ['front', 'back', 'double']).name(lang('side')).onChange(value => {
+		groupFolder.addBinding(groupData, 'side', {
+			label: lang('side'),
+			options: { 'Front': 'front', 'Back': 'back', 'Double': 'double' }
+		}).on('change', ({ value }) => {
 			groupEntity.material.side = value;
 		});
 
-		groupFolder.add(groupData, 'fog').name(lang('fog')).onChange(value => {
+		groupFolder.addBinding(groupData, 'fog', { label: lang('fog') }).on('change', ({ value }) => {
 			groupEntity.material.fog = value;
 			groupEntity.material.needsUpdate = true;
 		});
@@ -189,7 +205,7 @@ export class ParticleGUI {
 		const emitterButtons = {};
 
 		function setEmitterButtons() {
-			emitterButtons.removeEmitter.enable(groupData.emitters.length > 1);
+			emitterButtons.removeEmitter.disabled = groupData.emitters.length <= 1;
 		}
 
 		const methods = {
@@ -207,8 +223,8 @@ export class ParticleGUI {
 			}
 		};
 
-		emitterButtons['addEmitter'] = groupFolder.add(methods, 'addEmitter').name(lang('addEmitter'));
-		emitterButtons['removeEmitter'] = groupFolder.add(methods, 'removeEmitter').name(lang('removeEmitter'));
+		emitterButtons['addEmitter'] = groupFolder.addButton({ title: lang('addEmitter') }).on('click', methods['addEmitter']);
+		emitterButtons['removeEmitter'] = groupFolder.addButton({ title: lang('removeEmitter') }).on('click', methods['removeEmitter']);
 
 		setEmitterButtons();
 
@@ -222,47 +238,68 @@ export class ParticleGUI {
 
 	_removeGroupUI(groupEntity) {
 		const groupUI = this._groupUIs.get(groupEntity);
-		groupUI.destroy();
+		groupUI.dispose();
 	}
 
 	_createEmitterUI(groupEntity, emitterEntity, emitterData) {
 		const { data, entity } = this;
 
 		const root = this._groupUIs.get(groupEntity);
-		const emitterFolder = root.addFolder(lang('emitter')).close();
+		const emitterFolder = root.addFolder({ title: lang('emitter'), expanded: false });
 		this._emitterUIs.set(emitterEntity, emitterFolder);
-
-		// part1: create main emitter ui
 
 		const isMeshParticle = !!groupEntity.isMeshParticleGroup;
 
-		emitterFolder.add(emitterData, 'meshAlignment', { 'None': 0, 'FaceCamera': 1, 'FaceCameraY': 2 }).name(lang('meshAlignment')).onChange(value => {
+		emitterFolder.addBinding(emitterData, 'meshAlignment', {
+			label: lang('meshAlignment'),
+			options: { 'None': 0, 'FaceCamera': 1, 'FaceCameraY': 2 },
+			disabled: !isMeshParticle
+		}).on('change', ({ value }) => {
 			emitterEntity.isLookAtCamera = value == 1;
 			emitterEntity.isLookAtCameraOnlyY = value == 2;
-		}).enable(isMeshParticle);
+		});
 
-		emitterFolder.add(emitterData, 'particleCount', 0, 500, 1).name(lang('particleCount')).onFinishChange(value => {
+		emitterFolder.addBinding(emitterData, 'particleCount', {
+			min: 0,
+			step: 1,
+			label: lang('particleCount')
+		}).on('change', ({ value }) => {
 			entity.updateParticleCount(groupEntity, emitterEntity, value);
 		});
 
-		emitterFolder.add(emitterData, 'isStatic').name(lang('static')).onChange(value => {
+		emitterFolder.addBinding(emitterData, 'isStatic', { label: lang('static') }).on('change', ({ value }) => {
 			emitterEntity.isStatic = value;
 		});
 
-		emitterFolder.add(emitterData, 'direction', { 'forward': 1, 'backward': -1 }).name(lang('direction')).onChange(value => {
+		emitterFolder.addBinding(emitterData, 'direction', {
+			label: lang('direction'),
+			options: { 'forward': 1, 'backward': -1 }
+		}).on('change', ({ value }) => {
 			emitterEntity.direction = value;
 		});
 
-		emitterFolder.add(emitterData, 'activeMultiplier', 0, 2, 0.1).name(lang('activeMultiplier')).onChange(value => {
+		emitterFolder.addBinding(emitterData, 'activeMultiplier', {
+			min: 0,
+			step: 0.1,
+			label: lang('activeMultiplier')
+		}).on('change', ({ value }) => {
 			emitterEntity.activeMultiplier = value;
 		});
 
-		const maxAgeFolder = emitterFolder.addFolder(lang('maxAge')).close();
-		maxAgeFolder.add(emitterData.maxAge, 'value', 0, 10).name(lang('value')).onFinishChange(value => {
+		const maxAgeFolder = emitterFolder.addFolder({ title: lang('maxAge'), expanded: false });
+		maxAgeFolder.addBinding(emitterData.maxAge, 'value', {
+			min: 0,
+			step: 0.01,
+			label: lang('value')
+		}).on('change', ({ value }) => {
 			emitterEntity.maxAge.value = value;
 			emitterEntity.calculatePPSValue();
 		});
-		maxAgeFolder.add(emitterData.maxAge, 'spread', 0, 10, 0.01).name(lang('spread')).onFinishChange(value => {
+		maxAgeFolder.addBinding(emitterData.maxAge, 'spread', {
+			min: 0,
+			step: 0.01,
+			label: lang('spread')
+		}).on('change', ({ value }) => {
 			emitterEntity.maxAge.spread = value;
 			emitterEntity.calculatePPSValue();
 		});
@@ -271,65 +308,83 @@ export class ParticleGUI {
 			name: 'position',
 			root: emitterFolder,
 			attributeData: emitterData.position,
-			attributeEntity: emitterEntity.position,
-			maxValue: 100
+			attributeEntity: emitterEntity.position
 		});
 
 		_simpleAttributeUI({
 			name: 'velocity',
 			root: emitterFolder,
 			attributeData: emitterData.velocity,
-			attributeEntity: emitterEntity.velocity,
-			maxValue: 50
+			attributeEntity: emitterEntity.velocity
 		});
 
 		_simpleAttributeUI({
 			name: 'acceleration',
 			root: emitterFolder,
 			attributeData: emitterData.acceleration,
-			attributeEntity: emitterEntity.acceleration,
-			maxValue: 50
+			attributeEntity: emitterEntity.acceleration
 		});
 
-		const dragFolder = emitterFolder.addFolder(lang('drag')).close();
-		dragFolder.add(emitterData.drag, 'value', 0, 50, 0.01).name(lang('value')).onChange(value => {
+		const dragFolder = emitterFolder.addFolder({ title: lang('drag'), expanded: false });
+		dragFolder.addBinding(emitterData.drag, 'value', {
+			min: 0,
+			step: 0.01,
+			label: lang('value')
+		}).on('change', ({ value }) => {
 			emitterEntity.drag.value = value;
 		});
-		dragFolder.add(emitterData.drag, 'spread', 0, 50, 0.01).name(lang('spread')).onChange(value => {
+		dragFolder.addBinding(emitterData.drag, 'spread', {
+			min: 0,
+			step: 0.01,
+			label: lang('spread')
+		}).on('change', ({ value }) => {
 			emitterEntity.drag.spread = value;
 		});
-		dragFolder.add(emitterData.drag, 'randomise').name(lang('randomise')).onChange(value => {
+		dragFolder.addBinding(emitterData.drag, 'randomise', { label: lang('randomise') }).on('change', ({ value }) => {
 			emitterEntity.drag.randomise = value;
 		});
 
-		const rotationFolder = emitterFolder.addFolder(lang('rotation')).close();
-		const rotationAxisValueFolder = rotationFolder.addFolder(lang('rotationAxis')).close();
-		const rotationAxisSpreadFolder = rotationFolder.addFolder(lang('rotationAxisSpread')).close();
-		const rotationCenterFolder = rotationFolder.addFolder(lang('rotationCenter')).close();
-		['x', 'y', 'z'].forEach((axisName, i) => {
-			rotationAxisValueFolder.add(emitterData.rotation.axis, i + '', -1, 1).name(axisName).onChange(value => {
-				emitterEntity.rotation.axis[axisName] = value;
-				emitterEntity.rotation.axis = emitterEntity.rotation.axis; // eslint-disable-line
-			});
-			rotationAxisSpreadFolder.add(emitterData.rotation.axisSpread, i + '', 0, 1).name(axisName).onChange(value => {
-				emitterEntity.rotation.axisSpread[axisName] = value;
-				emitterEntity.rotation.axisSpread = emitterEntity.rotation.axisSpread; // eslint-disable-line
-			});
-			rotationCenterFolder.add(emitterData.rotation.center, i + '', -50, 50).name(axisName).onChange(value => {
-				emitterEntity.rotation.center[axisName] = value;
-				emitterEntity.rotation.center = emitterEntity.rotation.center; // eslint-disable-line
-			});
-		});
-		rotationFolder.add(emitterData.rotation, 'angle', 0, 6.28, 0.01).name(lang('value')).onChange(value => {
+		const rotationFolder = emitterFolder.addFolder({ title: lang('rotation'), expanded: false });
+		rotationFolder.addBinding(emitterData.rotation, 'angle', {
+			step: 0.01,
+			label: lang('value')
+		}).on('change', ({ value }) => {
 			emitterEntity.rotation.angle = value;
 		});
-		rotationFolder.add(emitterData.rotation, 'angleSpread', 0, 6.28, 0.01).name(lang('spread')).onChange(value => {
+		rotationFolder.addBinding(emitterData.rotation, 'angleSpread', {
+			step: 0.01,
+			label: lang('spread')
+		}).on('change', ({ value }) => {
 			emitterEntity.rotation.angleSpread = value;
 		});
-		rotationFolder.add(emitterData.rotation, 'isStatic').name(lang('static')).onChange(value => {
+		rotationFolder.addBinding({ value: _convertArrayToVector(emitterData.rotation.axis) }, 'value', {
+			label: lang('rotationAxis')
+		}).on('change', ({ value }) => {
+			emitterEntity.rotation.axis.copy(value);
+			emitterEntity.rotation.axis = emitterEntity.rotation.axis; // eslint-disable-line
+			emitterEntity.rotation.axis.toArray(emitterData.rotation.axis);
+		});
+		rotationFolder.addBinding({ value: _convertArrayToVector(emitterData.rotation.axisSpread) }, 'value', {
+			label: lang('rotationAxisSpread'),
+			x: { min: 0 },
+			y: { min: 0 },
+			z: { min: 0 }
+		}).on('change', ({ value }) => {
+			emitterEntity.rotation.axisSpread.copy(value);
+			emitterEntity.rotation.axisSpread = emitterEntity.rotation.axisSpread; // eslint-disable-line
+			emitterEntity.rotation.axisSpread.toArray(emitterData.rotation.axisSpread);
+		});
+		rotationFolder.addBinding({ value: _convertArrayToVector(emitterData.rotation.center) }, 'value', {
+			label: lang('rotationCenter')
+		}).on('change', ({ value }) => {
+			emitterEntity.rotation.center.copy(value);
+			emitterEntity.rotation.center = emitterEntity.rotation.center; // eslint-disable-line
+			emitterEntity.rotation.center.toArray(emitterData.rotation.center);
+		});
+		rotationFolder.addBinding(emitterData.rotation, 'isStatic', { label: lang('static') }).on('change', ({ value }) => {
 			emitterEntity.rotation.static = value;
 		});
-		rotationFolder.add(emitterData.rotation, 'randomise').name(lang('randomise')).onChange(value => {
+		rotationFolder.addBinding(emitterData.rotation, 'randomise', { label: lang('randomise') }).on('change', ({ value }) => {
 			emitterEntity.rotation.randomise = value;
 		});
 
@@ -357,8 +412,7 @@ export class ParticleGUI {
 			attributeData: emitterData.size,
 			attributeEntity: emitterEntity.size,
 			data,
-			minValue: 0,
-			maxValue: 100
+			minValue: 0
 		});
 
 		_arrayAttributeUI({
@@ -366,42 +420,48 @@ export class ParticleGUI {
 			root: emitterFolder,
 			attributeData: emitterData.angle,
 			attributeEntity: emitterEntity.angle,
-			data,
-			minValue: -6.28,
-			maxValue: 6.28
+			data
 		});
 	}
 
 	_removeEmitterUI(emitterEntity) {
 		const emitterUI = this._emitterUIs.get(emitterEntity);
-		emitterUI.destroy();
+		emitterUI.dispose();
 	}
 
 }
 
 function _simpleAttributeUI(options) {
-	const { name, root, attributeData, attributeEntity, maxValue } = options;
+	const { name, root, attributeData, attributeEntity } = options;
 
-	const folder = root.addFolder(lang(name)).close();
+	const folder = root.addFolder({ title: lang(name), expanded: false });
 
-	folder.add(attributeData, 'distribution', { Box: 1, Sphere: 2, Disc: 3, Line: 4 }).name(lang('distribution')).onChange(value => {
+	folder.addBinding(attributeData, 'distribution', {
+		label: lang('distribution'),
+		options: { Box: 1, Sphere: 2, Disc: 3, Line: 4 }
+	}).on('change', ({ value }) => {
 		attributeEntity.distribution = value;
 	});
 
-	const valueFolder = folder.addFolder(lang('value')).close();
-	const spreadFolder = folder.addFolder(lang('spread')).close();
-	['x', 'y', 'z'].forEach((axisName, i) => {
-		valueFolder.add(attributeData.value, i + '', -maxValue, maxValue).name(axisName).onChange(value => {
-			attributeEntity.value[axisName] = value;
-			attributeEntity.value = attributeEntity.value; // eslint-disable-line
-		});
-		spreadFolder.add(attributeData.spread, i + '', 0, maxValue).name(axisName).onChange(value => {
-			attributeEntity.spread[axisName] = value;
-            attributeEntity.spread = attributeEntity.spread; // eslint-disable-line
-		});
+	folder.addBinding({ value: _convertArrayToVector(attributeData.value) }, 'value', {
+		label: lang('value')
+	}).on('change', ({ value }) => {
+		attributeEntity.value.copy(value);
+		attributeEntity.value = attributeEntity.value; // eslint-disable-line
+		attributeEntity.value.toArray(attributeData.value);
+	});
+	folder.addBinding({ value: _convertArrayToVector(attributeData.spread) }, 'value', {
+		label: lang('spread'),
+		x: { min: 0 },
+		y: { min: 0 },
+		z: { min: 0 }
+	}).on('change', ({ value }) => {
+		attributeEntity.spread.copy(value);
+		attributeEntity.spread = attributeEntity.spread; // eslint-disable-line
+		attributeEntity.spread.toArray(attributeData.spread);
 	});
 
-	folder.add(attributeData, 'randomise').name(lang('randomise')).onChange(value => {
+	folder.addBinding(attributeData, 'randomise', { label: lang('randomise') }).on('change', ({ value }) => {
 		attributeEntity.randomise = value;
 	});
 }
@@ -410,15 +470,15 @@ function _arrayAttributeUI(options) {
 	const { name, root, attributeData, attributeEntity, minValue, maxValue, data } = options;
 	const elementDataArray = attributeData.elements;
 
-	const folder = root.addFolder(lang(name)).close();
+	const folder = root.addFolder({ title: lang(name), expanded: false });
 
-	folder.add(attributeData, 'randomise').name(lang('randomise')).onChange(value => {
+	folder.addBinding(attributeData, 'randomise', { label: lang('randomise') }).on('change', ({ value }) => {
 		attributeEntity.randomise = value;
 	});
 
 	function setButtons() {
-		createButton.enable(elementDataArray.length < 4);
-		removeButton.enable(elementDataArray.length > 1);
+		createButton.disabled = elementDataArray.length >= 4;
+		removeButton.disabled = elementDataArray.length <= 1;
 	}
 
 	const methods = {
@@ -436,40 +496,55 @@ function _arrayAttributeUI(options) {
 		}
 	};
 
-	const createButton = folder.add(methods, 'create').name(lang('create'));
-	const removeButton = folder.add(methods, 'remove').name(lang('remove'));
+	const createButton = folder.addButton({ title: lang('create') }).on('click', methods.create);
+	const removeButton = folder.addButton({ title: lang('remove') }).on('click', methods.remove);
 
 	setButtons();
 
 	elementDataArray.forEach(_createElementUI);
 
 	function _createElementUI(elementData, index) {
-		const elementFolder = folder.addFolder(lang(name) + '_' + index).close();
+		const elementFolder = folder.addFolder({ title: lang(name) + '_' + index, expanded: false });
 
 		if (name == 'color') {
-			elementFolder.addColor(elementData, 'value').name(lang('value')).onChange(() => {
+			elementFolder.addBinding({ value: _convertArrayToColor(elementData.value) }, 'value', {
+				color: { type: 'float' },
+				label: lang('value')
+			}).on('change', ({ value }) => {
 				_updateAttributeEntityByType('value');
+				_setColorToArray(value, elementData.value);
 			});
 
-			const spreadFolder = elementFolder.addFolder(lang('spread')).close().onChange(() => {
+			elementFolder.addBinding({ value: _convertArrayToVector(elementData.spread) }, 'value', {
+				label: lang('spread'),
+				x: { min: 0, max: 1 },
+				y: { min: 0, max: 1 },
+				z: { min: 0, max: 1 }
+			}).on('change', ({ value }) => {
 				_updateAttributeEntityByType('spread');
-			});
-			['x', 'y', 'z'].forEach((axisName, i) => {
-				spreadFolder.add(elementData.spread, i + '', 0, 1).name(axisName);
+				_setVectorToArray(value, elementData.spread);
 			});
 		} else {
-			elementFolder.add(elementData, 'value', minValue, maxValue).name(lang('value')).onChange(() => {
+			elementFolder.addBinding(elementData, 'value', {
+				min: minValue,
+				max: maxValue,
+				label: lang('value')
+			}).on('change', () => {
 				_updateAttributeEntityByType('value');
 			});
 
-			elementFolder.add(elementData, 'spread', Math.max(minValue, 0), maxValue).name(lang('spread')).onChange(() => {
+			elementFolder.addBinding(elementData, 'spread', {
+				min: 0,
+				max: maxValue,
+				label: lang('spread')
+			}).on('change', () => {
 				_updateAttributeEntityByType('spread');
 			});
 		}
 	}
 
 	function _removeElementUI() {
-		folder.folders[folder.folders.length - 1].destroy();
+		folder.children[folder.children.length - 1].dispose();
 	}
 
 	function _updateAttributeEntityByType(type) {
@@ -493,4 +568,31 @@ function _arrayAttributeUI(options) {
 	function _updateAttributeEntity() {
 		_types.forEach(_updateAttributeEntityByType);
 	}
+}
+
+function _convertArrayToVector(array) {
+	if (array.length === 2) {
+		return { x: array[0], y: array[1] };
+	} else if (array.length === 3) {
+		return { x: array[0], y: array[1], z: array[2] };
+	} else {
+		return { x: array[0], y: array[1], z: array[2], w: array[3] };
+	}
+}
+
+function _convertArrayToColor(array) {
+	return { r: array[0], g: array[1], b: array[2] };
+}
+
+function _setVectorToArray(vector, target) {
+	target[0] = vector.x;
+	target[1] = vector.y;
+	if (vector.z) target[2] = vector.z;
+	if (vector.w) target[3] = vector.w;
+}
+
+function _setColorToArray(color, target) {
+	target[0] = color.r;
+	target[1] = color.g;
+	target[2] = color.b;
 }

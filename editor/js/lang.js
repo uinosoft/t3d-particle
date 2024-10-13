@@ -63,7 +63,7 @@ const lang_zh = {
 	'drag': '阻力',
 	'rotation': '旋转',
 	'rotationAxis': '旋转轴',
-	'rotationAxisSpread': '旋转轴方差',
+	'rotationAxisSpread': '转轴方差',
 	'rotationCenter': '旋转中心',
 	'color': '颜色',
 	'opacity': '透明度',
