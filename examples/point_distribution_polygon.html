@@ -1,0 +1,285 @@
+<html>
+<head>
+    <title>Custom Distribution in Polygon</title>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+	<link rel="stylesheet" type="text/css" href="./main.css">
+</head>
+<body>
+    <p class="numParticles"></p>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "./libs/t3d/build/t3d.module.js",
+                "t3d/addons/": "./libs/t3d/examples/jsm/",
+                "t3d-particle": "../build/t3d.particle.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from 't3d/addons/Clock.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { Earcut } from 't3d/addons/geometries/builders/Earcut.js';
+		import { ExtrudeShapeBuilder } from 't3d/addons/geometries/builders/ExtrudeShapeBuilder.js';
+		import { GeometryBuilderUtils } from 't3d/addons/geometries/builders/GeometryBuilderUtils.js';
+		import { GridHelper } from 't3d/addons/objects/GridHelper.js';
+
+		import {
+			ParticleGroup, ParticleEmitter
+		} from 't3d-particle';
+
+		// variables used in init()
+		let width, height, scene, camera, renderer, backRenderTarget, clock, controller;
+
+		// Used in initParticles()
+		let emitter, particleGroup;
+
+		// Setup the scene
+		function init() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			document.body.appendChild(canvas);
+
+			const gl = canvas.getContext('webgl2', {
+				antialias: true,
+				alpha: false,
+				stencil: true
+			});
+
+			scene = new t3d.Scene();
+			camera = new t3d.Camera();
+			camera.position.set(0, 250, 800);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+			camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 5000);
+			scene.add(camera);
+
+			const gridHelper = new GridHelper(500, 10, 0x888888, 0x303030);
+			gridHelper.position.y = -100;
+			scene.add(gridHelper);
+
+			renderer = new t3d.WebGLRenderer(gl);
+			renderer.setClearColor(0, 0, 0, 1);
+			backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+			clock = new Clock();
+
+			controller = new OrbitControls(camera, canvas);
+		}
+
+		// polygon data
+
+		const polygon = {
+			contour: [[30 - 180, 50 - 125], [130 - 180, 100 - 125], [80 - 180, 150 - 125], [180 - 180, 200 - 125], [230 - 180, 150 - 125], [330 - 180, 100 - 125], [230 - 180, 50 - 125], [180 - 180, 20 - 125]],
+			holes: []
+		};
+		
+		function createPolygon() {
+			const geometryData = ExtrudeShapeBuilder.getGeometryData({
+				contour: polygon.contour,
+				holes: polygon.holes,
+				depth: 5
+			});
+			const geometry = new t3d.Geometry();
+			geometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData.positions), 3)));
+			geometry.addAttribute('a_Uv', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData.uvs), 2)));
+			geometry.setIndex(new t3d.Attribute(new t3d.Buffer(
+				(geometryData.positions.length / 3) > 65536 ? new Uint32Array(geometryData.indices) : new Uint16Array(geometryData.indices),
+				1
+			)));
+			geometry.computeBoundingBox();
+			geometry.computeBoundingSphere();
+
+			const material = new t3d.BasicMaterial();
+			material.transparent = true;
+			material.opacity = 0.2;
+
+			const extrudeShape = new t3d.Mesh(geometry, material);
+			extrudeShape.position.y = 100;
+			extrudeShape.euler.x = Math.PI / 2;
+			extrudeShape.renderOrder = 1;
+			scene.add(extrudeShape);
+		}
+
+		// earcut
+
+		const _v0 = new t3d.Vector3();
+		const _v1 = new t3d.Vector3();
+		const _v2 = new t3d.Vector3();
+
+		function getArea(triangle) {
+			_v0.subVectors(triangle.c, triangle.b);
+			_v1.subVectors(triangle.a, triangle.b);
+			return _v0.cross(_v1).getLength() * 0.5;
+		}
+
+		function getRandomPoint(triangle) {
+			let u = Math.random();
+			let v = Math.random();
+
+			if (u + v > 1) {
+				u = 1 - u;
+				v = 1 - v;
+			}
+
+			const w = 1 - u - v;
+
+			return _v0.copy(triangle.a).multiplyScalar(u).add(_v1.copy(triangle.b).multiplyScalar(v)).add(_v2.copy(triangle.c).multiplyScalar(w));
+		}
+
+		const vertices = []; // flat array of vertices like [ x0,y0, x1,y1, x2,y2, ... ]
+		const holeIndices = []; // array of hole indices
+
+		GeometryBuilderUtils.convertShapeDataToEarcut(polygon, vertices, holeIndices);
+
+		const indices = Earcut.triangulate(vertices, []);
+		
+		let totalArea = 0;
+		const areaArray = [];
+		const triangles = [];
+		for (let i = 0; i < indices.length; i += 3) {
+			const aIndex = indices[i];
+			const bIndex = indices[i + 1];
+			const cIndex = indices[i + 2];
+
+			const a = new t3d.Vector3(vertices[aIndex * 2], 0, vertices[aIndex * 2 + 1]);
+			const b = new t3d.Vector3(vertices[bIndex * 2], 0, vertices[bIndex * 2 + 1]);
+			const c = new t3d.Vector3(vertices[cIndex * 2], 0, vertices[cIndex * 2 + 1]);
+
+			const triangle = new t3d.Triangle(a, b, c);
+			const area = getArea(triangle);
+
+			triangles.push(triangle);
+			areaArray.push(area);
+
+			totalArea += area;
+		}
+
+		const weights = areaArray.map(area => area / totalArea);
+
+		function getRandomTriangle() {
+			const seed = Math.random();
+			let sum = 0;
+			for (let i = 0; i < weights.length; i++) {
+				sum += weights[i];
+
+				if (seed < sum) {
+					return triangles[i];
+				}
+			}
+			return triangles[triangles.length - 1];
+		}
+
+		// set custom distribution function for position (attribute.buffer.array, attribute.offset, posotion.value, position.spread)
+		function setPositionDistribution(array, offset, value, spread) {
+			const triangle = getRandomTriangle();
+			const point = getRandomPoint(triangle);
+		
+			array[offset + 0] = point.x + value.x;
+			array[offset + 1] = point.y + value.y;
+			array[offset + 2] = point.z + value.z;
+		}
+
+		// set custom distribution function for velecity (attribute.buffer.array, attribute.offset, velocity.value, velocity.spread, particlePosition.x, particlePosition.y, particlePosition.z, this.position.value)
+		function setVelocityDistribution(array, offset, value, spread, particlePosX, particlePosY, particlePosZ, positionValue) {
+			const x = value.x + (Math.random() * spread.x - (spread.x * 0.5)),
+				y = value.y + (Math.random() * spread.y - (spread.y * 0.5)),
+				z = value.z + (Math.random() * spread.z - (spread.z * 0.5));
+
+			array[offset + 0] = x;
+			array[offset + 1] = y;
+			array[offset + 2] = z;
+		
+			return array;
+		}
+
+		// Create particle group and emitter
+		function initParticles() {
+			particleGroup = new ParticleGroup({
+				maxParticleCount: 4000,
+				texture: {
+					value: new Texture2DLoader().load('./resources/img/smokeparticle.png')
+				},
+				blending: t3d.BLEND_TYPE.NORMAL
+			});
+
+			emitter = new ParticleEmitter({
+				maxAge: {
+					value: 1
+				},
+				position: {
+					value: new t3d.Vector3(0, 0, 0),
+					spread: new t3d.Vector3(0, 0, 0),
+					distribution: setPositionDistribution
+				},
+				acceleration: {
+					value: new t3d.Vector3(0, 2, 0),
+					spread: new t3d.Vector3(1, 1, 1),
+					distribution: setVelocityDistribution
+				},
+				velocity: {
+					value: new t3d.Vector3(0, -150, 0),
+					spread: new t3d.Vector3(20, 100, 20),
+					distribution: setVelocityDistribution
+				},
+				color: {
+					value: [new t3d.Color3(0.8, 0.8, 0.8), new t3d.Color3(1, 1, 1)]
+				},
+				size: {
+					value: 20
+				},
+				particleCount: 4000
+			});
+
+			particleGroup.addEmitter(emitter);
+			particleGroup.mesh.position.y = 100;
+			scene.add(particleGroup.mesh);
+		}
+
+		function animate() {
+			requestAnimationFrame(animate);
+
+			controller.update();
+
+			if (particleGroup) {
+				particleGroup.tick(clock.getDelta());
+			}
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, false);
+			renderer.renderScene(scene, camera);
+		}
+
+		init();
+		initParticles();
+		createPolygon();
+
+		setTimeout(animate, 0);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 5000);
+
+			backRenderTarget.resize(width, height);
+		}
+
+		window.addEventListener('resize', onWindowResize, false);
+    </script>
+</body>
+</html>

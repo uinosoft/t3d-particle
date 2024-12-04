@@ -6,6 +6,7 @@
 		"point_clouds",
 		"point_distributions",
 		"point_distribution_custom",
+		"point_distribution_polygon",
 		"point_explosion",
 		"point_fog",
 		"point_follow_mouse",
