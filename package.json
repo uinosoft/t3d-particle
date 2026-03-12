@@ -47,6 +47,8 @@
     "dev": "rollup -c -w",
     "lint": "eslint src",
     "lint-fix": "eslint src --fix",
+    "validate:particle": "node scripts/validate-particle-schema.mjs",
+    "validate:particle:file": "node scripts/validate-particle-schema.mjs",
     "server": "servez -p 8083 --ssl"
   }
 }

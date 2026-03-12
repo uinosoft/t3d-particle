@@ -1,0 +1,386 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://uinosoft.github.io/t3d-particle/schemas/particle.schema.json",
+  "title": "t3d-particle resource",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "groups"],
+  "properties": {
+    "version": {
+      "const": "0.0.2"
+    },
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/group"
+      }
+    }
+  },
+  "$defs": {
+    "number": {
+      "type": "number"
+    },
+    "boolean": {
+      "type": "boolean"
+    },
+    "vec2Positive": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "number",
+        "minimum": 1
+      }
+    },
+    "vec3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "number"
+      }
+    },
+    "color3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "distribution": {
+      "type": "integer",
+      "enum": [1, 2, 3, 4]
+    },
+    "simpleScalarSpread": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "spread"],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/number"
+        },
+        "spread": {
+          "$ref": "#/$defs/number"
+        }
+      }
+    },
+    "drag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "spread", "randomise"],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/number"
+        },
+        "spread": {
+          "$ref": "#/$defs/number"
+        },
+        "randomise": {
+          "$ref": "#/$defs/boolean"
+        }
+      }
+    },
+    "simpleVectorDistributionWithRadius": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "spread", "distribution", "randomise", "spreadClamp", "radius", "radiusScale"],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/vec3"
+        },
+        "spread": {
+          "$ref": "#/$defs/vec3"
+        },
+        "distribution": {
+          "$ref": "#/$defs/distribution"
+        },
+        "randomise": {
+          "$ref": "#/$defs/boolean"
+        },
+        "spreadClamp": {
+          "$ref": "#/$defs/vec3"
+        },
+        "radius": {
+          "$ref": "#/$defs/number"
+        },
+        "radiusScale": {
+          "$ref": "#/$defs/vec3"
+        }
+      }
+    },
+    "simpleVectorDistribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "spread", "distribution", "randomise"],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/vec3"
+        },
+        "spread": {
+          "$ref": "#/$defs/vec3"
+        },
+        "distribution": {
+          "$ref": "#/$defs/distribution"
+        },
+        "randomise": {
+          "$ref": "#/$defs/boolean"
+        }
+      }
+    },
+    "rotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["axis", "axisSpread", "angle", "angleSpread", "isStatic", "center", "randomise"],
+      "properties": {
+        "axis": {
+          "$ref": "#/$defs/vec3"
+        },
+        "axisSpread": {
+          "$ref": "#/$defs/vec3"
+        },
+        "angle": {
+          "$ref": "#/$defs/number"
+        },
+        "angleSpread": {
+          "$ref": "#/$defs/number"
+        },
+        "isStatic": {
+          "$ref": "#/$defs/boolean"
+        },
+        "center": {
+          "$ref": "#/$defs/vec3"
+        },
+        "randomise": {
+          "$ref": "#/$defs/boolean"
+        }
+      }
+    },
+    "colorElement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "spread"],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/color3"
+        },
+        "spread": {
+          "$ref": "#/$defs/vec3"
+        },
+        "randomise": {
+          "$ref": "#/$defs/boolean"
+        }
+      }
+    },
+    "numberElement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "spread"],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/number"
+        },
+        "spread": {
+          "$ref": "#/$defs/number"
+        },
+        "randomise": {
+          "$ref": "#/$defs/boolean"
+        }
+      }
+    },
+    "colorLife": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["elements", "randomise"],
+      "properties": {
+        "elements": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/colorElement"
+          }
+        },
+        "randomise": {
+          "$ref": "#/$defs/boolean"
+        }
+      }
+    },
+    "numberLife": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["elements", "randomise"],
+      "properties": {
+        "elements": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/numberElement"
+          }
+        },
+        "randomise": {
+          "$ref": "#/$defs/boolean"
+        }
+      }
+    },
+    "emitter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "particleCount",
+        "isStatic",
+        "direction",
+        "activeMultiplier",
+        "meshAlignment",
+        "maxAge",
+        "position",
+        "velocity",
+        "acceleration",
+        "drag",
+        "wiggle",
+        "rotation",
+        "color",
+        "opacity",
+        "size",
+        "angle"
+      ],
+      "properties": {
+        "particleCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "isStatic": {
+          "$ref": "#/$defs/boolean"
+        },
+        "direction": {
+          "type": "integer",
+          "enum": [1, -1]
+        },
+        "activeMultiplier": {
+          "type": "number",
+          "minimum": 0
+        },
+        "meshAlignment": {
+          "type": "integer",
+          "enum": [0, 1, 2]
+        },
+        "maxAge": {
+          "$ref": "#/$defs/simpleScalarSpread"
+        },
+        "position": {
+          "$ref": "#/$defs/simpleVectorDistributionWithRadius"
+        },
+        "velocity": {
+          "$ref": "#/$defs/simpleVectorDistribution"
+        },
+        "acceleration": {
+          "$ref": "#/$defs/simpleVectorDistribution"
+        },
+        "drag": {
+          "$ref": "#/$defs/drag"
+        },
+        "wiggle": {
+          "$ref": "#/$defs/simpleScalarSpread"
+        },
+        "rotation": {
+          "$ref": "#/$defs/rotation"
+        },
+        "color": {
+          "$ref": "#/$defs/colorLife"
+        },
+        "opacity": {
+          "$ref": "#/$defs/numberLife"
+        },
+        "size": {
+          "$ref": "#/$defs/numberLife"
+        },
+        "angle": {
+          "$ref": "#/$defs/numberLife"
+        }
+      }
+    },
+    "group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "perspective",
+        "meshUri",
+        "textureUri",
+        "textureFrame",
+        "textureFrameLoop",
+        "colorize",
+        "transparent",
+        "blending",
+        "alphaTest",
+        "depthWrite",
+        "depthTest",
+        "side",
+        "fog",
+        "emitters"
+      ],
+      "properties": {
+        "mode": {
+          "type": "integer",
+          "enum": [0, 1]
+        },
+        "perspective": {
+          "$ref": "#/$defs/boolean"
+        },
+        "meshUri": {
+          "type": "string",
+          "pattern": "^BuildIn/(Box|Plane|Sphere)$"
+        },
+        "textureUri": {
+          "type": ["string", "null"]
+        },
+        "textureFrame": {
+          "$ref": "#/$defs/vec2Positive"
+        },
+        "textureFrameLoop": {
+          "type": "number",
+          "minimum": 1
+        },
+        "colorize": {
+          "$ref": "#/$defs/boolean"
+        },
+        "transparent": {
+          "$ref": "#/$defs/boolean"
+        },
+        "blending": {
+          "type": "string",
+          "enum": ["none", "normal", "add", "sub", "mul"]
+        },
+        "alphaTest": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "depthWrite": {
+          "$ref": "#/$defs/boolean"
+        },
+        "depthTest": {
+          "$ref": "#/$defs/boolean"
+        },
+        "side": {
+          "type": "string",
+          "enum": ["front", "back", "double"]
+        },
+        "fog": {
+          "$ref": "#/$defs/boolean"
+        },
+        "emitters": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/emitter"
+          }
+        }
+      }
+    }
+  }
+}
